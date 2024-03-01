@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
-from .models import Project, Shot, ShotGroup, Version
+from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 
 
 @admin.register(Project)
@@ -20,6 +20,12 @@ class VersionInline(admin.TabularInline):
     extra = 0
 
 
+class ShotTaskInline(admin.TabularInline):
+    model = ShotTask
+    show_change_link = True
+    extra = 0
+
+
 @admin.register(Shot)
 class ShotAdmin(admin.ModelAdmin):
     list_display = (
@@ -33,7 +39,10 @@ class ShotAdmin(admin.ModelAdmin):
         "group__project",
         "group",
     )
-    inlines = (VersionInline,)
+    inlines = (
+        ShotTaskInline,
+        VersionInline,
+    )
 
     @admin.display(description="Latest version")
     def get_latest_version(self, obj):
@@ -44,4 +53,19 @@ class ShotAdmin(admin.ModelAdmin):
 
 @admin.register(Version)
 class VersionAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Status)
+class StatusAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ShotTask)
+class ShotTaskAdmin(admin.ModelAdmin):
     pass
