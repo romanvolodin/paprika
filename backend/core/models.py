@@ -68,6 +68,45 @@ class Shot(models.Model):
         on_delete=models.CASCADE,
         related_name="shots",
     )
+    rec_timecode = models.CharField(
+        "Начальный таймкод в монтаже",
+        max_length=11,
+        blank=True,
+        help_text="Задается в виде 00:00:00:00",
+    )
+    source_name = models.CharField(
+        "имя исходника",
+        max_length=50,
+        blank=True,
+    )
+    source_start_timecode = models.CharField(
+        "Начальный таймкод по исходнику",
+        max_length=11,
+        blank=True,
+        help_text="Задается в виде 00:00:00:00",
+    )
+    source_end_timecode = models.CharField(
+        "Конечный таймкод по исходнику",
+        max_length=11,
+        blank=True,
+        help_text="Задается в виде 00:00:00:00",
+    )
+    pixel_aspect = models.FloatField(
+        "Аспект пикселя",
+        default=1.0,
+    )
+    retime_speed = models.FloatField(
+        "скорость ретайма",
+        default=100,
+        help_text=(
+            "100% - скорость без изменений, 200% - в 2 раза быстрее, 50% - в 2 раза медленнее"
+        ),
+    )
+    scene = models.IntegerField(
+        "Номер сцены",
+        null=True,
+        blank=True,
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
