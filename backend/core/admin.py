@@ -33,6 +33,7 @@ class ShotAdmin(admin.ModelAdmin):
         "group",
         "created_by",
         "created_at",
+        "get_shot_status",
         "get_latest_version",
     )
     list_filter = (
@@ -49,6 +50,25 @@ class ShotAdmin(admin.ModelAdmin):
         latest_version = obj.versions.latest("created_at")
         if latest_version:
             return mark_safe(f'<a href="{latest_version.video.url}">{latest_version.name}</a>')
+
+    @admin.display(description="Shot status")
+    def get_shot_status(self, obj):
+        statuses = [task.status.title for task in obj.task_statuses.all()]
+        template = "<span style='background-color:{};color:#fff;padding:3px 7px'>{}</span>"
+
+        if set() == set(statuses):
+            return mark_safe(template.format("#ccc", "Нет задач"))
+
+        if set(("Не начата",)) == set(statuses):
+            return mark_safe(template.format("#900", "Не начат"))
+
+        if set(("Отмена",)) == set(statuses):
+            return mark_safe(template.format("#999", "Отмена"))
+
+        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
+            return mark_safe(template.format("#090", "Принят"))
+
+        return mark_safe(template.format("#fa0", "В работе"))
 
 
 @admin.register(Version)
