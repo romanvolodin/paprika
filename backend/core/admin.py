@@ -44,6 +44,44 @@ class ShotAdmin(admin.ModelAdmin):
         ShotTaskInline,
         VersionInline,
     )
+    readonly_fields = ("created_at",)
+
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    ("name", "group"),
+                    ("rec_timecode", "scene"),
+                )
+            },
+        ),
+        (
+            "Информация об исходнике",
+            {
+                "fields": (
+                    (
+                        "source_name",
+                        "source_start_timecode",
+                        "source_end_timecode",
+                    ),
+                )
+            },
+        ),
+        (
+            "Дополнительная информация",
+            {
+                "fields": (
+                    (
+                        "pixel_aspect",
+                        "retime_speed",
+                        "created_by",
+                        "created_at",
+                    ),
+                )
+            },
+        ),
+    )
 
     @admin.display(description="Latest version")
     def get_latest_version(self, obj):
