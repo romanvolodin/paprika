@@ -102,9 +102,9 @@ class Shot(models.Model):
             "100% - скорость без изменений, 200% - в 2 раза быстрее, 50% - в 2 раза медленнее"
         ),
     )
-    scene = models.IntegerField(
+    scene = models.CharField(
         "Номер сцены",
-        null=True,
+        max_length=15,
         blank=True,
     )
     created_by = models.ForeignKey(
