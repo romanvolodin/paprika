@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
+from .forms import AddShotsToGroupsForm
 from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 
 
@@ -106,6 +109,26 @@ class ShotAdmin(admin.ModelAdmin):
             return mark_safe(template.format("#090", "Принят"))
 
         return mark_safe(template.format("#fa0", "В работе"))
+
+    actions = ["add_shots_to_groups"]
+
+    @admin.action(description="Добавить шоты в группы")
+    def add_shots_to_groups(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddShotsToGroupsForm(request.POST)
+            if form.is_valid():
+                groups = form.cleaned_data["groups"]
+                for shot in queryset:
+                    shot.group.set(shot.group.all().union(groups))
+                    shot.save()
+
+            return HttpResponseRedirect(request.get_full_path())
+
+        context = {
+            "shots": queryset,
+            "form": AddShotsToGroupsForm,
+        }
+        return render(request, "admin/add_shots_to_groups.html", context=context)
 
 
 @admin.register(Version)

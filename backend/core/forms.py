@@ -18,3 +18,8 @@ class ReadXlsxForm(forms.Form):
     pixel_aspect_column = forms.CharField(help_text="(A,B,C,...)")
     retime_speed_column = forms.CharField(help_text="(A,B,C,...)")
     scene_column = forms.CharField(help_text="(A,B,C,...)")
+
+
+class AddShotsToGroupsForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    groups = forms.ModelMultipleChoiceField(ShotGroup.objects.all())
