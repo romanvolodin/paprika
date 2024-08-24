@@ -30,7 +30,6 @@ class ShotTaskInline(admin.TabularInline):
 class ShotAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "group",
         "created_by",
         "created_at",
         "get_shot_status",

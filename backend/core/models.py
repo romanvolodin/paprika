@@ -63,10 +63,15 @@ class Shot(models.Model):
         "Название шота",
         max_length=50,
     )
-    group = models.ForeignKey(
+    # group = models.ForeignKey(
+    #     ShotGroup,
+    #     on_delete=models.CASCADE,
+    #     related_name="shots",
+    # )
+    group = models.ManyToManyField(
         ShotGroup,
-        on_delete=models.CASCADE,
         related_name="shots",
+        verbose_name="группа, которой принадлежит шот",
     )
     rec_timecode = models.CharField(
         "Начальный таймкод в монтаже",
