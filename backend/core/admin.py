@@ -37,6 +37,7 @@ class ShotAdmin(admin.ModelAdmin):
         "created_at",
         "get_shot_status",
         "get_latest_version",
+        "get_shot_groups",
     )
     list_filter = (
         "group__project",
@@ -90,6 +91,10 @@ class ShotAdmin(admin.ModelAdmin):
         latest_version = obj.versions.latest("created_at")
         if latest_version:
             return mark_safe(f'<a href="{latest_version.video.url}">{latest_version.name}</a>')
+
+    @admin.display(description="группы")
+    def get_shot_groups(self, obj):
+        return ", ".join([group.name for group in obj.group.all()])
 
     @admin.display(description="Shot status")
     def get_shot_status(self, obj):
