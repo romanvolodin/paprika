@@ -1,10 +1,11 @@
 from django.contrib import admin
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from .forms import AddShotsToGroupsForm
-from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
+from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
 
 
 @admin.register(Project)
@@ -32,6 +33,7 @@ class ShotTaskInline(admin.TabularInline):
 @admin.register(Shot)
 class ShotAdmin(admin.ModelAdmin):
     list_display = (
+        "get_tmp_preview",
         "name",
         "created_by",
         "created_at",
@@ -96,6 +98,27 @@ class ShotAdmin(admin.ModelAdmin):
     def get_shot_groups(self, obj):
         return ", ".join([group.name for group in obj.group.all()])
 
+    @admin.display(description="превью")
+    def get_tmp_preview(self, shot):
+        try:
+            preview = shot.tmp_preview.image.url
+        except ObjectDoesNotExist:
+            return mark_safe(
+                "<div style='"
+                "aspect-ratio:2.39/1;"
+                "width:150px;"
+                "background-color:#eee;"
+                "display:flex;"
+                "align-items:center;"
+                "justify-content:center;"
+                "' "
+                ">Нет превью</div>"
+            )
+
+        return mark_safe(
+            f"<img src='{preview}' style='aspect-ratio:2.39/1; width:150px; object-fit:cover'>"
+        )
+
     @admin.display(description="Shot status")
     def get_shot_status(self, obj):
         statuses = [task.status.title for task in obj.task_statuses.all()]
@@ -153,4 +176,9 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(ShotTask)
 class ShotTaskAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(TmpShotPreview)
+class TmpShotPreview(admin.ModelAdmin):
     pass

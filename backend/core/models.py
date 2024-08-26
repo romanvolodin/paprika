@@ -8,6 +8,12 @@ def version_upload_path(version, filename):
     return f"{project}/{shot}/{filename}"
 
 
+def shot_preview_upload_path(preview, filename):
+    shot = preview.shot
+    project = shot.group.all()[0].project.code
+    return f"{project}/{shot}/preview/{filename}"
+
+
 class Project(models.Model):
     name = models.CharField(
         "название",
@@ -209,3 +215,15 @@ class ShotTask(models.Model):
 
     def __str__(self):
         return f"{self.shot}: {self.task} ({self.status})"
+
+
+class TmpShotPreview(models.Model):
+    shot = models.OneToOneField(
+        Shot,
+        on_delete=models.PROTECT,
+        related_name="tmp_preview",
+    )
+    image = models.FileField(upload_to=shot_preview_upload_path)
+
+    def __str__(self):
+        return self.shot.name
