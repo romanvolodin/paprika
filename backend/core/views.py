@@ -1,8 +1,9 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 
-from .forms import ReadXlsxForm
-from .models import Shot
+from .forms import ReadXlsxForm, UploadMultiplePreviewsForm
+from .models import Shot, TmpShotPreview
 
 
 def read_xlsx(request):
@@ -72,3 +73,39 @@ def read_xlsx(request):
     else:
         form = ReadXlsxForm()
     return render(request, "core/xlsx_read.html", {"form": form})
+
+
+def save_multiple_uploaded_shot_previews(request):
+    import re
+
+    if request.method == "POST":
+        form = UploadMultiplePreviewsForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, "core/upload_multiple_shot_previews.html", {"form": form})
+
+        previews = form.cleaned_data["previews"]
+        successful_count = 0
+        errors = []
+        for preview in previews:
+            shot_name = re.search("PLN_CG_\d+", preview.name)
+
+            if shot_name is None:
+                errors.append(f"Нет имени шота в '{preview.name}'")
+                continue
+
+            parsed_shot_name = shot_name.group(0)
+
+            try:
+                shot = Shot.objects.get(name=parsed_shot_name)
+            except ObjectDoesNotExist:
+                errors.append(f"Шот '{parsed_shot_name}' не найден")
+                continue
+
+            TmpShotPreview.objects.create(shot=shot, image=preview)
+            successful_count += 1
+        return HttpResponse(
+            f"{successful_count} картинок загружено.<br><br>Ошибки:<br>{'<br>'.join(errors)}"
+        )
+    else:
+        form = UploadMultiplePreviewsForm()
+    return render(request, "core/upload_multiple_shot_previews.html", {"form": form})

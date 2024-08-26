@@ -1,0 +1,9 @@
+ <p style="color:red">Только для проекта Планета</p>
+ <p>Можно загрузить сразу несколько превьюх для шотов.</p>
+ <p>Имя шота должно содержаться в имени картинки, например "PLN_CG_0010_{...}.jpg"</p>
+
+<form method='post' enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form }}
+  <input type='submit' value='OK'>
+</form>
