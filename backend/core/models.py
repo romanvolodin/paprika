@@ -63,11 +63,6 @@ class Shot(models.Model):
         "Название шота",
         max_length=50,
     )
-    # group = models.ForeignKey(
-    #     ShotGroup,
-    #     on_delete=models.CASCADE,
-    #     related_name="shots",
-    # )
     group = models.ManyToManyField(
         ShotGroup,
         related_name="shots",
