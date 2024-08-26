@@ -35,9 +35,8 @@ class ShotAdmin(admin.ModelAdmin):
     list_display = (
         "get_tmp_preview",
         "name",
-        "created_by",
-        "created_at",
         "get_shot_status",
+        "get_shot_tasks",
         "get_latest_version",
         "get_shot_groups",
     )
@@ -49,6 +48,7 @@ class ShotAdmin(admin.ModelAdmin):
         ShotTaskInline,
         VersionInline,
     )
+    ordering = ("name",)
     readonly_fields = ("created_at",)
 
     fieldsets = (
@@ -96,7 +96,11 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.display(description="группы")
     def get_shot_groups(self, obj):
-        return ", ".join([group.name for group in obj.group.all()])
+        return mark_safe("<br>".join([group.name for group in obj.group.all()]))
+
+    @admin.display(description="задачи")
+    def get_shot_tasks(self, obj):
+        return mark_safe("<br>".join([task.description for task in obj.task.all()]))
 
     @admin.display(description="превью")
     def get_tmp_preview(self, shot):
