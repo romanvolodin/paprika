@@ -170,7 +170,10 @@ class VersionAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        "description",
+        "default_status",
+    )
 
 
 @admin.register(Status)

@@ -168,6 +168,18 @@ class Task(models.Model):
         verbose_name="кем создана",
     )
     description = models.TextField("описание")
+    default_status = models.ForeignKey(
+        "Status",
+        on_delete=models.PROTECT,
+        related_name="tasks",
+        verbose_name="статус по умолчанию",
+        null=True,
+        blank=True,
+        help_text=(
+            "Будет установлен при добавлении задачи в шот. "
+            "Prepopulated_fields здесь не работает, нужна самописная вьюха"
+        ),
+    )
 
     def __str__(self):
         return self.description
