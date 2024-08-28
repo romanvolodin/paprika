@@ -36,6 +36,7 @@ class ShotAdmin(admin.ModelAdmin):
         "get_tmp_preview",
         "name",
         "get_shot_status",
+        "pixel_aspect",
         "get_shot_tasks",
         "get_latest_version",
         "get_shot_groups",
@@ -43,6 +44,7 @@ class ShotAdmin(admin.ModelAdmin):
     list_filter = (
         "group__project",
         "group",
+        "pixel_aspect",
     )
     inlines = (
         ShotTaskInline,
