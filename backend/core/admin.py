@@ -140,7 +140,10 @@ class ShotAdmin(admin.ModelAdmin):
             return mark_safe(template.format("#999", "Отмена"))
 
         if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
-            return mark_safe(template.format("#090", "Принят"))
+            return mark_safe(template.format("#099", "Принят"))
+
+        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова")) == set(statuses):
+            return mark_safe(template.format("#090", "Готов"))
 
         if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано")) == set(statuses):
             return mark_safe(template.format("#7700BE", "Отдан"))
