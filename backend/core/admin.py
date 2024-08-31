@@ -180,7 +180,14 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        "title",
+        "get_color",
+    )
+
+    @admin.display(description="цвет")
+    def get_color(self, obj):
+        return mark_safe(f"<div style='background-color:{obj.color};color:#fff'>{obj.color}</div>")
 
 
 @admin.register(ShotTask)

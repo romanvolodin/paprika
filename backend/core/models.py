@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.conf import settings
 from django.db import models
 
@@ -199,6 +200,10 @@ class Status(models.Model):
     title = models.CharField(
         "Статус задачи",
         max_length=50,
+    )
+    color = ColorField(
+        "цвет метки",
+        default="#ffffff",
     )
 
     def __str__(self):
