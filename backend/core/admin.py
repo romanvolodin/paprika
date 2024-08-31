@@ -142,6 +142,12 @@ class ShotAdmin(admin.ModelAdmin):
         if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
             return mark_safe(template.format("#090", "Принят"))
 
+        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано")) == set(statuses):
+            return mark_safe(template.format("#7700BE", "Отдан"))
+
+        if "Есть комментарий" in statuses:
+            return mark_safe(template.format("#FF6600", "Есть комментарий"))
+
         return mark_safe(template.format("#fa0", "В работе"))
 
     actions = ["add_shots_to_groups"]
