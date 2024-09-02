@@ -30,6 +30,48 @@ class ShotTaskInline(admin.TabularInline):
     extra = 0
 
 
+class ShotStatusListFilter(admin.SimpleListFilter):
+    title = "shot status"
+    parameter_name = "shot_status"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("no_tasks", "Нет задач"),
+            ("canceled", "Отмена"),
+            ("not_started", "Не начат"),
+            ("in_progress", "В работе"),
+            ("done", "Готов"),
+            ("commented", "Есть комментарий"),
+            ("approved", "Принят"),
+            ("delivered", "Отдан"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "no_tasks":
+            return queryset.filter(task_statuses=None)
+
+        if self.value() == "canceled":
+            return queryset.filter(task_statuses__status__title="Отмена")
+
+        if self.value() == "not_started":
+            return queryset.filter(task_statuses__status__title="Не начата")
+
+        if self.value() == "in_progress":
+            return queryset.filter(task_statuses__status__title="В работе")
+
+        if self.value() == "done":
+            return queryset.filter(task_statuses__status__title="Готова")
+
+        if self.value() == "commented":
+            return queryset.filter(task_statuses__status__title="Есть комментарий")
+
+        if self.value() == "approved":
+            return queryset.filter(task_statuses__status__title="Принята")
+
+        if self.value() == "delivered":
+            return queryset.filter(task_statuses__status__title="Отдано")
+
+
 @admin.register(Shot)
 class ShotAdmin(admin.ModelAdmin):
     list_display = (
@@ -43,6 +85,8 @@ class ShotAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "group__project",
+        ShotStatusListFilter,
+        "task",
         "group",
         "pixel_aspect",
     )
