@@ -185,6 +185,8 @@ class TaskAdmin(admin.ModelAdmin):
         "description",
         "default_status",
     )
+    ordering = ("description",)
+    inlines = (ShotTaskInline,)
 
 
 @admin.register(Status)
