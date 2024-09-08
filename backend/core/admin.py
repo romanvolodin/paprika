@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
@@ -197,7 +197,7 @@ class ShotAdmin(admin.ModelAdmin):
 
         return mark_safe(template.format("#fa0", "В работе"))
 
-    actions = ["add_shots_to_groups"]
+    actions = ["add_shots_to_groups", "download_shots_as_xlsx"]
 
     @admin.action(description="Добавить шоты в группы")
     def add_shots_to_groups(modeladmin, request, queryset):
@@ -216,6 +216,48 @@ class ShotAdmin(admin.ModelAdmin):
             "form": AddShotsToGroupsForm,
         }
         return render(request, "admin/add_shots_to_groups.html", context=context)
+
+    @admin.action(description="Скачать шоты в виде Excel таблицы")
+    def download_shots_as_xlsx(modeladmin, request, queryset):
+        from datetime import datetime
+
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment
+        from openpyxl.utils import get_column_letter
+
+        project_code = queryset[0].group.first().project.code
+        date = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"{project_code}_shots_{date}.xlsx"
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f"attachment; filename={filename}"
+
+        wb = Workbook()
+        ws = wb.active
+        ws.append(("№", "Название шота", "Задачи"))
+        for counter, shot in enumerate(queryset, start=1):
+            counter_cell = ws.cell(row=counter + 1, column=1, value=counter)
+            counter_cell.alignment = Alignment(vertical="top", horizontal="left")
+
+            name_cell = ws.cell(row=counter + 1, column=2, value=shot.name)
+            name_cell.alignment = Alignment(vertical="top", horizontal="left")
+
+            ws.cell(
+                row=counter + 1,
+                column=3,
+                value="\n".join([task.description for task in shot.task.all()]),
+            )
+
+        for i, column in enumerate(ws.columns, 1):
+            lengths = (
+                len(max(str(cell.value).split("\n"))) for cell in column if cell.value is not None
+            )
+            ws.column_dimensions[get_column_letter(i)].width = max(lengths) + 2
+
+        wb.save(response)
+        return response
 
 
 @admin.register(Version)
