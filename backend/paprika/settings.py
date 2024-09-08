@@ -4,7 +4,7 @@ from environs import Env
 
 
 env = Env()
-env.read_env()
+env.read_env(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env.str("PAPRIKA_SECRET_KEY")
