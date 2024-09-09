@@ -15,7 +15,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ShotGroup)
 class ShotGroupAdmin(admin.ModelAdmin):
-    pass
+    ordering = ("-name",)
 
 
 class VersionInline(admin.TabularInline):
