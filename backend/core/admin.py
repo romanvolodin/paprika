@@ -78,8 +78,8 @@ class ShotAdmin(admin.ModelAdmin):
         "get_tmp_preview",
         "name",
         "get_shot_status",
-        "pixel_aspect",
         "get_shot_tasks",
+        "comment",
         "get_latest_version",
         "get_shot_groups",
     )
@@ -129,6 +129,7 @@ class ShotAdmin(admin.ModelAdmin):
                         "created_by",
                         "created_at",
                     ),
+                    ("comment",),
                 )
             },
         ),

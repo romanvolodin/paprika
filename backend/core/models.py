@@ -130,6 +130,11 @@ class Shot(models.Model):
         related_name="shots",
         verbose_name="задача на шот",
     )
+    comment = models.TextField(
+        verbose_name="Комментарий",
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return self.name
