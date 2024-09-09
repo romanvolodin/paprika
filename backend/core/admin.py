@@ -95,10 +95,11 @@ class ShotAdmin(admin.ModelAdmin):
     list_display = (
         "get_tmp_preview",
         "name",
+        "get_rec_timecode",
         "get_shot_status",
         "get_shot_tasks",
         "comment",
-        "get_latest_version",
+        # "get_latest_version",
         "get_shot_groups",
     )
     list_filter = (
@@ -155,6 +156,10 @@ class ShotAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    @admin.display(description="TC")
+    def get_rec_timecode(self, obj):
+        return obj.rec_timecode
 
     @admin.display(description="Latest version")
     def get_latest_version(self, obj):
