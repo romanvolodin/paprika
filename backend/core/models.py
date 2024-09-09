@@ -29,6 +29,7 @@ class Project(models.Model):
         on_delete=models.PROTECT,
         related_name="projects",
         verbose_name="кем создан",
+        blank=True,
     )
     created_at = models.DateTimeField(
         "когда создан",
@@ -55,6 +56,7 @@ class ShotGroup(models.Model):
         on_delete=models.PROTECT,
         related_name="created_shot_groups",
         verbose_name="кем создан",
+        blank=True,
     )
     created_at = models.DateTimeField(
         "когда создан",
@@ -119,6 +121,7 @@ class Shot(models.Model):
         on_delete=models.CASCADE,
         related_name="created_shots",
         verbose_name="кем создан",
+        blank=True,
     )
     created_at = models.DateTimeField(
         "когда создан",
@@ -155,6 +158,7 @@ class Version(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="created_versions",
+        blank=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -172,6 +176,7 @@ class Task(models.Model):
         on_delete=models.PROTECT,
         related_name="created_tasks",
         verbose_name="кем создана",
+        blank=True,
     )
     description = models.TextField("описание")
     default_status = models.ForeignKey(
@@ -201,6 +206,7 @@ class Status(models.Model):
         on_delete=models.PROTECT,
         related_name="created_statuses",
         verbose_name="кем создан",
+        blank=True,
     )
     title = models.CharField(
         "Статус задачи",

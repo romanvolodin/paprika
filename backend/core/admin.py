@@ -12,10 +12,18 @@ from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPre
 class ProjectAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(ShotGroup)
 class ShotGroupAdmin(admin.ModelAdmin):
     ordering = ("-name",)
+
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 class VersionInline(admin.TabularInline):
@@ -260,10 +268,16 @@ class ShotAdmin(admin.ModelAdmin):
         wb.save(response)
         return response
 
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Version)
 class VersionAdmin(admin.ModelAdmin):
-    pass
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Task)
@@ -274,6 +288,10 @@ class TaskAdmin(admin.ModelAdmin):
     )
     ordering = ("description",)
     inlines = (ShotTaskInline,)
+
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Status)
@@ -286,6 +304,10 @@ class StatusAdmin(admin.ModelAdmin):
     @admin.display(description="цвет")
     def get_color(self, obj):
         return mark_safe(f"<div style='background-color:{obj.color};color:#fff'>{obj.color}</div>")
+
+    def save_model(self, request, obj, form, change):
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(ShotTask)
