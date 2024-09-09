@@ -10,6 +10,7 @@ from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPre
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
+    save_on_top = True
     readonly_fields = ("created_at",)
 
     def save_model(self, request, obj, form, change):
@@ -19,6 +20,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ShotGroup)
 class ShotGroupAdmin(admin.ModelAdmin):
+    save_on_top = True
     ordering = ("-name",)
 
     def save_model(self, request, obj, form, change):
@@ -82,6 +84,7 @@ class ShotStatusListFilter(admin.SimpleListFilter):
 
 @admin.register(Shot)
 class ShotAdmin(admin.ModelAdmin):
+    save_on_top = True
     list_display = (
         "get_tmp_preview",
         "name",
@@ -275,6 +278,8 @@ class ShotAdmin(admin.ModelAdmin):
 
 @admin.register(Version)
 class VersionAdmin(admin.ModelAdmin):
+    save_on_top = True
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         super().save_model(request, obj, form, change)
@@ -282,6 +287,7 @@ class VersionAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    save_on_top = True
     list_display = (
         "description",
         "default_status",
@@ -296,6 +302,7 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin):
+    save_on_top = True
     list_display = (
         "title",
         "get_color",
@@ -312,9 +319,9 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(ShotTask)
 class ShotTaskAdmin(admin.ModelAdmin):
-    pass
+    save_on_top = True
 
 
 @admin.register(TmpShotPreview)
 class TmpShotPreview(admin.ModelAdmin):
-    pass
+    save_on_top = True
