@@ -155,7 +155,7 @@ class ShotAdmin(admin.ModelAdmin):
         except ObjectDoesNotExist:
             return mark_safe(
                 "<div style='"
-                "aspect-ratio:2.39/1;"
+                "aspect-ratio:2.39/0.2;"
                 "width:150px;"
                 "background-color:#eee;"
                 "display:flex;"
