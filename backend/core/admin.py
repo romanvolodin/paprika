@@ -11,7 +11,10 @@ from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPre
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     save_on_top = True
-    readonly_fields = ("created_at",)
+    readonly_fields = (
+        "created_by",
+        "created_at",
+    )
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
@@ -22,6 +25,10 @@ class ProjectAdmin(admin.ModelAdmin):
 class ShotGroupAdmin(admin.ModelAdmin):
     save_on_top = True
     ordering = ("-name",)
+    readonly_fields = (
+        "created_by",
+        "created_at",
+    )
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
@@ -106,7 +113,10 @@ class ShotAdmin(admin.ModelAdmin):
         VersionInline,
     )
     ordering = ("rec_timecode",)
-    readonly_fields = ("created_at",)
+    readonly_fields = (
+        "created_by",
+        "created_at",
+    )
 
     fieldsets = (
         (
@@ -279,6 +289,10 @@ class ShotAdmin(admin.ModelAdmin):
 @admin.register(Version)
 class VersionAdmin(admin.ModelAdmin):
     save_on_top = True
+    readonly_fields = (
+        "created_by",
+        "created_at",
+    )
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
@@ -291,6 +305,10 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = (
         "description",
         "default_status",
+    )
+    readonly_fields = (
+        "created_by",
+        "created_at",
     )
     ordering = ("description",)
     inlines = (ShotTaskInline,)
@@ -306,6 +324,10 @@ class StatusAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "get_color",
+    )
+    readonly_fields = (
+        "created_by",
+        "created_at",
     )
 
     @admin.display(description="цвет")
