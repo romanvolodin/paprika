@@ -76,8 +76,6 @@ def read_xlsx(request):
 
 
 def save_multiple_uploaded_shot_previews(request):
-    import re
-
     if request.method == "POST":
         form = UploadMultiplePreviewsForm(request.POST, request.FILES)
         if not form.is_valid():
@@ -87,18 +85,16 @@ def save_multiple_uploaded_shot_previews(request):
         successful_count = 0
         errors = []
         for preview in previews:
-            shot_name = re.search("PLN_CG_\d+", preview.name)
+            shot_name = preview.name.split(".")[0]
 
             if shot_name is None:
                 errors.append(f"Нет имени шота в '{preview.name}'")
                 continue
 
-            parsed_shot_name = shot_name.group(0)
-
             try:
-                shot = Shot.objects.get(name=parsed_shot_name)
+                shot = Shot.objects.get(name=shot_name)
             except ObjectDoesNotExist:
-                errors.append(f"Шот '{parsed_shot_name}' не найден")
+                errors.append(f"Шот '{shot_name}' не найден")
                 continue
 
             TmpShotPreview.objects.create(shot=shot, image=preview)
