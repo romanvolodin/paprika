@@ -1,7 +1,7 @@
 from django import forms
 from users.models import User
 
-from .models import ShotGroup
+from .models import Project, ShotGroup
 
 
 class ReadXlsxForm(forms.Form):
@@ -23,6 +23,11 @@ class ReadXlsxForm(forms.Form):
 class AddShotsToGroupsForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     groups = forms.ModelMultipleChoiceField(ShotGroup.objects.all())
+
+
+class AddShotsToProjectForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    project = forms.ModelChoiceField(Project.objects.all())
 
 
 class MultipleFileInput(forms.ClearableFileInput):

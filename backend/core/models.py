@@ -72,6 +72,14 @@ class Shot(models.Model):
         "Название шота",
         max_length=50,
     )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.PROTECT,
+        related_name="shots",
+        verbose_name="проект",
+        null=True,
+        blank=True,
+    )
     group = models.ManyToManyField(
         ShotGroup,
         related_name="shots",
@@ -167,6 +175,14 @@ class Version(models.Model):
 
 
 class Task(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.PROTECT,
+        related_name="tasks",
+        verbose_name="проект",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(
         "когда создана",
         auto_now_add=True,

@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .forms import AddShotsToGroupsForm
+from .forms import AddShotsToGroupsForm, AddShotsToProjectForm
 from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
 
 
@@ -124,7 +124,7 @@ class ShotAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": (
-                    ("name", "group"),
+                    ("name", "group", "project"),
                     ("rec_timecode", "scene"),
                 )
             },
@@ -224,7 +224,25 @@ class ShotAdmin(admin.ModelAdmin):
 
         return mark_safe(template.format("#fa0", "В работе"))
 
-    actions = ["add_shots_to_groups", "download_shots_as_xlsx"]
+    actions = ["add_shots_to_project", "add_shots_to_groups", "download_shots_as_xlsx"]
+
+    @admin.action(description="Добавить шоты в проект")
+    def add_shots_to_project(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddShotsToProjectForm(request.POST)
+            if form.is_valid():
+                project = form.cleaned_data["project"]
+                for shot in queryset:
+                    shot.project = project
+                    shot.save()
+
+            return HttpResponseRedirect(request.get_full_path())
+
+        context = {
+            "shots": queryset,
+            "form": AddShotsToProjectForm,
+        }
+        return render(request, "admin/add_shots_to_project.html", context=context)
 
     @admin.action(description="Добавить шоты в группы")
     def add_shots_to_groups(modeladmin, request, queryset):
@@ -288,6 +306,7 @@ class ShotAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
+        obj.project = Project.objects.get(code="ZS")
         super().save_model(request, obj, form, change)
 
 
@@ -318,8 +337,29 @@ class TaskAdmin(admin.ModelAdmin):
     ordering = ("description",)
     inlines = (ShotTaskInline,)
 
+    actions = ["add_shots_to_project"]
+
+    @admin.action(description="Добавить задачи в проект")
+    def add_shots_to_project(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddShotsToProjectForm(request.POST)
+            if form.is_valid():
+                project = form.cleaned_data["project"]
+                for task in queryset:
+                    task.project = project
+                    task.save()
+
+            return HttpResponseRedirect(request.get_full_path())
+
+        context = {
+            "shots": queryset,
+            "form": AddShotsToProjectForm,
+        }
+        return render(request, "admin/add_shots_to_project.html", context=context)
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
+        obj.project = Project.objects.get(code="ZS")
         super().save_model(request, obj, form, change)
 
 
