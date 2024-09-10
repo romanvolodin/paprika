@@ -6,6 +6,7 @@
 
 ```bash
 apt install git
+# прописать имя и почту юзера для гита. Если не планируется пушить, то можно забить
 apt install python3-pip
 apt install python3-venv
 
@@ -45,14 +46,20 @@ sudo systemctl restart paprika.service
 Таблицы `sessions.session` и `admin.logentry` игнорируются, ибо не содержат важных данных (это сессии и лог действий в админке).
 
 ```bash
-manage.py dumpdata --format=json --indent=2 \
+cd paprika_ZS_backup/
+
+/root/paprika/venv/bin/python /root/paprika/backend/manage.py dumpdata --format=json --indent=2 \
   --natural-primary \
   --natural-foreign \
   --exclude sessions.session \
   --exclude auth.permission \
   --exclude admin.logentry \
   --exclude contenttypes \
-  --output dump_$(date "+%Y-%m-%d_%H-%M-%S").json
+  --output /root/paprika_ZS_backup/dump/ZS_dump.json
+
+git add .
+git commit -m "backup"
+git push
 ```
 
 Чтобы залить бэкап:
