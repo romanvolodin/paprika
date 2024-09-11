@@ -96,6 +96,7 @@ class ShotAdmin(admin.ModelAdmin):
         "get_tmp_preview",
         "name",
         "get_rec_timecode",
+        "get_source_timecode",
         "get_shot_status",
         "get_shot_tasks",
         "comment",
@@ -160,6 +161,10 @@ class ShotAdmin(admin.ModelAdmin):
     @admin.display(description="TC")
     def get_rec_timecode(self, obj):
         return obj.rec_timecode
+
+    @admin.display(description="TC исходника")
+    def get_source_timecode(self, obj):
+        return obj.source_start_timecode
 
     @admin.display(description="Latest version")
     def get_latest_version(self, obj):
