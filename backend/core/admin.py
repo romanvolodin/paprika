@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .forms import AddShotsToGroupsForm, AddShotsToProjectForm
+from .forms import AddShotsToGroupsForm, AddShotsToProjectForm, AddTasksToShotForm
 from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
 
 
@@ -229,7 +229,12 @@ class ShotAdmin(admin.ModelAdmin):
 
         return mark_safe(template.format("#fa0", "В работе"))
 
-    actions = ["add_shots_to_project", "add_shots_to_groups", "download_shots_as_xlsx"]
+    actions = [
+        "add_shots_to_project",
+        "add_shots_to_groups",
+        "add_tasks_to_shot",
+        "download_shots_as_xlsx",
+    ]
 
     @admin.action(description="Добавить шоты в проект")
     def add_shots_to_project(modeladmin, request, queryset):
@@ -248,6 +253,37 @@ class ShotAdmin(admin.ModelAdmin):
             "form": AddShotsToProjectForm,
         }
         return render(request, "admin/add_shots_to_project.html", context=context)
+
+    @admin.action(description="Добавить задачи в шоты")
+    def add_tasks_to_shot(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddTasksToShotForm(request.POST)
+            if form.is_valid():
+                tasks = form.cleaned_data["tasks"]
+                status = Status.objects.get(title="Не начата")
+                for shot in queryset:
+                    for task in tasks:
+                        try:
+                            ShotTask.objects.get(
+                                shot=shot,
+                                task=task,
+                                status=status,
+                            )
+                            continue
+                        except ObjectDoesNotExist:
+                            ShotTask.objects.create(
+                                shot=shot,
+                                task=task,
+                                status=status,
+                            )
+
+            return HttpResponseRedirect(request.get_full_path())
+
+        context = {
+            "shots": queryset,
+            "form": AddTasksToShotForm,
+        }
+        return render(request, "admin/add_tasks_to_shot.html", context=context)
 
     @admin.action(description="Добавить шоты в группы")
     def add_shots_to_groups(modeladmin, request, queryset):
