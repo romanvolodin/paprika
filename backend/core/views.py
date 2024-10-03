@@ -117,6 +117,5 @@ def shot_group_details(request, project_code, shot_group_id):
     shot_group = ShotGroup.objects.get(pk=shot_group_id)
     context = {
         "shot_group": shot_group,
-        "shots": shot_group.shots.order_by("name"),
     }
     return render(request, "core/shot_group_details.html", context)
