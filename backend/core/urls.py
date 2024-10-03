@@ -1,9 +1,19 @@
 from django.urls import path
 
-from .views import read_xlsx, save_multiple_uploaded_shot_previews
+from . import views
 
 
 urlpatterns = [
-    path("shots/from_xlsx/", read_xlsx),
-    path("shots/upload_previews/", save_multiple_uploaded_shot_previews),
+    path("shots/from_xlsx/", views.read_xlsx),
+    path("shots/upload_previews/", views.save_multiple_uploaded_shot_previews),
+    path(
+        "<str:project_code>/groups/",
+        views.shot_group_list,
+        name="shot_groups_list",
+    ),
+    path(
+        "<str:project_code>/groups/<int:shot_group_id>",
+        views.shot_group_details,
+        name="shot_group_details",
+    ),
 ]

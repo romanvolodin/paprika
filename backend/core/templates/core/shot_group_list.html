@@ -1,0 +1,3 @@
+{% for shot_group in shot_groups %}
+  <a href="{% url 'shot_group_details' shot_group.project.code shot_group.id %}">{{shot_group.name}}</a><br>
+{% endfor %}

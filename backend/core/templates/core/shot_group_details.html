@@ -1,0 +1,25 @@
+{{ shot_group.name }} <a href="{% url 'admin:core_shotgroup_change' object_id=shot_group.id %}">⚙️</a>
+<hr>
+<table style="font-family: sans-serif;font-size: 14px;border:0;">
+  {% for shot in shot_group.shots.all %}
+  <tr>
+    <td style="padding-right: 10px;">
+    {% if shot.tmp_preview %}
+      <img src="{{shot.tmp_preview.image.url}}" style="width:120px;aspect-ratio:2.35/1;object-fit:cover;">
+    {% else %}
+      Нет превью
+    {% endif %}
+    </td>
+    <td style="padding-right: 10px;"><a href="{% url 'admin:core_shot_change' object_id=shot.id %}">{{shot.name}}</a></td>
+    <td style="padding-right: 10px;">{{shot.rec_timecode}}</td>
+    <td style="padding-right: 10px;">{{shot.source_start_timecode}}</td>
+    <td style="padding-right: 10px;">{% for task in shot.task.all%}{{task}}<br>{%endfor%}</td>
+    <td style="padding-right: 10px;"></td>
+    <td style="padding-right: 10px;">{% if shot.comment %}{{shot.comment}}{% endif %}</td>
+    <td style="padding-right: 10px;">{% for group in shot.group.all%}{{group.name}}, {%endfor%}</td>
+  </tr>
+  {% empty %}
+  Нет шотов
+  {% endfor %}
+</table>
+
