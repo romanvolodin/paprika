@@ -237,7 +237,7 @@ class ShotAdmin(admin.ModelAdmin):
         "download_shots_as_xlsx",
     ]
 
-    @admin.action(description="Добавить шоты в проект")
+    @admin.action(description="Добавить в проект")
     def add_shots_to_project(modeladmin, request, queryset):
         if "apply" in request.POST:
             form = AddShotsToProjectForm(request.POST)
@@ -255,7 +255,7 @@ class ShotAdmin(admin.ModelAdmin):
         }
         return render(request, "admin/add_shots_to_project.html", context=context)
 
-    @admin.action(description="Добавить задачи в шоты")
+    @admin.action(description="Добавить задачи")
     def add_tasks_to_shot(modeladmin, request, queryset):
         if "apply" in request.POST:
             form = AddTasksToShotForm(request.POST)
@@ -286,7 +286,7 @@ class ShotAdmin(admin.ModelAdmin):
         }
         return render(request, "admin/add_tasks_to_shot.html", context=context)
 
-    @admin.action(description="Добавить шоты в группы")
+    @admin.action(description="Добавить в группы")
     def add_shots_to_groups(modeladmin, request, queryset):
         if "apply" in request.POST:
             form = AddShotsToGroupsForm(request.POST)
@@ -322,7 +322,7 @@ class ShotAdmin(admin.ModelAdmin):
         }
         return render(request, "admin/remove_shots_from_groups.html", context=context)
 
-    @admin.action(description="Скачать шоты в виде Excel таблицы")
+    @admin.action(description="Скачать в виде Excel таблицы")
     def download_shots_as_xlsx(modeladmin, request, queryset):
         from datetime import datetime
 
