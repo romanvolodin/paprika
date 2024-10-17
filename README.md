@@ -35,6 +35,7 @@ sudo systemctl status paprika.service
 Обновление:
 
 ```bash
+cd paprika/
 git pull
 sudo systemctl restart paprika.service
 ```
