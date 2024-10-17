@@ -8,6 +8,11 @@ from .forms import AddShotsToGroupsForm, AddShotsToProjectForm, AddTasksToShotFo
 from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
 
 
+admin.site.site_header = "Паприка"
+admin.site.site_title = "Паприка"
+admin.site.index_title = "Администрирование Паприки"
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     save_on_top = True
