@@ -232,6 +232,7 @@ class ShotAdmin(admin.ModelAdmin):
     actions = [
         "add_shots_to_project",
         "add_shots_to_groups",
+        "remove_shots_from_groups",
         "add_tasks_to_shot",
         "download_shots_as_xlsx",
     ]
@@ -302,6 +303,24 @@ class ShotAdmin(admin.ModelAdmin):
             "form": AddShotsToGroupsForm,
         }
         return render(request, "admin/add_shots_to_groups.html", context=context)
+
+    @admin.action(description="Удалить из групп")
+    def remove_shots_from_groups(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddShotsToGroupsForm(request.POST)
+            if form.is_valid():
+                groups = form.cleaned_data["groups"]
+                for shot in queryset:
+                    shot.group.remove(*groups)
+                    shot.save()
+
+            return HttpResponseRedirect(request.get_full_path())
+
+        context = {
+            "shots": queryset,
+            "form": AddShotsToGroupsForm,
+        }
+        return render(request, "admin/remove_shots_from_groups.html", context=context)
 
     @admin.action(description="Скачать шоты в виде Excel таблицы")
     def download_shots_as_xlsx(modeladmin, request, queryset):
