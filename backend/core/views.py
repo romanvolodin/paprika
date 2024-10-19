@@ -141,3 +141,20 @@ def task_details(request, project_code, task_id):
         "task": task,
     }
     return render(request, "core/task_details.html", context)
+
+
+def project_list(request):
+    projects = Project.objects.order_by("name")
+    context = {
+        "projects": projects,
+        "count": len(projects),
+    }
+    return render(request, "core/project_list.html", context)
+
+
+def project_details(request, project_code):
+    project = Project.objects.get(code=project_code)
+    context = {
+        "project": project,
+    }
+    return render(request, "core/project_details.html", context)

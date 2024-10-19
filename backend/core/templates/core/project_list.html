@@ -1,0 +1,6 @@
+<h3>Проекты ({{count}})</h3>
+{% for project in projects %}
+  <a href="{% url 'project_details' project.code %}">{{project.name}}</a><br>
+{% empty %}
+Нет проектов
+{% endfor %}

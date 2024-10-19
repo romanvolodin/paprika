@@ -26,4 +26,14 @@ urlpatterns = [
         views.task_details,
         name="task_details",
     ),
+    path(
+        "",
+        views.project_list,
+        name="project_list",
+    ),
+    path(
+        "<str:project_code>",
+        views.project_details,
+        name="project_details",
+    ),
 ]
