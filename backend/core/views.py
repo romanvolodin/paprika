@@ -3,7 +3,7 @@ from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm
-from .models import Project, Shot, ShotGroup, TmpShotPreview
+from .models import Project, Shot, ShotGroup, Task, TmpShotPreview
 
 
 def read_xlsx(request):
@@ -119,3 +119,17 @@ def shot_group_details(request, project_code, shot_group_id):
         "shot_group": shot_group,
     }
     return render(request, "core/shot_group_details.html", context)
+
+
+def task_list(request, project_code):
+    project = Project.objects.get(code=project_code)
+    context = {"tasks": project.tasks.all().order_by("description")}
+    return render(request, "core/task_list.html", context)
+
+
+def task_details(request, project_code, task_id):
+    task = Task.objects.get(pk=task_id)
+    context = {
+        "task": task,
+    }
+    return render(request, "core/task_details.html", context)

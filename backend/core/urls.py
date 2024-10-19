@@ -16,4 +16,14 @@ urlpatterns = [
         views.shot_group_details,
         name="shot_group_details",
     ),
+    path(
+        "<str:project_code>/tasks/",
+        views.task_list,
+        name="task_list",
+    ),
+    path(
+        "<str:project_code>/tasks/<int:task_id>",
+        views.task_details,
+        name="task_details",
+    ),
 ]
