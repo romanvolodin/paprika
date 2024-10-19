@@ -109,7 +109,11 @@ def save_multiple_uploaded_shot_previews(request):
 
 def shot_group_list(request, project_code):
     project = Project.objects.get(code=project_code)
-    context = {"shot_groups": project.shot_groups.all().order_by("name")}
+    shot_groups = project.shot_groups.all().order_by("name")
+    context = {
+        "shot_groups": shot_groups,
+        "count": len(shot_groups),
+    }
     return render(request, "core/shot_group_list.html", context)
 
 
@@ -123,7 +127,11 @@ def shot_group_details(request, project_code, shot_group_id):
 
 def task_list(request, project_code):
     project = Project.objects.get(code=project_code)
-    context = {"tasks": project.tasks.all().order_by("description")}
+    tasks = project.tasks.all().order_by("description")
+    context = {
+        "tasks": tasks,
+        "count": len(tasks),
+    }
     return render(request, "core/task_list.html", context)
 
 

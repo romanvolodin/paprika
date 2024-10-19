@@ -1,3 +1,4 @@
+<h3>Задачи ({{count}})</h3>
 {% for task in tasks %}
   <a href="{% url 'task_details' task.project.code task.id %}">{{task.description}}</a><br>
 {% endfor %}

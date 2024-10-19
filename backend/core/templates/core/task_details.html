@@ -1,4 +1,4 @@
-{{ task.description }} <a href="{% url 'admin:core_task_change' object_id=task.id %}">⚙️</a>
+{{ task.description }} ({{task.shots.count}}) <a href="{% url 'admin:core_task_change' object_id=task.id %}">⚙️</a>
 <hr>
 <table style="font-family: sans-serif;font-size: 14px;border:0;">
   {% for shot in task.shots.all|dictsort:"name" %}
