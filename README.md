@@ -68,3 +68,71 @@ git push
 ```bash
 manage.py loaddata dump.json
 ```
+
+# Заметки по запуску Паприки через докер
+
+Устанавливаем Докер:
+
+https://docs.docker.com/engine/install/ubuntu/
+
+Я ставил из Докеровского апт репозитория
+
+Настраиваем разрешение запускать Докер не от рутового пользователя:
+
+https://docs.docker.com/engine/install/linux-postinstall/
+
+Важно выйти и войти в систему (или перезагрузить комп), чтобы подхватились настройки
+
+## Запуск Паприки
+
+### Предварительные требования
+
+- Создать `.env` с настройками БД в корне проекта
+
+Пример:
+
+```bash
+POSTGRES_DB=db_name
+POSTGRES_USER=db_user
+POSTGRES_PASSWORD=db_passwd
+
+DATABASE_URL=postgres://db_user:db_passwd@db:5432/db_name
+```
+
+- Создать `.env` с настройками Паприки в папке `backend/`.
+
+Пример:
+
+```bash
+PAPRIKA_SECRET_KEY=lb0rb08^80*62%5+cz0ba^-yta5_ef53dwp^^jlb0bu
+PAPRIKA_DEBUG=false
+PAPRIKA_ALLOWED_HOSTS=127.0.0.1,localhost
+```
+
+### Запускаем
+
+Запустите базу данных и сайт:
+
+```bash
+docker compose up
+```
+
+Версия для разработки:
+
+```bash
+docker compose -f docker-compose-dev.yml up
+```
+
+В новом терминале не выключая сайт запустите команды для настройки базы данных:
+
+```bash
+docker compose run app ./manage.py migrate
+docker compose run app ./manage.py createsuperuser
+```
+
+Для разработки:
+
+```bash
+docker compose -f docker-compose-dev.yml run app ./manage.py migrate
+docker compose -f docker-compose-dev.yml run app ./manage.py createsuperuser
+```
