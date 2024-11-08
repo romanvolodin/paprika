@@ -143,6 +143,12 @@ def task_details(request, project_code, task_id):
         d = shot.__dict__
         d["status"] = shot_task.status.title
         d["status_color"] = shot_task.status.color
+
+        try:
+            d["tmp_preview"] = {"image": {"url": shot.tmp_preview.image.url}}
+        except ObjectDoesNotExist:
+            pass
+
         shots.append(d)
 
     context = {"task": task, "shots": shots}
