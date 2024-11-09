@@ -1,9 +1,15 @@
- <p style="color:red">Только для проекта Золото скифов</p>
- <p>Можно загрузить сразу несколько превьюх для шотов.</p>
- <p>Имя шота должно содержаться в имени картинки, например "02-50-bank{...}.jpg"</p>
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<p style="color:red">Только для проекта Золото скифов</p>
+<p>Можно загрузить сразу несколько превьюх для шотов.</p>
+<p>Имя шота должно содержаться в имени картинки, например "02-50-bank{...}.jpg"</p>
 
 <form method='post' enctype="multipart/form-data">
   {% csrf_token %}
   {{ form }}
   <input type='submit' value='OK'>
 </form>
+
+{% endblock %}

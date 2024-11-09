@@ -37,6 +37,7 @@ sudo systemctl status paprika.service
 ```bash
 cd paprika/
 git pull
+/root/paprika/venv/bin/python backend/manage.py collectstatic
 sudo systemctl restart paprika.service
 ```
 
