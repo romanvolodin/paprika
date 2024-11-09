@@ -11,13 +11,28 @@ services:
 
   app:
     build: ./backend
-    ports:
-      - 8000:8000
+    expose:
+      - 8000
     command: gunicorn paprika.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
     env_file:
       - ./backend/.env
     depends_on:
       - db
 
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - 1337:80
+    depends_on:
+      - app
+
 volumes:
   postgres_data:
+  static_volume:
+  media_volume:
