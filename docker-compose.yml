@@ -3,21 +3,19 @@ services:
   db:
     image: postgres:alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
   app:
-    build: ./backend/
+    build: ./backend
     ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    command: python manage.py runserver 0.0.0.0:8000
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - 8000:8000
+    command: gunicorn paprika.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - ./backend/.env
     depends_on:
       - db
 

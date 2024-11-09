@@ -1,13 +1,20 @@
-FROM python:3.13-alpine
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+FROM python:3.11.4-slim-buster
 
 WORKDIR /app
 
-COPY requirements.txt /app/
-RUN pip install -r requirements.txt
-COPY . /app/
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-RUN adduser -D paprika
-USER paprika
+RUN apt-get update && apt-get install -y netcat
+
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY ./entrypoint.sh .
+RUN sed -i 's/\r$//g' /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+COPY . .
+
+ENTRYPOINT ["/app/entrypoint.sh"]
