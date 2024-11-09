@@ -371,7 +371,7 @@ class ShotAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
-        obj.project = Project.objects.get(code="ZS")
+    #     obj.project = Project.objects.get(code="ZS")
         super().save_model(request, obj, form, change)
 
 
