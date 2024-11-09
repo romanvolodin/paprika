@@ -10,7 +10,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
   app:
-    build: ./backend/
+    build:
+      context: ./backend/
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
     volumes:
