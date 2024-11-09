@@ -8,7 +8,7 @@
   <tr class="row-highlight">
     <td style="padding-right: 10px;">
     {% if shot.tmp_preview %}
-      <img src="{{shot.tmp_preview.image.url}}" style="width:120px;aspect-ratio:2.35/1;object-fit:cover;">
+      <img src="{{shot.tmp_preview.image.url}}" class="shot-preview">
     {% else %}
       Нет превью
     {% endif %}
@@ -17,7 +17,7 @@
     <td style="padding-right: 10px;">{{shot.rec_timecode}}</td>
     <td style="padding-right: 10px;">{{shot.source_start_timecode}}</td>
     <td style="padding-right: 10px;">
-      <span style='background-color:{{shot.status_color}};color:#fff;padding:3px 7px'>
+      <span class="status-badge" style="background-color: {{shot.status_color}}">
         {{shot.status}}
       </span>
     </td>
