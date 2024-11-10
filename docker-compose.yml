@@ -4,10 +4,8 @@ services:
     image: postgres:alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - .env
 
   app:
     build: ./backend
@@ -18,7 +16,7 @@ services:
       - static_volume:/app/static
       - media_volume:/app/media
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - db
 
