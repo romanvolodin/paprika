@@ -2,42 +2,102 @@
 
 ## Деплой
 
-Находимся в `/root`. Рабочая папка соответственно будет `/root/paprika`
+Устанавливаем гит (если его нет), клонируем репозиторий и переключаемся в ветку с Докером:
 
 ```bash
 apt install git
-# прописать имя и почту юзера для гита. Если не планируется пушить, то можно забить
-apt install python3-pip
-apt install python3-venv
-
 git clone git@github.com:romanvolodin/paprika.git
 # если не проброшен ssh ключ, то
 # git clone https://github.com/romanvolodin/paprika.git
 
-cd paprika/
-python -m venv venv
-. venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+cd paprika
+git checkout docker
+```
 
-nano .env  # переменные окружения
+### Docker
 
-./backend/manage.py migrate
-./backend/manage.py createsuperuser
-./backend/manage.py collectstatic
+Добавляем ключ и репозиторий Докера (команды взяты из [докуметации](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)):
 
-sudo ln -s /root/paprika/deploy/paprika.service /etc/systemd/system/paprika.service
-sudo systemctl daemon-reload
-sudo systemctl start paprika.service
-sudo systemctl status paprika.service
+```bash
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get -y install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+Устанавливаем Докер и плагины:
+
+```bash
+sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Если вы работаете под `root`-пользователем, то можно переходить к следующему разделу. Иначе нужно разрешить запуск Докера вашему пользователю:
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+Чтобы изменения вступили в силу нужно разлогиниться и заново войти в систему (иногда нужно перезагрузить машину):
+
+```bash
+logout
+# или
+# reboot
+```
+
+
+```bash
+nano .env
+
+POSTGRES_DB=db_name
+POSTGRES_USER=db_user
+POSTGRES_PASSWORD=db_passwd
+
+
+
+
+nano backend/.env
+
+
+PAPRIKA_SECRET_KEY=dev
+PAPRIKA_DEBUG=true
+PAPRIKA_ALLOWED_HOSTS=123.45.67.8
+
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+
+DATABASE_URL=postgres://db_user:db_passwd@db:5432/db_name
+
+
+
+
+nano backend/paprika/settings.py
+```
+
+Запускаем Паприку, создаем таблицы в БД, создаем суперпользователя, собираем статические файлы (JS, CSS, картинки и прочее):
+
+```bash
+docker compose up -d --build
+docker compose run app ./manage.py collectstatic --no-input
+docker compose run app ./manage.py migrate
+docker compose run app ./manage.py createsuperuser
 ```
 
 Обновление:
 
 ```bash
-cd paprika/
-git pull
-sudo systemctl restart paprika.service
+# cd paprika/
+# git pull
+# sudo systemctl restart paprika.service
 ```
 
 ## Бэкап данных
@@ -49,27 +109,30 @@ sudo systemctl restart paprika.service
 ```bash
 cd paprika_ZS_backup/
 
-/root/paprika/venv/bin/python /root/paprika/backend/manage.py dumpdata --format=json --indent=2 \
-  --natural-primary \
-  --natural-foreign \
-  --exclude sessions.session \
-  --exclude auth.permission \
-  --exclude admin.logentry \
-  --exclude contenttypes \
-  --output /root/paprika_ZS_backup/dump/ZS_dump.json
+# /root/paprika/venv/bin/python /root/paprika/backend/manage.py dumpdata --format=json --indent=2 \
+#   --natural-primary \
+#   --natural-foreign \
+#   --exclude sessions.session \
+#   --exclude auth.permission \
+#   --exclude admin.logentry \
+#   --exclude contenttypes \
+#   --output /root/paprika_ZS_backup/dump/ZS_dump.json
 
-git add .
-git commit -m "backup"
-git push
+# git add .
+# git commit -m "backup"
+# git push
 ```
 
 Чтобы залить бэкап:
 
 ```bash
-manage.py loaddata dump.json
+cp -r /root/paprika_ZS_backup/media/* /var/lib/docker/volumes/paprika_media_volume/_data
+cp /root/paprika_ZS_backup/dump/ZS_dump.json /var/lib/docker/volumes/paprika_media_volume/_data
+docker compose run --remove-orphans app ./manage.py loaddata media/ZS_dump.json
+
 ```
 
-# Заметки по запуску Паприки через докер
+# (Возможно устарело) Заметки по запуску Паприки через докер
 
 Устанавливаем Докер:
 
