@@ -62,12 +62,6 @@ POSTGRES_DB=db_name
 POSTGRES_USER=db_user
 POSTGRES_PASSWORD=db_passwd
 
-
-
-
-nano backend/.env
-
-
 PAPRIKA_SECRET_KEY=dev
 PAPRIKA_DEBUG=true
 PAPRIKA_ALLOWED_HOSTS=123.45.67.8
@@ -76,11 +70,6 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
 DATABASE_URL=postgres://db_user:db_passwd@db:5432/db_name
-
-
-
-
-nano backend/paprika/settings.py
 ```
 
 Запускаем Паприку, создаем таблицы в БД, создаем суперпользователя, собираем статические файлы (JS, CSS, картинки и прочее):
