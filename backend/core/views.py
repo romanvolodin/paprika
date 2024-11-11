@@ -137,9 +137,21 @@ def task_list(request, project_code):
 
 def task_details(request, project_code, task_id):
     task = Task.objects.get(pk=task_id)
-    context = {
-        "task": task,
-    }
+    shots = []
+    for shot in task.shots.all():
+        shot_task = [st for st in shot.task_statuses.all() if st.task == task][0]
+        d = shot.__dict__
+        d["status"] = shot_task.status.title
+        d["status_color"] = shot_task.status.color
+
+        try:
+            d["tmp_preview"] = {"image": {"url": shot.tmp_preview.image.url}}
+        except ObjectDoesNotExist:
+            pass
+
+        shots.append(d)
+
+    context = {"task": task, "shots": shots}
     return render(request, "core/task_details.html", context)
 
 

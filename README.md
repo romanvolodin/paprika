@@ -86,6 +86,7 @@ docker compose run app ./manage.py createsuperuser
 ```bash
 # cd paprika/
 # git pull
+/root/paprika/venv/bin/python backend/manage.py collectstatic --noinput
 # sudo systemctl restart paprika.service
 ```
 

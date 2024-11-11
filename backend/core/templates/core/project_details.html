@@ -1,3 +1,6 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
 {{ project.name }} <a href="{% url 'admin:core_project_change' object_id=project.id %}">⚙️</a>
 <hr>
 <a href="{% url 'shot_groups_list' project.code %}">Группы</a>
@@ -5,10 +8,10 @@
 <hr>
 <table style="font-family: sans-serif;font-size: 14px;border:0;">
   {% for shot in project.shots.all|dictsort:"name" %}
-  <tr>
+  <tr class="row-highlight">
     <td style="padding-right: 10px;">
     {% if shot.tmp_preview %}
-      <img src="{{shot.tmp_preview.image.url}}" style="width:120px;aspect-ratio:2.35/1;object-fit:cover;">
+      <img src="{{shot.tmp_preview.image.url}}" class="shot-preview">
     {% else %}
       Нет превью
     {% endif %}
@@ -25,4 +28,4 @@
   Нет шотов
   {% endfor %}
 </table>
-
+{% endblock %}
