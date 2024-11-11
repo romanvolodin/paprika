@@ -208,7 +208,11 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.display(description="Shot status")
     def get_shot_status(self, obj):
-        statuses = [task.status.title for task in obj.task_statuses.all()]
+        statuses = [
+            shot_task.status.title
+            for shot_task in obj.task_statuses.all()
+            if shot_task.task.description != "Выдать материал"
+        ]
         template = "<span style='background-color:{};color:#fff;padding:3px 7px'>{}</span>"
 
         if set() == set(statuses):
