@@ -16,7 +16,7 @@ git checkout docker
 
 ### Docker
 
-Добавляем ключ и репозиторий Докера (команды взяты из [докуметации](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)):
+Добавляем ключ и репозиторий Докера (команды взяты из [документации](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)):
 
 ```bash
 # Add Docker's official GPG key:
@@ -46,6 +46,7 @@ sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plug
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
+
 Чтобы изменения вступили в силу нужно разлогиниться и заново войти в систему (иногда нужно перезагрузить машину):
 
 ```bash
@@ -53,7 +54,6 @@ logout
 # или
 # reboot
 ```
-
 
 ```bash
 nano .env
@@ -75,10 +75,10 @@ DATABASE_URL=postgres://db_user:db_passwd@db:5432/db_name
 Запускаем Паприку, создаем таблицы в БД, создаем суперпользователя, собираем статические файлы (JS, CSS, картинки и прочее):
 
 ```bash
-docker compose up -d --build
-docker compose run app ./manage.py collectstatic --no-input
-docker compose run app ./manage.py migrate
-docker compose run app ./manage.py createsuperuser
+docker compose up --build --detach
+docker compose run --rm app ./manage.py collectstatic --no-input
+docker compose run --rm app ./manage.py migrate
+docker compose run --rm app ./manage.py createsuperuser
 ```
 
 Обновление:
@@ -92,7 +92,7 @@ docker compose run app ./manage.py createsuperuser
 
 ## Бэкап данных
 
-Не сохраняются `auth.permissions` и `contenttypes`, чтобы избежать ошибки `IntegrityError` при дальнейшей загрузке данных. Происходит она потому, что Джанго заново генерит id записей. Эту ошибку должны исправить ключи `--natural-primary` и `--natural-foreing`, но указанные таблицы пока всё равно не сохраняются. Считай это данью традиции.
+Не сохраняются `auth.permissions` и `contenttypes`, чтобы избежать ошибки `IntegrityError` при дальнейшей загрузке данных. Происходит она потому, что Джанго заново генерит id записей. Эту ошибку должны исправить ключи `--natural-primary` и `--natural-foreign`, но указанные таблицы пока всё равно не сохраняются. Считай это данью традиции.
 
 Таблицы `sessions.session` и `admin.logentry` игнорируются, ибо не содержат важных данных (это сессии и лог действий в админке).
 
@@ -122,17 +122,17 @@ docker compose run --remove-orphans app ./manage.py loaddata media/ZS_dump.json
 
 ```
 
-# (Возможно устарело) Заметки по запуску Паприки через докер
+## (Возможно устарело) Заметки по запуску Паприки через докер
 
 Устанавливаем Докер:
 
-https://docs.docker.com/engine/install/ubuntu/
+<https://docs.docker.com/engine/install/ubuntu/>
 
 Я ставил из Докеровского апт репозитория
 
 Настраиваем разрешение запускать Докер не от рутового пользователя:
 
-https://docs.docker.com/engine/install/linux-postinstall/
+<https://docs.docker.com/engine/install/linux-postinstall/>
 
 Важно выйти и войти в систему (или перезагрузить комп), чтобы подхватились настройки
 
