@@ -76,9 +76,9 @@ DATABASE_URL=postgres://db_user:db_passwd@db:5432/db_name
 
 ```bash
 docker compose up --build --detach
-docker compose run --rm app ./manage.py collectstatic --no-input
-docker compose run --rm app ./manage.py migrate
-docker compose run --rm app ./manage.py createsuperuser
+docker compose exec app ./manage.py collectstatic --no-input
+docker compose exec app ./manage.py migrate
+docker compose exec app ./manage.py createsuperuser
 ```
 
 Обновление:
@@ -118,7 +118,7 @@ cd paprika_ZS_backup/
 ```bash
 cp -r /root/paprika_ZS_backup/media/* /var/lib/docker/volumes/paprika_media_volume/_data
 cp /root/paprika_ZS_backup/dump/ZS_dump.json /var/lib/docker/volumes/paprika_media_volume/_data
-docker compose run --remove-orphans app ./manage.py loaddata media/ZS_dump.json
+docker compose exec app ./manage.py loaddata media/ZS_dump.json
 
 ```
 
@@ -179,13 +179,13 @@ docker compose -f docker-compose-dev.yml up
 В новом терминале не выключая сайт запустите команды для настройки базы данных:
 
 ```bash
-docker compose run app ./manage.py migrate
-docker compose run app ./manage.py createsuperuser
+docker compose exec app ./manage.py migrate
+docker compose exec app ./manage.py createsuperuser
 ```
 
 Для разработки:
 
 ```bash
-docker compose -f docker-compose-dev.yml run app ./manage.py migrate
-docker compose -f docker-compose-dev.yml run app ./manage.py createsuperuser
+docker compose -f docker-compose-dev.yml exec app ./manage.py migrate
+docker compose -f docker-compose-dev.yml exec app ./manage.py createsuperuser
 ```
