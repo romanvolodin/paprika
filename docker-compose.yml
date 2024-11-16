@@ -1,13 +1,13 @@
 services:
 
-  db:
+  paprika-pg:
     image: postgres:alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env
 
-  app:
+  paprika-app:
     build: ./backend
     expose:
       - 8000
@@ -18,9 +18,9 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      - paprika-pg
 
-  nginx:
+  paprika-nginx:
     build: ./nginx
     volumes:
       - static_volume:/app/static
@@ -28,7 +28,7 @@ services:
     ports:
       - 80:80
     depends_on:
-      - app
+      - paprika-app
 
 volumes:
   postgres_data:
