@@ -2,7 +2,7 @@
 
 echo "Waiting for postgres..."
 
-while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
+while ! nc -z $PAPRIKA_DB_HOST $PAPRIKA_DB_PORT; do
     sleep 0.1
 done
 

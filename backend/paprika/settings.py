@@ -2,7 +2,6 @@ from pathlib import Path
 
 from environs import Env
 
-
 env = Env()
 env.read_env(override=True)
 
@@ -56,7 +55,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "paprika.wsgi.application"
 
 DATABASES = {
-    "default": env.dj_db_url("DATABASE_URL"),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": env.str("PAPRIKA_DB_HOST", "localhost"),
+        "PORT": env.int("PAPRIKA_DB_PORT", 5432),
+        "NAME": env.str("PAPRIKA_DB_NAME"),
+        "USER": env.str("PAPRIKA_DB_USER"),
+        "PASSWORD": env.str("PAPRIKA_DB_PASSWORD"),
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
