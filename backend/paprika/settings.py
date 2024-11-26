@@ -57,11 +57,11 @@ WSGI_APPLICATION = "paprika.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": env.str("PAPRIKA_DB_HOST", "localhost"),
-        "PORT": env.int("PAPRIKA_DB_PORT", 5432),
-        "NAME": env.str("PAPRIKA_DB_NAME"),
-        "USER": env.str("PAPRIKA_DB_USER"),
-        "PASSWORD": env.str("PAPRIKA_DB_PASSWORD"),
+        "HOST": env.str("POSTGRES_HOST", "localhost"),
+        "PORT": env.int("POSTGRES_PORT", 5432),
+        "NAME": env.str("POSTGRES_DB"),
+        "USER": env.str("POSTGRES_USER"),
+        "PASSWORD": env.str("POSTGRES_PASSWORD"),
     }
 }
 
