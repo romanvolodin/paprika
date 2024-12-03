@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
@@ -6,6 +7,7 @@ from .forms import ReadXlsxForm, UploadMultiplePreviewsForm
 from .models import Project, Shot, ShotGroup, Task, TmpShotPreview
 
 
+@login_required
 def read_xlsx(request):
     if request.method == "POST":
         form = ReadXlsxForm(request.POST, request.FILES)
@@ -75,6 +77,7 @@ def read_xlsx(request):
     return render(request, "core/xlsx_read.html", {"form": form})
 
 
+@login_required
 def save_multiple_uploaded_shot_previews(request):
     if request.method == "POST":
         form = UploadMultiplePreviewsForm(request.POST, request.FILES)
@@ -107,6 +110,7 @@ def save_multiple_uploaded_shot_previews(request):
     return render(request, "core/upload_multiple_shot_previews.html", {"form": form})
 
 
+@login_required
 def shot_group_list(request, project_code):
     project = Project.objects.get(code=project_code)
     shot_groups = project.shot_groups.all().order_by("name")
@@ -117,6 +121,7 @@ def shot_group_list(request, project_code):
     return render(request, "core/shot_group_list.html", context)
 
 
+@login_required
 def shot_group_details(request, project_code, shot_group_id):
     shot_group = ShotGroup.objects.get(pk=shot_group_id)
     context = {
@@ -125,6 +130,7 @@ def shot_group_details(request, project_code, shot_group_id):
     return render(request, "core/shot_group_details.html", context)
 
 
+@login_required
 def task_list(request, project_code):
     project = Project.objects.get(code=project_code)
     tasks = project.tasks.all().order_by("description")
@@ -135,6 +141,7 @@ def task_list(request, project_code):
     return render(request, "core/task_list.html", context)
 
 
+@login_required
 def task_details(request, project_code, task_id):
     task = Task.objects.get(pk=task_id)
     shots = []
@@ -155,6 +162,7 @@ def task_details(request, project_code, task_id):
     return render(request, "core/task_details.html", context)
 
 
+@login_required
 def project_list(request):
     projects = Project.objects.order_by("name")
     context = {
@@ -164,6 +172,7 @@ def project_list(request):
     return render(request, "core/project_list.html", context)
 
 
+@login_required
 def project_details(request, project_code):
     project = Project.objects.get(code=project_code)
     context = {
