@@ -25,3 +25,29 @@ createsuperuser:
 	docker compose exec paprika-app ./manage.py createsuperuser
 
 prod:	env run collectstatic migrate createsuperuser
+
+init.dev:
+	cp -n .env.template .env.dev
+	sed -i "s/PAPRIKA_DEBUG=false/PAPRIKA_DEBUG=true/" .env.dev
+	sed -i "s/allowed_hosts/$(ALLOWED_HOSTS)/" .env.dev
+	docker compose --file docker-compose-dev.yml up --build --detach
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py collectstatic --no-input
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py migrate
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py createsuperuser --no-input
+	docker compose --file docker-compose-dev.yml down
+
+dev:
+	docker compose --file docker-compose-dev.yml up --build
+
+stop.dev:
+	docker compose --file docker-compose-dev.yml down
+
+env.dev:
+	cp -n .env.template .env.dev
+	sed -i "s/PAPRIKA_DEBUG=false/PAPRIKA_DEBUG=true/" .env.dev
+
+collectstatic.dev:
+	docker compose exec --file docker-compose-dev.yml paprika-app ./manage.py collectstatic --no-input
+
+migrate.dev:
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py migrate
