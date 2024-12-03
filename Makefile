@@ -9,6 +9,8 @@ env:
 	sed -i "s/db_password/$(RANDOM_DB_PASSWORD)/" .env
 	sed -i "s/secret_key/$(RANDOM_SECRET_KEY)/" .env
 	sed -i "s/allowed_hosts/$(ALLOWED_HOSTS)/" .env
+	sed -i '/DJANGO_SUPERUSER_EMAIL/d' .env
+	sed -i '/DJANGO_SUPERUSER_PASSWORD/d' .env
 
 run:
 	docker compose up --detach --build
