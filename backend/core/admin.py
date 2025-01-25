@@ -5,7 +5,17 @@ from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from .forms import AddShotsToGroupsForm, AddShotsToProjectForm, AddTasksToShotForm
-from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
+from .models import (
+    ChatMessage,
+    Project,
+    Shot,
+    ShotGroup,
+    ShotTask,
+    Status,
+    Task,
+    TmpShotPreview,
+    Version,
+)
 
 
 admin.site.site_header = "Паприка"
@@ -44,6 +54,18 @@ class VersionInline(admin.TabularInline):
     model = Version
     show_change_link = True
     extra = 0
+
+
+class ChatMessageInline(admin.TabularInline):
+    model = ChatMessage
+    show_change_link = True
+    extra = 0
+    fields = (
+        "created_by",
+        "created_at",
+        "reply_to",
+        "text",
+    )
 
 
 class ShotTaskInline(admin.TabularInline):
@@ -116,6 +138,7 @@ class ShotAdmin(admin.ModelAdmin):
         "pixel_aspect",
     )
     inlines = (
+        ChatMessageInline,
         ShotTaskInline,
         VersionInline,
     )
@@ -460,4 +483,9 @@ class ShotTaskAdmin(admin.ModelAdmin):
 
 @admin.register(TmpShotPreview)
 class TmpShotPreview(admin.ModelAdmin):
+    save_on_top = True
+
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
     save_on_top = True

@@ -271,3 +271,34 @@ class TmpShotPreview(models.Model):
 
     def __str__(self):
         return self.shot.name
+
+
+class ChatMessage(models.Model):
+    shot = models.ForeignKey(
+        Shot,
+        on_delete=models.CASCADE,
+        related_name="chat_messages",
+        verbose_name="шот",
+    )
+    created_at = models.DateTimeField(
+        "когда создано",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="chat_messages",
+        verbose_name="кем создано",
+        blank=True,
+    )
+    reply_to = models.ForeignKey(
+        "ChatMessage",
+        on_delete=models.CASCADE,
+        related_name="replies",
+        verbose_name="ответ на сообщение",
+        blank=True,
+        null=True,
+    )
+    text = models.TextField()
+
+    def __str__(self):
+        return f"{self.shot}:{self.created_by.first_name}:{self.text[:15]}"
