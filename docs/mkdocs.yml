@@ -1,0 +1,21 @@
+site_name: Паприка
+repo_name: romanvolodin/paprika
+repo_url: https://github.com/romanvolodin/paprika
+edit_uri: docs/
+theme:
+  name: material
+  language: ru
+  features:
+    - content.code.select
+    - content.code.copy
+    - content.action.view
+    - content.action.edit
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
