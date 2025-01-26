@@ -11,6 +11,7 @@ DEBUG = env.bool("PAPRIKA_DEBUG", False)
 ALLOWED_HOSTS = env.list("PAPRIKA_ALLOWED_HOSTS", [])
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -22,6 +23,7 @@ INSTALLED_APPS = [
     #
     "core",
     "users",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -95,3 +97,13 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 LOGIN_URL = "/users/login/"
+
+ASGI_APPLICATION = "paprika.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("paprika-redis", 6379)],
+        },
+    },
+}

@@ -7,6 +7,12 @@ services:
     env_file:
       - .env.dev
 
+  paprika-redis:
+    image: redis:alpine
+    # restart: always
+    ports:
+      - "6379:6379"
+
   paprika-app:
     build:
       context: ./backend/
@@ -21,6 +27,7 @@ services:
       - .env.dev
     depends_on:
       - paprika-pg
+      - paprika-redis
 
 volumes:
   postgres_data:
