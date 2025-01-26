@@ -5,7 +5,7 @@ from django.db import models
 
 def version_upload_path(version, filename):
     shot = version.shot
-    project = shot.group.project.code
+    project = shot.project.code
     return f"{project}/{shot}/{filename}"
 
 
