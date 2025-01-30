@@ -155,6 +155,8 @@ class Version(models.Model):
     name = models.CharField(
         "Название версии",
         max_length=50,
+        null=True,
+        blank=True,
     )
     shot = models.ForeignKey(
         Shot,
