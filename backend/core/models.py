@@ -171,6 +171,9 @@ class Version(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        get_latest_by = "created_at"
+
     def __str__(self):
         return self.name
 
