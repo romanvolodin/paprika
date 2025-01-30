@@ -162,6 +162,7 @@ class Version(models.Model):
         related_name="versions",
     )
     video = models.FileField(upload_to=version_upload_path)
+    preview = models.ImageField(upload_to=version_upload_path, null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
