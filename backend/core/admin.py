@@ -1,5 +1,9 @@
+from pathlib import Path
+import subprocess
+
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
@@ -419,6 +423,10 @@ class VersionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         super().save_model(request, obj, form, change)
+        preview_path = f"{obj.video.path}.jpg"
+        cmd = ["ffmpeg", "-y", "-i", obj.video.path, "-frames:v", "1", preview_path]
+        subprocess.run(cmd)
+        obj.preview.save(Path(preview_path).name, File(open(preview_path, "rb")))
 
 
 @admin.register(Task)
