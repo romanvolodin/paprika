@@ -30,6 +30,11 @@ class ProjectAdmin(admin.ModelAdmin):
         "created_by",
         "created_at",
     )
+    list_display = (
+        "name",
+        "code",
+        "created_at",
+    )
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
@@ -129,6 +134,7 @@ class ShotAdmin(admin.ModelAdmin):
         "comment",
         # "get_latest_version",
         "get_shot_groups",
+        "created_at",
     )
     list_filter = (
         "group__project",
@@ -398,7 +404,7 @@ class ShotAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
-    #     obj.project = Project.objects.get(code="ZS")
+        #     obj.project = Project.objects.get(code="ZS")
         super().save_model(request, obj, form, change)
 
 
@@ -421,11 +427,14 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = (
         "description",
         "default_status",
+        "project",
+        "created_at",
     )
     readonly_fields = (
         "created_by",
         "created_at",
     )
+    list_filter = ("project",)
     ordering = ("description",)
     inlines = (ShotTaskInline,)
 
