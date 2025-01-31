@@ -1,10 +1,14 @@
+import subprocess
+from pathlib import Path
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 
-from .forms import ReadXlsxForm, UploadMultiplePreviewsForm
-from .models import Project, Shot, ShotGroup, Task, TmpShotPreview
+from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
+from .models import Project, Shot, ShotGroup, Task, TmpShotPreview, Version
 
 
 @login_required
@@ -179,3 +183,49 @@ def project_details(request, project_code):
         "project": project,
     }
     return render(request, "core/project_details.html", context)
+
+
+@login_required
+def save_multiple_uploaded_versions(request):
+    if request.method == "POST":
+        form = UploadMultipleVersionsForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, "core/upload_multiple_versions.html", {"form": form})
+
+        versions = form.cleaned_data["versions"]
+        successful_count = 0
+        errors = []
+        for uploaded_version in versions:
+            shot_name = uploaded_version.name.split(".")[0]
+
+            if shot_name is None:
+                errors.append(f"Нет имени шота в '{uploaded_version.name}'")
+                continue
+
+            try:
+                shot = Shot.objects.get(name=shot_name)
+            except ObjectDoesNotExist:
+                errors.append(f"Шот '{shot_name}' не найден")
+                continue
+
+            version = Version.objects.create(
+                name=Path(uploaded_version.name).stem,
+                shot=shot,
+                video=uploaded_version,
+                created_by=request.user,
+            )
+
+            preview_path = f"{version.video.path}.jpg"
+            cmd = ["ffmpeg", "-y", "-i", version.video.path, "-frames:v", "1", preview_path]
+            subprocess.run(cmd)
+            version.preview.save(Path(preview_path).name, File(open(preview_path, "rb")))
+            successful_count += 1
+
+        errors_message = ""
+        if errors:
+            errors_message = f"<br><br>Ошибки:<br>{'<br>'.join(errors)}"
+
+        return HttpResponse(f"{successful_count} версий загружено.{errors_message}")
+    else:
+        form = UploadMultipleVersionsForm()
+    return render(request, "core/upload_multiple_versions.html", {"form": form})

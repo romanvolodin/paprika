@@ -36,4 +36,9 @@ urlpatterns = [
         views.project_details,
         name="project_details",
     ),
+    path(
+        "versions/upload/",
+        views.save_multiple_uploaded_versions,
+        name="versions_upload",
+    ),
 ]

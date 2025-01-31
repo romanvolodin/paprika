@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %} {% block content %}
+<h2>Загрузка нескольких версий</h2>
+<p>
+  Имя шота должно содержаться в имени картинки, например
+  <b>SHOT_0010{...}.mp4</b>.
+</p>
+<p>Файлы без имени шота будут проигнорированы.</p>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %} {{ form }}
+  <input type="submit" value="OK" />
+</form>
+
+{% endblock %}

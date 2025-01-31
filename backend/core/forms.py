@@ -56,3 +56,7 @@ class MultipleFileField(forms.FileField):
 
 class UploadMultiplePreviewsForm(forms.Form):
     previews = MultipleFileField()
+
+
+class UploadMultipleVersionsForm(forms.Form):
+    versions = MultipleFileField()
