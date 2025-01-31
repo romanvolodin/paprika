@@ -7,8 +7,8 @@
   {% for shot in shots|dictsort:"name" %}
   <tr class="row-highlight">
     <td style="padding-right: 10px;">
-    {% if shot.tmp_preview %}
-      <img src="{{shot.tmp_preview.image.url}}" class="shot-preview">
+    {% if shot.versions.latest %}
+      <img src="{{shot.versions.latest.preview.url}}" class="shot-preview">
     {% else %}
       Нет превью
     {% endif %}

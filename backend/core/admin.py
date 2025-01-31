@@ -129,7 +129,7 @@ class ShotStatusListFilter(admin.SimpleListFilter):
 class ShotAdmin(admin.ModelAdmin):
     save_on_top = True
     list_display = (
-        "get_tmp_preview",
+        "get_version_preview",
         "name",
         "get_rec_timecode",
         "get_source_timecode",
@@ -219,9 +219,9 @@ class ShotAdmin(admin.ModelAdmin):
         return mark_safe("<br>".join([task.description for task in obj.task.all()]))
 
     @admin.display(description="превью")
-    def get_tmp_preview(self, shot):
+    def get_version_preview(self, shot):
         try:
-            preview = shot.tmp_preview.image.url
+            version = shot.versions.latest()
         except ObjectDoesNotExist:
             return mark_safe(
                 "<div style='"
@@ -236,7 +236,7 @@ class ShotAdmin(admin.ModelAdmin):
             )
 
         return mark_safe(
-            f"<img src='{preview}' style='aspect-ratio:2.39/1; width:150px; object-fit:cover'>"
+            f"<img src='{version.preview.url}' style='aspect-ratio:2.39/1; width:150px; object-fit:cover'>"
         )
 
     @admin.display(description="Shot status")
