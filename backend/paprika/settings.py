@@ -108,3 +108,5 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1_048_576  # 100MB
