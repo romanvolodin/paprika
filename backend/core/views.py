@@ -156,7 +156,8 @@ def task_details(request, project_code, task_id):
         d["status_color"] = shot_task.status.color
 
         try:
-            d["tmp_preview"] = {"image": {"url": shot.tmp_preview.image.url}}
+            version = shot.versions.latest()
+            d["versions"] = {"latest": {"preview": {"url": version.preview.url}}}
         except ObjectDoesNotExist:
             pass
 
