@@ -3,7 +3,6 @@ from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 
@@ -216,10 +215,19 @@ def save_multiple_uploaded_versions(request):
                 created_by=request.user,
             )
 
-            preview_path = f"{version.video.path}.jpg"
-            cmd = ["ffmpeg", "-y", "-i", version.video.path, "-frames:v", "1", preview_path]
+            cmd = [
+                "ffmpeg",
+                "-hide_banner",
+                "-y",
+                "-i",
+                version.video.path,
+                "-frames:v",
+                "1",
+                f"{version.video.path}.jpg",
+            ]
             subprocess.run(cmd)
-            version.preview.save(Path(preview_path).name, File(open(preview_path, "rb")))
+            version.preview = f"{version.video.name}.jpg"
+            version.save()
             successful_count += 1
 
         errors_message = ""
