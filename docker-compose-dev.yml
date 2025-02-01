@@ -29,6 +29,18 @@ services:
       - paprika-pg
       - paprika-redis
 
+  paprika-frontend:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - paprika-app
+
 volumes:
   postgres_data:
   media_volume:
