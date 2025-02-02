@@ -41,4 +41,5 @@ urlpatterns = [
         views.save_multiple_uploaded_versions,
         name="versions_upload",
     ),
+    path("api/", views.api),
 ]

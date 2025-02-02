@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 
@@ -238,3 +239,7 @@ def save_multiple_uploaded_versions(request):
     else:
         form = UploadMultipleVersionsForm()
     return render(request, "core/upload_multiple_versions.html", {"form": form})
+
+
+def api(request):
+    return JsonResponse({"message": "ok!"})
