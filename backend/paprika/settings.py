@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     #
     "colorfield",
     "corsheaders",
+    "rest_framework",
     #
     "core",
     "users",
@@ -114,3 +115,11 @@ CHANNEL_LAYERS = {
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1_048_576  # 100MB
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+}

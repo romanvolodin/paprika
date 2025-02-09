@@ -2,13 +2,18 @@ import subprocess
 from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
+from rest_framework import permissions, viewsets
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
 from .models import Project, Shot, ShotGroup, Task, TmpShotPreview, Version
+from .serializers import GroupSerializer, UserSerializer
+
+from users.models import User
 
 
 @login_required
@@ -243,3 +248,23 @@ def save_multiple_uploaded_versions(request):
 
 def api(request):
     return JsonResponse({"message": "ok!"})
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows groups to be viewed or edited.
+    """
+
+    queryset = Group.objects.all().order_by("name")
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
