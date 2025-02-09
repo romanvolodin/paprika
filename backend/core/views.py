@@ -8,12 +8,14 @@ from django.http import JsonResponse
 from django.shortcuts import HttpResponse, render
 from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
 from .models import Project, Shot, ShotGroup, Task, TmpShotPreview, Version
 from .serializers import GroupSerializer, UserSerializer
-
-from users.models import User
 
 
 @login_required
@@ -268,3 +270,11 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all().order_by("name")
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class CurrentUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user, context={"request": request})
+        return Response(serializer.data)
