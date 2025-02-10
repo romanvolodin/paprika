@@ -1,12 +1,13 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import axios from 'axios'
 
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const email = ref('')
@@ -32,7 +33,11 @@ const login = async () => {
       })
       .catch(console.log)
 
-    router.push('/')
+    let url = route.query.next
+    if (!url) {
+      url = '/'
+    }
+    router.push(url)
   } catch (error) {
     error_message.value = error.response.data
   }
