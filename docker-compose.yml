@@ -21,7 +21,9 @@ services:
       - paprika-pg
 
   paprika-nginx:
-    build: ./nginx
+    build:
+      context: ./
+      dockerfile: ./nginx/Dockerfile
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
