@@ -1,7 +1,7 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import BaseLayout from './layout/BaseLayout.vue'
 </script>
 
 <template>
-  <RouterView />
+  <BaseLayout />
 </template>
