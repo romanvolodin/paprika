@@ -10,7 +10,6 @@ from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
@@ -25,7 +24,7 @@ def read_xlsx(request):
         if not form.is_valid():
             return render(request, "core/xlsx_read.html", {"form": form})
 
-        shot_group = form.cleaned_data["shot_group"]
+        # shot_group = form.cleaned_data["shot_group"]
         created_by = form.cleaned_data["created_by"]
         start_row = form.cleaned_data["start_row"]
         end_row = form.cleaned_data["end_row"]
@@ -44,7 +43,7 @@ def read_xlsx(request):
         active_sheet = wb.active
         for row_number in range(start_row, end_row + 1):
             fields = {
-                "group": shot_group,
+                # "group": shot_group,
                 "created_by": created_by,
             }
 
