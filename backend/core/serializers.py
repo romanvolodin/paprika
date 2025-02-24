@@ -1,7 +1,8 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
+
+from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task
 from users.models import User
-from core.models import Shot, Project, ShotGroup, ShotTask, Task, Status
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

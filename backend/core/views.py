@@ -10,11 +10,21 @@ from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
-from .models import Project, Shot, ShotGroup, ShotTask, Task, TmpShotPreview, Version, Status
-from .serializers import GroupSerializer, UserSerializer, ShotSerializer, ProjectSerializer, ShotGroupSerializer, ShotTaskSerializer, TaskSerializer, StatusSerializer
+from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
+from .serializers import (
+    GroupSerializer,
+    ProjectSerializer,
+    ShotGroupSerializer,
+    ShotSerializer,
+    ShotTaskSerializer,
+    StatusSerializer,
+    TaskSerializer,
+    UserSerializer,
+)
 
 
 @login_required
