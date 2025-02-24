@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
-from .models import Project, Shot, ShotGroup, Task, TmpShotPreview, Version
-from .serializers import GroupSerializer, UserSerializer
+from .models import Project, Shot, ShotGroup, ShotTask, Task, TmpShotPreview, Version, Status
+from .serializers import GroupSerializer, UserSerializer, ShotSerializer, ProjectSerializer, ShotGroupSerializer, ShotTaskSerializer, TaskSerializer, StatusSerializer
 
 
 @login_required
@@ -277,3 +277,39 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(serializer.data)
+
+
+class ShotViewSet(viewsets.ModelViewSet):
+    queryset = Shot.objects.all()
+    serializer_class = ShotSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all().order_by("name")
+    serializer_class = ProjectSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class ShotGroupViewSet(viewsets.ModelViewSet):
+    queryset = ShotGroup.objects.all().order_by("name")
+    serializer_class = ShotGroupSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class ShotTaskViewSet(viewsets.ModelViewSet):
+    queryset = ShotTask.objects.all()
+    serializer_class = ShotTaskSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all().order_by("description")
+    serializer_class = TaskSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class StatusViewSet(viewsets.ModelViewSet):
+    queryset = Status.objects.all().order_by("title")
+    serializer_class = StatusSerializer
+    # permission_classes = [permissions.IsAuthenticated]

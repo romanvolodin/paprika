@@ -8,6 +8,12 @@ from . import views
 router = routers.DefaultRouter()
 router.register("users", views.UserViewSet)
 router.register("groups", views.GroupViewSet)
+router.register("shots", views.ShotViewSet)
+router.register("projects", views.ProjectViewSet)
+router.register("shot-groups", views.ShotGroupViewSet)
+router.register("shot-tasks", views.ShotTaskViewSet)
+router.register("tasks", views.TaskViewSet)
+router.register("statuses", views.StatusViewSet)
 
 urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
