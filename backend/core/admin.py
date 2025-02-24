@@ -334,6 +334,12 @@ class ShotAdmin(admin.ModelAdmin):
 
             return HttpResponseRedirect(request.get_full_path())
 
+        context = {
+            "shots": queryset,
+            "form": AddTasksToShotForm,
+        }
+        return render(request, "admin/add_tasks_to_shot.html", context=context)
+
     @admin.action(description="Добавить комментарий")
     def add_comments_to_shot(modeladmin, request, queryset):
         if "apply" in request.POST:
