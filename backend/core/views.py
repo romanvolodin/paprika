@@ -1,3 +1,4 @@
+import re
 import subprocess
 from pathlib import Path
 
@@ -213,7 +214,8 @@ def save_multiple_uploaded_versions(request):
         successful_count = 0
         errors = []
         for uploaded_version in versions:
-            shot_name = uploaded_version.name.split(".")[0]
+            match = re.search(r"^PSM_CG_\d+", uploaded_version.name)
+            shot_name = match.group(0)
 
             if shot_name is None:
                 errors.append(f"Нет имени шота в '{uploaded_version.name}'")
