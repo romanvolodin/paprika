@@ -253,7 +253,12 @@ def save_multiple_uploaded_versions(request):
         if errors:
             errors_message = f"<br><br>Ошибки:<br>{'<br>'.join(errors)}"
 
-        return HttpResponse(f"{successful_count} версий загружено.{errors_message}")
+        return HttpResponse(
+            (
+                f"{successful_count} версий загружено.{errors_message}"
+                "<br><br><a href='/dj/versions/upload/'>Загрузить ещё</a>"
+            )
+        )
     else:
         form = UploadMultipleVersionsForm()
     return render(request, "core/upload_multiple_versions.html", {"form": form})
