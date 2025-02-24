@@ -138,10 +138,11 @@ class ShotAdmin(admin.ModelAdmin):
         "get_version_preview",
         "name",
         "get_rec_timecode",
-        "get_source_timecode",
+        # "get_source_timecode",
         "get_shot_status",
         "get_shot_tasks",
-        "comment",
+        # "comment",
+        "get_chat_message",
         # "get_latest_version",
         "get_shot_groups",
         "created_at",
@@ -215,6 +216,10 @@ class ShotAdmin(admin.ModelAdmin):
         latest_version = obj.versions.latest("created_at")
         if latest_version:
             return mark_safe(f'<a href="{latest_version.video.url}">{latest_version.name}</a>')
+
+    @admin.display(description="Комментарий")
+    def get_chat_message(self, obj):
+        return obj.chat_messages.latest("created_at").text
 
     @admin.display(description="группы")
     def get_shot_groups(self, obj):
