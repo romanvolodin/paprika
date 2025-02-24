@@ -418,6 +418,12 @@ class VersionAdmin(admin.ModelAdmin):
         "created_by",
         "created_at",
     )
+    list_display = (
+        "name",
+        "created_at",
+        "created_by",
+    )
+    ordering = ("name",)
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
