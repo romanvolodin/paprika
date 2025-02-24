@@ -152,7 +152,7 @@ class ShotAdmin(admin.ModelAdmin):
         ShotTaskInline,
         VersionInline,
     )
-    ordering = ("-rec_timecode",)
+    ordering = ("name",)
     readonly_fields = (
         "created_by",
         "created_at",
