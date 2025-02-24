@@ -1,4 +1,5 @@
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from django.contrib import admin
@@ -8,7 +9,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .forms import AddShotsToGroupsForm, AddShotsToProjectForm, AddTasksToShotForm
+from .forms import (
+    AddShotsToGroupsForm,
+    AddShotsToProjectForm,
+    AddTasksToShotForm,
+    AddСommentToShotForm,
+)
 from .models import (
     ChatMessage,
     Project,
@@ -276,6 +282,7 @@ class ShotAdmin(admin.ModelAdmin):
         "add_shots_to_groups",
         "remove_shots_from_groups",
         "add_tasks_to_shot",
+        "add_comments_to_shot",
         "download_shots_as_xlsx",
     ]
 
@@ -322,11 +329,32 @@ class ShotAdmin(admin.ModelAdmin):
 
             return HttpResponseRedirect(request.get_full_path())
 
+    @admin.action(description="Добавить комментарий")
+    def add_comments_to_shot(modeladmin, request, queryset):
+        if "apply" in request.POST:
+            form = AddСommentToShotForm(request.POST)
+            if form.is_valid():
+                comment = form.cleaned_data["comment"]
+                created_by = form.cleaned_data["created_by"]
+                for shot in queryset:
+                    ChatMessage.objects.create(
+                        shot=shot,
+                        text=comment,
+                        created_by=created_by,
+                        created_at=datetime.now(),
+                    )
+
+            return HttpResponseRedirect(request.get_full_path())
+
         context = {
             "shots": queryset,
-            "form": AddTasksToShotForm,
+            "form": AddСommentToShotForm,
         }
-        return render(request, "admin/add_tasks_to_shot.html", context=context)
+        return render(
+            request,
+            "admin/add_comments_to_shot.html",
+            context=context,
+        )
 
     @admin.action(description="Добавить в группы")
     def add_shots_to_groups(modeladmin, request, queryset):
