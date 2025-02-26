@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task
+from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from users.models import User
 
 
@@ -50,4 +50,10 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
 class StatusSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Status
+        fields = "__all__"
+
+
+class VersionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Version
         fields = "__all__"

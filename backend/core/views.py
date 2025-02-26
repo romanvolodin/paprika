@@ -25,6 +25,7 @@ from .serializers import (
     StatusSerializer,
     TaskSerializer,
     UserSerializer,
+    VersionSerializer,
 )
 
 
@@ -329,4 +330,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 class StatusViewSet(viewsets.ModelViewSet):
     queryset = Status.objects.all().order_by("title")
     serializer_class = StatusSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class VersionViewSet(viewsets.ModelViewSet):
+    queryset = Version.objects.all().order_by("-created_at")
+    serializer_class = VersionSerializer
     # permission_classes = [permissions.IsAuthenticated]
