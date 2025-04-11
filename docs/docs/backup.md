@@ -21,6 +21,20 @@ docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py dumpda
 
 Таблицы `sessions.session` и `admin.logentry` игнорируются, ибо не содержат важных данных (это сессии и лог действий в админке).
 
+## Бэкап медиа
+
+Установка Я.Диска
+
+echo "deb http://repo.yandex.ru/yandex-disk/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/yandex-disk.list > /dev/null && wget http://repo.yandex.ru/yandex-disk/YANDEX-DISK-KEY.GPG -O- | sudo apt-key add - && sudo apt-get update && sudo apt-get install -y yandex-disk
+
+yandex-disk token -- Важно! выберите правильный аккаунт в браузере
+
+Если ошиблись -- удалите .config/yandex-disk/passwd и попробуйте заново
+
+Указываем папку
+nano .config/yandex-disk/config.cfg
+dir=/root/paprika/backend/media_backup
+
 ## Заполняем базу данными
 
 ```sh
