@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
 
-const auth = useAuthStore
+const auth = useAuthStore()
 const _user = ref({})
 
 onMounted(() => {
