@@ -215,7 +215,7 @@ class Task(models.Model):
     )
 
     def __str__(self):
-        return f"{self.project.code}:{self.description}"
+        return f"{self.project}:{self.description}"
 
 
 class Status(models.Model):
