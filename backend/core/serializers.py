@@ -18,9 +18,19 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ShotSerializer(serializers.HyperlinkedModelSerializer):
+    thumb = serializers.SerializerMethodField()
+
     class Meta:
         model = Shot
         fields = "__all__"
+
+    def get_thumb(self, shot):
+        if not shot.versions.all():
+            return
+
+        request = self.context.get("request")
+        latest_version = shot.versions.latest()
+        return request.build_absolute_uri(latest_version.preview.url)
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
