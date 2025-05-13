@@ -26,7 +26,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="shots-list">
+  <div v-if="!!shots" class="empty-message">
+    <p>Шотов пока нет</p>
+  </div>
+
+  <div v-else class="shots-list">
     <div v-if="error" class="error-message">
       {{ error }}
     </div>
@@ -44,6 +48,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 90vh;
+}
+
 .shots-list {
   padding: 1rem;
 }
