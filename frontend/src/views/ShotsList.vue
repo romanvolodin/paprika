@@ -26,7 +26,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="!!shots" class="empty-message">
+  <div v-if="!!shots.value" class="empty-message">
     <p>Шотов пока нет</p>
   </div>
 
