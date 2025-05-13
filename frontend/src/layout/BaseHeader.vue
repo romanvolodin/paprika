@@ -1,9 +1,16 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const auth = useAuthStore()
 const _user = ref({})
+
+function logout() {
+  auth.logout()
+  router.push({ name: 'login' })
+}
 
 onMounted(() => {
   _user.value = auth.user
@@ -13,8 +20,9 @@ onMounted(() => {
 <template>
   <header>
     <div class="user" v-if="_user">
-      <p class="name">{{ _user.first_name || _user.email }}</p>
+      <p>{{ _user.first_name || _user.email }}</p>
       <img class="avatar" :src="_user.avatar" alt="" />
+      <button class="logout" @click="logout">𐄂</button>
     </div>
   </header>
 </template>
@@ -29,14 +37,15 @@ header {
 .user {
   display: flex;
   align-items: center;
-}
-.name {
-  margin-right: 10px;
+  gap: 10px;
 }
 .avatar {
   border-radius: 50vh;
   aspect-ratio: 1;
   width: 40px;
   object-fit: cover;
+}
+.logout {
+  padding: 0 5px;
 }
 </style>
