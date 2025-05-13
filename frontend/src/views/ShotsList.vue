@@ -10,10 +10,7 @@ const fetchShots = async () => {
   try {
     loading.value = true
     error.value = null
-    const token = localStorage.getItem('auth_token')
-    const response = await axios.get('/api/shots/', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await axios.get('/api/shots/')
     shots.value = response.data.results
   } catch (err) {
     error.value = err.response?.data?.detail || 'Произошла ошибка при загрузке шотов'

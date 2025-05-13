@@ -1,23 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
+import { onMounted, ref } from 'vue'
 
 const auth = useAuthStore()
 const _user = ref({})
 
 onMounted(() => {
-  const token = localStorage.getItem('auth_token')
-
-  axios
-    .get('/api/me/', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(function (response) {
-      _user.value = response.data
-      auth.setUser(response.data)
-    })
-    .catch(console.log)
+  _user.value = auth.user
 })
 </script>
 

@@ -2,8 +2,6 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import axios from '@/config/axiosConfig'
-
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -15,31 +13,16 @@ const password = ref('')
 const error_message = ref('')
 
 const login = async () => {
-  try {
-    const response = await axios.post('/api/token/', {
-      email: email.value,
-      password: password.value,
-    })
-    const token = response.data.access
-
-    localStorage.setItem('auth_token', token)
-
-    await axios
-      .get('/api/me/', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(function (response) {
-        authStore.setUser(response.data)
-      })
-      .catch(console.log)
-
+  const success = await authStore.login({
+    email: email.value,
+    password: password.value,
+  })
+  if (success) {
     let url = route.query.next
     if (!url) {
       url = '/'
     }
     router.push(url)
-  } catch (error) {
-    error_message.value = error.response.data
   }
 }
 </script>
