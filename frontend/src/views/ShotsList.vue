@@ -1,42 +1,34 @@
 <script setup>
-import axios from '@/config/axiosConfig'
 import { onMounted, ref } from 'vue'
+import { useProjectsStore } from '@/stores/projects'
+import { useShotsStore } from '@/stores/shots'
 
-const shots = ref([])
-const loading = ref(true)
-const error = ref(null)
+const _shots = ref([])
 
-const fetchShots = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    const response = await axios.get('/api/shots/')
-    shots.value = response.data.results
-  } catch (err) {
-    error.value = err.response?.data?.detail || 'Произошла ошибка при загрузке шотов'
-    console.error('Ошибка при загрузке шотов:', err)
-  } finally {
-    loading.value = false
+const projectsStore = useProjectsStore()
+const shotsStore = useShotsStore()
+
+onMounted(async () => {
+  const project = projectsStore.currentProject
+  if (project) {
+    await shotsStore.fetchShots(project.code)
+    _shots.value = shotsStore.shots
   }
-}
-
-onMounted(() => {
-  fetchShots()
 })
 </script>
 
 <template>
-  <div v-if="!!shots.value" class="empty-message">
+  <div v-if="!!_shots.value" class="empty-message">
     <p>Шотов пока нет</p>
   </div>
 
   <div v-else class="shots-list">
-    <div v-if="error" class="error-message">
-      {{ error }}
+    <div v-if="shotsStore.error" class="error-message">
+      {{ shotsStore.error }}
     </div>
-    <div v-else-if="loading" class="loading">Загрузка...</div>
+    <div v-else-if="shotsStore.isLoading" class="loading">Загрузка...</div>
     <div v-else class="shots-grid">
-      <div v-for="shot in shots" :key="shot.url" class="shot-card">
+      <div v-for="shot in _shots" :key="shot.url" class="shot-card">
         <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
         <div v-else class="shot-no-thumb">Нет превью</div>
         <div class="shot-info">

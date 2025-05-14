@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
+import ProjectList from '@/views/ProjectList.vue'
 import ShotsList from '@/views/ShotsList.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -11,7 +12,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: ProjectList,
     },
     {
       path: '/login',
@@ -21,6 +22,11 @@ const router = createRouter({
     {
       path: '/shots',
       name: 'shots',
+      component: ShotsList,
+    },
+    {
+      path: '/:projectCode/shots',
+      name: 'shots-by-project',
       component: ShotsList,
     },
   ],

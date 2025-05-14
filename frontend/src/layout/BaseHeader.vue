@@ -19,6 +19,11 @@ onMounted(() => {
 
 <template>
   <header>
+    <nav>
+      <router-link :to="{ name: 'home' }">Проекты</router-link>
+      <router-link :to="{ name: 'shots' }">Шоты</router-link>
+    </nav>
+
     <div class="user" v-if="_user">
       <p>{{ _user.first_name || _user.email }}</p>
       <img class="avatar" :src="_user.avatar" alt="" />
@@ -30,9 +35,13 @@ onMounted(() => {
 <style scoped>
 header {
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
   box-shadow: 0px 10px 10px #00000008;
   padding: 10px;
+}
+nav {
+  display: flex;
+  gap: 20px;
 }
 .user {
   display: flex;
