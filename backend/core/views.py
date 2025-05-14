@@ -302,6 +302,14 @@ class ShotViewSet(viewsets.ModelViewSet):
     serializer_class = ShotSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        project_code = self.request.query_params.get("project")
+
+        if not project_code:
+            return Shot.objects.all()
+
+        return Shot.objects.filter(project__code=project_code)
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("name")
