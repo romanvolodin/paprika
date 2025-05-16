@@ -3,8 +3,8 @@ import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import ProjectList from '@/views/ProjectList.vue'
 import ShotsList from '@/views/ShotsList.vue'
+import ShotDetails from '@/views/ShotDetails.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'shots-by-project',
       component: ShotsList,
     },
+    {
+      path: '/:projectCode/shots/:shotName',
+      name: 'shot-details',
+      component: ShotDetails,
+    },
   ],
 })
 
@@ -37,7 +42,7 @@ router.beforeEach(async (to) => {
   if (!auth.isUserAuthenticated && to.name !== 'login') {
     return {
       name: 'login',
-      query: {next: to.fullPath}
+      query: { next: to.fullPath },
     }
   }
 })

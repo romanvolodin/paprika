@@ -2,16 +2,25 @@
 import { onMounted, ref } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useShotsStore } from '@/stores/shots'
+import { useRouter } from 'vue-router'
 
+const _project = ref(null)
 const _shots = ref([])
 
 const projectsStore = useProjectsStore()
 const shotsStore = useShotsStore()
 
+function goToShotDetails(project) {
+  router.push({
+    name: 'shot-details',
+    params: { projectCode: project.code, shotName: shot.name },
+  })
+}
+
 onMounted(async () => {
-  const project = projectsStore.currentProject
-  if (project) {
-    await shotsStore.fetchShots(project.code)
+  _project.value = projectsStore.currentProject
+  if (_project.value) {
+    await shotsStore.fetchShots(_project.value.code)
     _shots.value = shotsStore.shots
   }
 })
@@ -29,17 +38,27 @@ onMounted(async () => {
     <div v-else-if="shotsStore.isLoading" class="loading">Загрузка...</div>
     <div v-else class="shots-grid">
       <div v-for="shot in _shots" :key="shot.url" class="shot-card">
-        <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
-        <div v-else class="shot-no-thumb">Нет превью</div>
-        <div class="shot-info">
-          {{ shot.name }}
-        </div>
+        <router-link
+          :to="{
+            name: 'shot-details',
+            params: { projectCode: _project.code, shotName: shot.name },
+          }"
+        >
+          <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
+          <div v-else class="shot-no-thumb">Нет превью</div>
+          <div class="shot-info">
+            {{ shot.name }}
+          </div>
+        </router-link>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+* {
+  text-decoration: none;
+}
 .empty-message {
   display: flex;
   flex-direction: column;
