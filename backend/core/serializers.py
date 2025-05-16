@@ -17,8 +17,15 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         fields = ["url", "name"]
 
 
+class VersionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Version
+        fields = "__all__"
+
+
 class ShotSerializer(serializers.HyperlinkedModelSerializer):
     thumb = serializers.SerializerMethodField()
+    versions = VersionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Shot
@@ -60,10 +67,4 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
 class StatusSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Status
-        fields = "__all__"
-
-
-class VersionSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Version
         fields = "__all__"
