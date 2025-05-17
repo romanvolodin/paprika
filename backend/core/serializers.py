@@ -5,31 +5,31 @@ from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Versio
 from users.models import User
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["url", "email", "avatar", "groups"]
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ["url", "name"]
 
 
-class VersionSerializer(serializers.HyperlinkedModelSerializer):
+class VersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Version
         fields = "__all__"
 
 
-class ChatMessageSerializer(serializers.HyperlinkedModelSerializer):
+class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = "__all__"
 
 
-class ShotSerializer(serializers.HyperlinkedModelSerializer):
+class ShotSerializer(serializers.ModelSerializer):
     thumb = serializers.SerializerMethodField()
     versions = VersionSerializer(many=True, read_only=True)
     chat_messages = ChatMessageSerializer(many=True, read_only=True)
@@ -47,31 +47,31 @@ class ShotSerializer(serializers.HyperlinkedModelSerializer):
         return request.build_absolute_uri(latest_version.preview.url)
 
 
-class ProjectSerializer(serializers.HyperlinkedModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = "__all__"
 
 
-class ShotGroupSerializer(serializers.HyperlinkedModelSerializer):
+class ShotGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShotGroup
         fields = "__all__"
 
 
-class ShotTaskSerializer(serializers.HyperlinkedModelSerializer):
+class ShotTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShotTask
         fields = "__all__"
 
 
-class TaskSerializer(serializers.HyperlinkedModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
 
 
-class StatusSerializer(serializers.HyperlinkedModelSerializer):
+class StatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Status
         fields = "__all__"
