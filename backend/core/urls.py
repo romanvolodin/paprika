@@ -15,6 +15,7 @@ router.register("shot-tasks", views.ShotTaskViewSet)
 router.register("tasks", views.TaskViewSet)
 router.register("statuses", views.StatusViewSet)
 router.register("versions", views.VersionViewSet)
+router.register("chats", views.ChatViewSet)
 
 urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),

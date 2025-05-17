@@ -15,7 +15,17 @@ from rest_framework.views import APIView
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
-from .models import Project, Shot, ShotGroup, ShotTask, Status, Task, TmpShotPreview, Version
+from .models import (
+    Project,
+    Shot,
+    ShotGroup,
+    ShotTask,
+    Status,
+    Task,
+    TmpShotPreview,
+    Version,
+    ChatMessage,
+)
 from .serializers import (
     GroupSerializer,
     ProjectSerializer,
@@ -26,6 +36,7 @@ from .serializers import (
     TaskSerializer,
     UserSerializer,
     VersionSerializer,
+    ChatMessageSerializer,
 )
 
 
@@ -344,4 +355,10 @@ class StatusViewSet(viewsets.ModelViewSet):
 class VersionViewSet(viewsets.ModelViewSet):
     queryset = Version.objects.all().order_by("-created_at")
     serializer_class = VersionSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+
+
+class ChatViewSet(viewsets.ModelViewSet):
+    queryset = ChatMessage.objects.all().order_by("-created_at")
+    serializer_class = ChatMessageSerializer
     # permission_classes = [permissions.IsAuthenticated]

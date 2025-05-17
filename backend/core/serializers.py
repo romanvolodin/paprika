@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
+from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version, ChatMessage
 from users.models import User
 
 
@@ -23,9 +23,16 @@ class VersionSerializer(serializers.HyperlinkedModelSerializer):
         fields = "__all__"
 
 
+class ChatMessageSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ChatMessage
+        fields = "__all__"
+
+
 class ShotSerializer(serializers.HyperlinkedModelSerializer):
     thumb = serializers.SerializerMethodField()
     versions = VersionSerializer(many=True, read_only=True)
+    chat_messages = ChatMessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Shot
