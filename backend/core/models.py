@@ -147,6 +147,11 @@ class Shot(models.Model):
         blank=True,
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["project", "name"], name="unique_shot_name_per_project")
+        ]
+
     def __str__(self):
         return self.name
 
