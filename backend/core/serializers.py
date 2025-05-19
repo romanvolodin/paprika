@@ -8,13 +8,20 @@ from users.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["url", "email", "avatar", "groups"]
+        fields = [
+            "id",
+            "email",
+            "avatar",
+            "groups",
+            "first_name",
+            "last_name",
+        ]
 
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ["url", "name"]
+        fields = ["id", "name"]
 
 
 class VersionSerializer(serializers.ModelSerializer):
