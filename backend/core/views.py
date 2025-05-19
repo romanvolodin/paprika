@@ -321,6 +321,17 @@ class ShotViewSet(viewsets.ModelViewSet):
 
         return Shot.objects.filter(project__code=project_code)
 
+    def list(self, request, project_code=None):
+        project = get_object_or_404(Project, code=project_code)
+        serializer = ShotSerializer(project.shots, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def retrieve(self, request, project_code=None, shot_name=None):
+        project = get_object_or_404(Project, code=project_code)
+        shot = get_object_or_404(Shot, project=project, name=shot_name)
+        serializer = ShotSerializer(shot, context={"request": request})
+        return Response(serializer.data)
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("name")

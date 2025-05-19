@@ -18,6 +18,16 @@ router.register("versions", views.VersionViewSet)
 router.register("chats", views.ChatViewSet)
 
 urlpatterns = [
+    path(
+        "api/projects/<str:project_code>/shots/",
+        views.ShotViewSet.as_view({"get": "list"}),
+        name="shot-list",
+    ),
+    path(
+        "api/projects/<str:project_code>/shots/<str:shot_name>/",
+        views.ShotViewSet.as_view({"get": "retrieve"}),
+        name="shot-detail",
+    ),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/me/", views.CurrentUserView.as_view(), name="current_user"),
