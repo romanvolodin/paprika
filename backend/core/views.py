@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
-from django.shortcuts import HttpResponse, render
+from django.shortcuts import HttpResponse, get_object_or_404, render
 from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
@@ -16,6 +16,7 @@ from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
 from .models import (
+    ChatMessage,
     Project,
     Shot,
     ShotGroup,
@@ -24,9 +25,9 @@ from .models import (
     Task,
     TmpShotPreview,
     Version,
-    ChatMessage,
 )
 from .serializers import (
+    ChatMessageSerializer,
     GroupSerializer,
     ProjectSerializer,
     ShotGroupSerializer,
@@ -36,7 +37,6 @@ from .serializers import (
     TaskSerializer,
     UserSerializer,
     VersionSerializer,
-    ChatMessageSerializer,
 )
 
 
