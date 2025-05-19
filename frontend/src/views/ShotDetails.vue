@@ -1,28 +1,51 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useShotsStore } from '@/stores/shots'
 import { useRoute } from 'vue-router'
+import axios from '@/config/axiosConfig'
 
 const route = useRoute()
-const _shot = ref(null)
+const projectCode = route.params.projectCode
+const shotName = route.params.shotName
 
-const shotsStore = useShotsStore()
+const _shot = ref(null)
+const _versions = ref([])
+const _chat = ref([])
+const _loaded = ref(false)
 
 onMounted(async () => {
-  _shot.value = shotsStore.shots.find((shot) => {
-    return shot.name === route.params.shotName
-  })
+  try {
+    const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
+    _shot.value = response.data
+    _versions.value = response.data.versions
+    _chat.value = response.data.chat_messages
+  } catch (error) {
+    console.error('Ошибка при загрузке данных:', error)
+    _shot.value = null
+  } finally {
+    _loaded.value = true
+  }
 })
 </script>
 
 <template>
-  <div v-if="_shot" class="wrapper">
-    <div class="player">
-      <video :src="_shot.versions[0].video" controls muted autoplay loop></video>
+  <div v-if="!_loaded" class="empty">Загрузка...</div>
+
+  <div v-else class="wrapper">
+    <div v-if="_versions.length === 0" class="empty">Версий пока нет</div>
+    <div v-else class="player">
+      <video
+        v-if="_versions.length > 0"
+        :src="_versions[0].video"
+        controls
+        muted
+        autoplay
+        loop
+      ></video>
     </div>
 
     <div class="chat">
-      <div class="message" v-for="message in _shot.chat_messages" :key="message.created_at">
+      <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
+      <div v-else class="message" v-for="message in _chat" :key="message.created_at">
         <p class="author">{{ message.created_by }}</p>
         <blockquote class="quote" v-if="message.reply_to">
           <p>Автор</p>
@@ -44,8 +67,6 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
-  <div v-else class="empty">Загрузка...</div>
 </template>
 
 <style scoped>
