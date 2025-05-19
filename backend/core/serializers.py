@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version, ChatMessage
+from core.models import ChatMessage, Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from users.models import User
 
 
