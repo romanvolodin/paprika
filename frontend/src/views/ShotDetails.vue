@@ -11,6 +11,7 @@ const _shot = ref(null)
 const _versions = ref([])
 const _chat = ref([])
 const _loaded = ref(false)
+const _error = ref(null)
 
 onMounted(async () => {
   try {
@@ -19,7 +20,7 @@ onMounted(async () => {
     _versions.value = response.data.versions
     _chat.value = response.data.chat_messages
   } catch (error) {
-    console.error('Ошибка при загрузке данных:', error)
+    _error.value = `${error.status}: ${error.response.data.detail}`
     _shot.value = null
   } finally {
     _loaded.value = true
@@ -29,6 +30,10 @@ onMounted(async () => {
 
 <template>
   <div v-if="!_loaded" class="empty">Загрузка...</div>
+
+  <div v-else-if="_error" class="error">
+    {{ _error }}
+  </div>
 
   <div v-else class="wrapper">
     <div v-if="_versions.length === 0" class="empty">Версий пока нет</div>
@@ -70,6 +75,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.error {
+  margin: 2rem;
+  border: 1px solid #c41212;
+  border-radius: 4px;
+  background-color: #ffe6e6;
+  padding: 1rem;
+  color: #c41212;
+  font-weight: bold;
+}
 .empty {
   display: flex;
   justify-content: center;
