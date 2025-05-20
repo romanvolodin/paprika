@@ -12,6 +12,7 @@ const _versions = ref([])
 const _chat = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
+const _message = ref('')
 
 onMounted(async () => {
   try {
@@ -26,6 +27,10 @@ onMounted(async () => {
     _loaded.value = true
   }
 })
+
+function sendMessage() {
+  console.log(_message.value)
+}
 </script>
 
 <template>
@@ -50,25 +55,33 @@ onMounted(async () => {
 
     <div class="chat">
       <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
-      <div v-else class="message" v-for="message in _chat" :key="message.created_at">
-        <p class="author">{{ message.created_by }}</p>
-        <blockquote class="quote" v-if="message.reply_to">
-          <p>Автор</p>
-          <p>{{ message.reply_to }}</p>
-        </blockquote>
-        <div class="text">
-          {{ message.text }}
+      <div v-else class="chat-area">
+        <div class="messages">
+          <div class="message" v-for="message in _chat" :key="message.created_at">
+            <p class="author">{{ message.created_by }}</p>
+            <blockquote class="quote" v-if="message.reply_to">
+              <p>Автор</p>
+              <p>{{ message.reply_to }}</p>
+            </blockquote>
+            <div class="text">
+              {{ message.text }}
+            </div>
+            <p class="date-time">
+              {{
+                new Date(message.created_at).toLocaleString('ru-ru', {
+                  month: 'short',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: 'numeric',
+                })
+              }}
+            </p>
+          </div>
         </div>
-        <p class="date-time">
-          {{
-            new Date(message.created_at).toLocaleString('ru-ru', {
-              month: 'short',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: 'numeric',
-            })
-          }}
-        </p>
+        <div class="input-field">
+          <input v-model.trim="_message" />
+          <button @click="sendMessage">➜</button>
+        </div>
       </div>
     </div>
   </div>
@@ -100,10 +113,18 @@ onMounted(async () => {
 .chat {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
   width: 100%;
   min-width: 200px;
+  height: 900px;
+}
+.chat-area {
+  flex-grow: 1;
+}
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
 }
 .message {
   border-radius: 10px;
@@ -124,5 +145,14 @@ onMounted(async () => {
 .date-time {
   opacity: 0.4;
   text-align: right;
+}
+.input-field {
+  padding: 20px;
+  font-size: 18px;
+}
+.input-field > input,
+.input-field > button {
+  padding: 10px;
+  font-size: inherit;
 }
 </style>
