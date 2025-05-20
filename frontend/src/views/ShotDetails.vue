@@ -2,10 +2,14 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '@/config/axiosConfig'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
 const shotName = route.params.shotName
+
+const auth = useAuthStore()
+const _user = ref({})
 
 const _shot = ref(null)
 const _versions = ref([])
@@ -15,6 +19,11 @@ const _error = ref(null)
 const _message = ref('')
 
 onMounted(async () => {
+  _user.value = auth.user
+  await fetchShot()
+})
+
+async function fetchShot() {
   try {
     const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
     _shot.value = response.data
@@ -26,10 +35,30 @@ onMounted(async () => {
   } finally {
     _loaded.value = true
   }
-})
+}
 
-function sendMessage() {
-  console.log(_message.value)
+async function postMessage(message) {
+  try {
+    await axios.post(`/api/projects/${projectCode}/shots/${shotName}/chat_messages/`, message)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+async function sendMessage() {
+  if (!_message.value) {
+    return
+  }
+  const msg = {
+    shot: _shot.value.id,
+    reply_to: null,
+    text: _message.value,
+    created_at: new Date().toISOString(),
+    created_by: _user.value.id,
+  }
+  await postMessage(msg)
+  await fetchShot()
+  _message.value = ''
 }
 </script>
 
