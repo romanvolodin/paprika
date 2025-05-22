@@ -18,10 +18,28 @@ const _loaded = ref(false)
 const _error = ref(null)
 const _message = ref('')
 
+const _all_users = ref([])
+
+const getAuthorById = (id) => {
+  return _all_users.value.find((user) => {
+    return user.id === id
+  })
+}
+
 onMounted(async () => {
   _user.value = auth.user
+  await fetchAllUsers()
   await fetchShot()
 })
+
+async function fetchAllUsers() {
+  try {
+    const response = await axios.get(`/api/users/`)
+    _all_users.value = response.data.results
+  } catch (error) {
+    _error.value = `${error.status}: ${error.response.data.detail}`
+  }
+}
 
 async function fetchShot() {
   try {
@@ -91,11 +109,15 @@ async function sendMessage() {
         <div class="messages">
           <div class="message" v-for="message in _chat" :key="message.created_at">
             <p class="author">
-              {{ message.created_by.first_name + ' ' + message.created_by.last_name }}
+              {{
+                getAuthorById(message.created_by).first_name +
+                ' ' +
+                getAuthorById(message.created_by).last_name
+              }}
             </p>
             <blockquote class="quote" v-if="message.reply_to">
-              <p>{{ message.reply_to.created_by }}</p>
-              <p>{{ message.reply_to.text }}</p>
+              <p>Автор</p>
+              <p>Текст цитаты</p>
             </blockquote>
             <div class="text">
               {{ message.text }}
