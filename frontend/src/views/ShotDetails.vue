@@ -113,10 +113,10 @@ async function sendMessage() {
           </div>
         </div>
       </div>
-      <div class="input-field">
+      <form @submit.prevent="sendMessage" class="input-field">
         <input v-model.trim="_message" placeholder="Сообщение..." />
-        <button @click="sendMessage">➜</button>
-      </div>
+        <button type="submit">➜</button>
+      </form>
     </div>
   </div>
 </template>
