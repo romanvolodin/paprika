@@ -94,8 +94,8 @@ async function sendMessage() {
               {{ message.created_by.first_name + ' ' + message.created_by.last_name }}
             </p>
             <blockquote class="quote" v-if="message.reply_to">
-              <p>Автор</p>
-              <p>{{ message.reply_to }}</p>
+              <p>{{ message.reply_to.created_by }}</p>
+              <p>{{ message.reply_to.text }}</p>
             </blockquote>
             <div class="text">
               {{ message.text }}

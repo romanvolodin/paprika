@@ -32,10 +32,21 @@ class VersionSerializer(serializers.ModelSerializer):
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     created_by = UserSerializer()
+    reply_to = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatMessage
         fields = "__all__"
+
+    def get_reply_to(self, obj):
+        if hasattr(obj, "reply_to") and obj.reply_to:
+            message = ChatMessageSerializer(obj.reply_to).data
+            created_by = message["created_by"]
+            return {
+                "id": message["id"],
+                "text": message["text"],
+                "created_by": f"{created_by['first_name']} {created_by['last_name']}",
+            }
 
 
 class ShotSerializer(serializers.ModelSerializer):
