@@ -31,6 +31,8 @@ class VersionSerializer(serializers.ModelSerializer):
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
+    created_by = UserSerializer()
+
     class Meta:
         model = ChatMessage
         fields = "__all__"

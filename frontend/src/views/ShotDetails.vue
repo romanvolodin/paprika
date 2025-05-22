@@ -90,7 +90,9 @@ async function sendMessage() {
       <div v-else class="chat-area">
         <div class="messages">
           <div class="message" v-for="message in _chat" :key="message.created_at">
-            <p class="author">{{ message.created_by }}</p>
+            <p class="author">
+              {{ message.created_by.first_name + ' ' + message.created_by.last_name }}
+            </p>
             <blockquote class="quote" v-if="message.reply_to">
               <p>Автор</p>
               <p>{{ message.reply_to }}</p>
