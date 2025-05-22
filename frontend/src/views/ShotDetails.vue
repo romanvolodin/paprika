@@ -73,13 +73,14 @@ async function sendMessage() {
     <div v-if="_versions.length === 0" class="empty">Версий пока нет</div>
     <div v-else class="player">
       <video
-        v-if="_versions.length > 0"
+        v-if="_versions[0].video"
         :src="_versions[0].video"
         controls
         muted
         autoplay
         loop
       ></video>
+      <img v-else :src="_versions[0].preview" alt="" />
     </div>
 
     <div class="chat">
@@ -137,6 +138,9 @@ async function sendMessage() {
   width: 100%;
 }
 .player > video {
+  width: 100%;
+}
+.player > img {
   width: 100%;
 }
 .chat {
