@@ -56,6 +56,8 @@ async function sendMessage() {
     created_at: new Date().toISOString(),
     created_by: _user.value.id,
   }
+  console.log(msg)
+
   await postMessage(msg)
   await fetchShot()
   _message.value = ''
@@ -108,10 +110,10 @@ async function sendMessage() {
             </p>
           </div>
         </div>
-        <div class="input-field">
-          <input v-model.trim="_message" />
-          <button @click="sendMessage">➜</button>
-        </div>
+      </div>
+      <div class="input-field">
+        <input v-model.trim="_message" placeholder="Сообщение..." />
+        <button @click="sendMessage">➜</button>
       </div>
     </div>
   </div>
@@ -129,6 +131,7 @@ async function sendMessage() {
 }
 .empty {
   display: flex;
+  flex-grow: 1;
   justify-content: center;
   align-items: center;
 }
@@ -180,6 +183,7 @@ async function sendMessage() {
   text-align: right;
 }
 .input-field {
+  display: flex;
   padding: 20px;
   font-size: 18px;
 }
@@ -187,5 +191,8 @@ async function sendMessage() {
 .input-field > button {
   padding: 10px;
   font-size: inherit;
+}
+.input-field > input {
+  flex-grow: 1;
 }
 </style>
