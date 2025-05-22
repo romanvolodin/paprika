@@ -6,6 +6,7 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env
+    restart: unless-stopped
 
   paprika-app:
     build: ./backend
@@ -19,6 +20,7 @@ services:
       - .env
     depends_on:
       - paprika-pg
+    restart: unless-stopped
 
   paprika-nginx:
     build:
@@ -31,6 +33,7 @@ services:
       - 80:80
     depends_on:
       - paprika-app
+    restart: unless-stopped
 
 volumes:
   postgres_data:
