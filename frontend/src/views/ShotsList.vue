@@ -1,47 +1,47 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useProjectsStore } from '@/stores/projects'
-import { useShotsStore } from '@/stores/shots'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import axios from '@/config/axiosConfig'
 
-const _project = ref(null)
+const route = useRoute()
+const projectCode = route.params.projectCode
+
 const _shots = ref([])
+const _loaded = ref(false)
+const _error = ref(null)
 
-const projectsStore = useProjectsStore()
-const shotsStore = useShotsStore()
-
-function goToShotDetails(project) {
-  router.push({
-    name: 'shot-details',
-    params: { projectCode: project.code, shotName: shot.name },
-  })
+async function fetchShots() {
+  try {
+    const response = await axios.get(`/api/projects/${projectCode}/shots/`)
+    _shots.value = response.data
+  } catch (error) {
+    _error.value = `${error.status}: ${error.response.data.detail}`
+  } finally {
+    _loaded.value = true
+  }
 }
 
 onMounted(async () => {
-  _project.value = projectsStore.currentProject
-  if (_project.value) {
-    await shotsStore.fetchShots(_project.value.code)
-    _shots.value = shotsStore.shots
-  }
+  await fetchShots()
 })
 </script>
 
 <template>
-  <div v-if="!!_shots.value" class="empty-message">
-    <p>Шотов пока нет</p>
+  <div v-if="!_loaded" class="empty">Загрузка...</div>
+
+  <div v-else-if="_error" class="error">
+    {{ _error }}
   </div>
 
   <div v-else class="shots-list">
-    <div v-if="shotsStore.error" class="error-message">
-      {{ shotsStore.error }}
-    </div>
-    <div v-else-if="shotsStore.isLoading" class="loading">Загрузка...</div>
+    <div v-if="_shots.length === 0" class="empty">Шотов пока нет</div>
+
     <div v-else class="shots-grid">
       <div v-for="shot in _shots" :key="shot.url" class="shot-card">
         <router-link
           :to="{
             name: 'shot-details',
-            params: { projectCode: _project.code, shotName: shot.name },
+            params: { projectCode: projectCode, shotName: shot.name },
           }"
         >
           <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
