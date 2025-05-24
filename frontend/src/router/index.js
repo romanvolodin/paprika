@@ -2,6 +2,7 @@ import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import ProjectList from '@/views/ProjectList.vue'
+import ProjectCreate from '@/views/ProjectCreate.vue'
 import ShotsList from '@/views/ShotsList.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -13,6 +14,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: ProjectList,
+    },
+    {
+      path: '/projects/create',
+      name: 'create-project',
+      component: ProjectCreate,
     },
     {
       path: '/login',

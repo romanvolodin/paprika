@@ -19,7 +19,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  {{ projectsStore.products }}
+  <router-link :to="{ name: 'create-project' }">Создать проект</router-link>
   <div v-if="!!_projects.value" class="empty-message">
     <p>Проектов пока нет</p>
   </div>
