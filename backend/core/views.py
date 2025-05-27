@@ -223,11 +223,12 @@ def save_multiple_uploaded_versions(request):
         if not form.is_valid():
             return render(request, "core/upload_multiple_versions.html", {"form": form})
 
+        shot_name_template = form.cleaned_data["shot_name_template"]
         versions = form.cleaned_data["versions"]
         successful_count = 0
         errors = []
         for uploaded_version in versions:
-            match = re.search(r"^PSM_CG_\d+", uploaded_version.name)
+            match = re.search(shot_name_template, uploaded_version.name)
             shot_name = match.group(0)
 
             if shot_name is None:
