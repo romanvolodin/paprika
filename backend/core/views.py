@@ -66,7 +66,6 @@ def read_xlsx(request):
         active_sheet = wb.active
         for row_number in range(start_row, end_row + 1):
             fields = {
-                "group": shot_group,
                 "created_by": created_by,
             }
 
@@ -103,7 +102,9 @@ def read_xlsx(request):
                 fields["scene"] = scene
 
             new_shots.append(Shot(**fields))
-        Shot.objects.bulk_create(new_shots)
+        created_shots = Shot.objects.bulk_create(new_shots)
+        for shot in created_shots:
+            shot.group.set([shot_group])
         return HttpResponse(f"{len(new_shots)} shot(s) created.")
     else:
         form = ReadXlsxForm()
