@@ -51,6 +51,14 @@ class ShotGroup(models.Model):
         related_name="shot_groups",
         verbose_name="проект",
     )
+    is_root = models.BooleanField(
+        default=False,
+        verbose_name="Корневая?",
+    )
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name="Дефолтная?",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
