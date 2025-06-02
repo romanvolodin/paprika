@@ -1,6 +1,6 @@
-black==24.10.*
+black==25.1.*
 djlint==1.36.*
-flake8==7.1.*
+flake8==7.2.*
 flake8-pyproject==1.2.*
-isort==5.13.*
+isort==6.0.*
 sort-requirements==1.3.*
