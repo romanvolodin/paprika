@@ -313,15 +313,6 @@ class CurrentUserView(APIView):
 class ShotViewSet(viewsets.ModelViewSet):
     queryset = Shot.objects.all()
     serializer_class = ShotSerializer
-    # permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        project_code = self.request.query_params.get("project")
-
-        if not project_code:
-            return Shot.objects.all()
-
-        return Shot.objects.filter(project__code=project_code)
 
     def list(self, request, project_code=None):
         project = get_object_or_404(Project, code=project_code)
