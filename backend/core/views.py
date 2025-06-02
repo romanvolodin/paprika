@@ -325,7 +325,8 @@ class ShotViewSet(viewsets.ModelViewSet):
 
     def list(self, request, project_code=None):
         project = get_object_or_404(Project, code=project_code)
-        serializer = ShotSerializer(project.shots, many=True, context={"request": request})
+        shot_group = get_object_or_404(ShotGroup, project=project, is_default=True)
+        serializer = ShotSerializer(shot_group.shots, many=True, context={"request": request})
         return Response(serializer.data)
 
     def retrieve(self, request, project_code=None, shot_name=None):
