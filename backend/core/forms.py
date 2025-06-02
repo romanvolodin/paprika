@@ -65,5 +65,5 @@ class UploadMultiplePreviewsForm(forms.Form):
 
 
 class UploadMultipleVersionsForm(forms.Form):
-    shot_name_template = forms.CharField(help_text="Пример: ^SHOT_CG_\d+")
+    shot_name_template = forms.CharField(help_text="Пример: ^SHOT_CG_\\d+")
     versions = MultipleFileField()
