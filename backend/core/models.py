@@ -275,6 +275,19 @@ class ShotTask(models.Model):
         related_name="shot_tasks",
         verbose_name="статус",
     )
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="assigned_tasks",
+        verbose_name="назначено",
+        null=True,
+        blank=True,
+    )
+    hours = models.FloatField(
+        verbose_name="часы",
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.shot}: {self.task} ({self.status})"

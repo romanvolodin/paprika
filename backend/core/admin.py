@@ -539,6 +539,13 @@ class StatusAdmin(admin.ModelAdmin):
 @admin.register(ShotTask)
 class ShotTaskAdmin(admin.ModelAdmin):
     save_on_top = True
+    list_display = (
+        "shot",
+        "task",
+        "hours",
+        "status",
+        "assigned_to",
+    )
 
 
 @admin.register(TmpShotPreview)
