@@ -1,7 +1,7 @@
 site_name: Паприка
 repo_name: romanvolodin/paprika
 repo_url: https://github.com/romanvolodin/paprika
-edit_uri: docs/
+edit_uri: docs/docs/
 theme:
   name: material
   language: ru
