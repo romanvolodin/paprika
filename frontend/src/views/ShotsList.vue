@@ -1,10 +1,12 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { onMounted, ref } from 'vue'
+import { h, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { getCoreRowModel } from '@tanstack/table-core'
-import { useVueTable } from '@tanstack/vue-table'
+import { FlexRender, useVueTable } from '@tanstack/vue-table'
+
+let table = null
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -15,6 +17,27 @@ const _error = ref(null)
 const _mode = ref('grid')
 
 const columns = [
+  {
+    id: 'select',
+    header: ({ table }) => {
+      console.log('внезапно', table)
+
+      return h('input', {
+        type: 'checkbox',
+        checked: table.getIsAllRowsSelected(),
+        disabled: table.getIsSomeRowsSelected(),
+        onChange: table.getToggleAllRowsSelectedHandler(),
+      })
+    },
+    cell: ({ row }) => {
+      return h('input', {
+        type: 'checkbox',
+        checked: row.getIsSelected(),
+        disabled: !row.getCanSelect(),
+        onChange: row.getToggleSelectedHandler(),
+      })
+    },
+  },
   {
     accessorKey: 'name',
     header: 'Название',
@@ -28,8 +51,7 @@ const columns = [
     header: 'Дата',
   },
 ]
-
-const table = useVueTable({ data: _shots, columns, getCoreRowModel: getCoreRowModel() })
+const _rowSelection = ref({})
 
 async function fetchShots() {
   try {
@@ -44,6 +66,23 @@ async function fetchShots() {
 
 onMounted(async () => {
   await fetchShots()
+  table = useVueTable({
+    get data() {
+      return _shots.value
+    },
+    columns,
+    state: {
+      get rowSelection() {
+        return _rowSelection.value
+      },
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: (updateOrValue) => {
+      _rowSelection.value =
+        typeof updateOrValue === 'function' ? updateOrValue(_rowSelection.value) : updateOrValue
+    },
+    getCoreRowModel: getCoreRowModel(),
+  })
 })
 </script>
 
@@ -84,14 +123,14 @@ onMounted(async () => {
           <thead>
             <tr v-for="headerRow in table.getHeaderGroups()" :key="headerRow.id">
               <th v-for="header in headerRow.headers" :key="header.id">
-                {{ header.column.columnDef.header }}
+                <FlexRender :render="header.column.columnDef.header" />
               </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in table.getRowModel().rows" :key="row.id">
               <td v-for="cell in row.getVisibleCells()" :key="cell.id">
-                {{ cell.getValue() }}
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </td>
             </tr>
           </tbody>
