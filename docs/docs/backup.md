@@ -41,3 +41,66 @@ dir=/root/paprika/backend/media_backup
 cp dump.json /var/lib/docker/volumes/paprika_media_volume/_data
 docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py loaddata media/dump.json
 ```
+
+### Бэкап данных в Git
+
+Сгенерируйте shh-ключ на сервере:
+
+```bash
+ssh-keygen
+```
+
+Теперь надо добавить ключ в аккаут на сайте вашего гит-хостинга, чтобы сервер мог заливать данные в репозиторий.
+
+Для этого выводим в терминале публичную часть ключа:
+
+```bash
+cat .ssh/id_rsa.pub
+```
+
+Публичную часть ключа надо скопировать и добавьте её в настройки аккаута на сайте вашего гит-хостинга.
+
+Создайте репозиторий на вашем гит-хостинге. В моём случае репозиторий будет называться `paprika_dumpdata`.
+
+Заходим на сервер Паприки, переходим в папку бэкапов и клонируем репозиторий.
+
+```bash
+git clone ssh://git@host/username/paprika_dumpdata.git
+```
+
+ssh сообщит, что хост неизвестен и точно ли мы хотим подключится? Отвечаем `yes`.
+
+### Добавляем запуск скрипта в Cron
+
+Открываем файл `crontab` в текстовом редакторе. Если файл не существует, он будет создан. При первом запуске команда спросит какой тексовый редактор использовать:
+
+```bash
+crontab -e
+```
+
+Добавляем в файл строчку:
+
+```crontab
+0 */2 * * * /root/paprika/deploy/backup.sh
+```
+
+Это правило будет заускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.
+
+Обычно больше ничего делать не нужно, `сron` сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис `cron`:
+
+```bash
+systemctl restart cron
+```
+
+### Запуск через systemd не проверялся
+
+Дальнейшая информация неактуальна.
+
+Создаем сервис и таймер, который будет запускаться каждые 2 часа:
+
+```bash
+ln -s paprika/deploy/paprika_backup_dumpdata.service /etc/systemd/system/paprika_backup_dumpdata.service
+ln -s paprika/deploy/paprika_backup_dumpdata.timer /etc/systemd/system/paprika_backup_dumpdata.timer
+
+systemctl daemon-reload
+```
