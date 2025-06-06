@@ -11,6 +11,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@tanstack/table-core": "^8.21.3",
+    "@tanstack/vue-table": "^8.21.3",
     "axios": "^1.7.9",
     "pinia": "^2.3.1",
     "vue": "^3.5.13",

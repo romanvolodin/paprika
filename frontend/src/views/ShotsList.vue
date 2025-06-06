@@ -1,7 +1,10 @@
 <script setup>
+import axios from '@/config/axiosConfig'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from '@/config/axiosConfig'
+
+import { getCoreRowModel } from '@tanstack/table-core'
+import { useVueTable } from '@tanstack/vue-table'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -9,6 +12,24 @@ const projectCode = route.params.projectCode
 const _shots = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
+const _mode = ref('grid')
+
+const columns = [
+  {
+    accessorKey: 'name',
+    header: 'Название',
+  },
+  {
+    accessorKey: 'rec_timecode',
+    header: 'REC TC',
+  },
+  {
+    accessorKey: 'created_at',
+    header: 'Дата',
+  },
+]
+
+const table = useVueTable({ data: _shots, columns, getCoreRowModel: getCoreRowModel() })
 
 async function fetchShots() {
   try {
@@ -36,20 +57,45 @@ onMounted(async () => {
   <div v-else class="shots-list">
     <div v-if="_shots.length === 0" class="empty">Шотов пока нет</div>
 
-    <div v-else class="shots-grid">
-      <div v-for="shot in _shots" :key="shot.url" class="shot-card">
-        <router-link
-          :to="{
-            name: 'shot-details',
-            params: { projectCode: projectCode, shotName: shot.name },
-          }"
-        >
-          <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
-          <div v-else class="shot-no-thumb">Нет превью</div>
-          <div class="shot-info">
-            {{ shot.name }}
-          </div>
-        </router-link>
+    <div v-else>
+      <div>
+        <button @click="_mode = 'list'">Список</button>
+        <button @click="_mode = 'grid'">Сетка</button>
+      </div>
+      <div v-if="_mode === 'grid'" class="shots-grid">
+        <div v-for="shot in _shots" :key="shot.url" class="shot-card">
+          <router-link
+            :to="{
+              name: 'shot-details',
+              params: { projectCode: projectCode, shotName: shot.name },
+            }"
+          >
+            <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
+            <div v-else class="shot-no-thumb">Нет превью</div>
+            <div class="shot-info">
+              {{ shot.name }}
+            </div>
+          </router-link>
+        </div>
+      </div>
+
+      <div v-else-if="_mode === 'list'">
+        <table>
+          <thead>
+            <tr v-for="headerRow in table.getHeaderGroups()" :key="headerRow.id">
+              <th v-for="header in headerRow.headers" :key="header.id">
+                {{ header.column.columnDef.header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in table.getRowModel().rows" :key="row.id">
+              <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+                {{ cell.getValue() }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -123,5 +169,15 @@ onMounted(async () => {
 
 .shot-info {
   padding: 2px 5px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 8px;
 }
 </style>
