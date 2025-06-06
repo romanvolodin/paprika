@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PROJECT_DIR="~/paprika"
-REPO_DIR="~/backup/paprika_dumpdata"
+PROJECT_DIR="/root/paprika"
+REPO_DIR="/root/backup/paprika_dumpdata"
 
 cd "$PROJECT_DIR" || exit 1
 
