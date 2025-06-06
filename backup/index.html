@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
       
 
@@ -303,6 +303,39 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Заполняем базу данными">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git" class="md-nav__link">
+    <span class="md-ellipsis">
+      Бэкап данных в Git
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cron" class="md-nav__link">
+    <span class="md-ellipsis">
+      Добавляем запуск скрипта в Cron
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#systemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Запуск через systemd не проверялся
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -354,6 +387,39 @@
       Заполняем базу данными
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Заполняем базу данными">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git" class="md-nav__link">
+    <span class="md-ellipsis">
+      Бэкап данных в Git
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cron" class="md-nav__link">
+    <span class="md-ellipsis">
+      Добавляем запуск скрипта в Cron
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#systemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Запуск через systemd не проверялся
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -417,6 +483,39 @@ dir=/root/paprika/backend/media_backup</p>
 <div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>dump.json<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
 </span></code></pre></div>
+<h3 id="git">Бэкап данных в Git</h3>
+<p>Сгенерируйте shh-ключ на сервере:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ssh-keygen
+</span></code></pre></div>
+<p>Теперь надо добавить ключ в аккаут на сайте вашего гит-хостинга, чтобы сервер мог заливать данные в репозиторий.</p>
+<p>Для этого выводим в терминале публичную часть ключа:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cat<span class="w"> </span>.ssh/id_rsa.pub
+</span></code></pre></div>
+<p>Публичную часть ключа надо скопировать и добавьте её в настройки аккаута на сайте вашего гит-хостинга.</p>
+<p>Создайте репозиторий на вашем гит-хостинге. В моём случае репозиторий будет называться <code>paprika_dumpdata</code>.</p>
+<p>Заходим на сервер Паприки, переходим в папку бэкапов и клонируем репозиторий.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>clone<span class="w"> </span>ssh://git@host/username/paprika_dumpdata.git
+</span></code></pre></div>
+<p>ssh сообщит, что хост неизвестен и точно ли мы хотим подключится? Отвечаем <code>yes</code>.</p>
+<h3 id="cron">Добавляем запуск скрипта в Cron</h3>
+<p>Открываем файл <code>crontab</code> в текстовом редакторе. Если файл не существует, он будет создан. При первом запуске команда спросит какой тексовый редактор использовать:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>crontab<span class="w"> </span>-e
+</span></code></pre></div>
+<p>Добавляем в файл строчку:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>0 */2 * * * /root/paprika/deploy/backup.sh
+</span></code></pre></div>
+<p>Это правило будет заускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.</p>
+<p>Обычно больше ничего делать не нужно, <code>сron</code> сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис <code>cron</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cron
+</span></code></pre></div>
+<h3 id="systemd">Запуск через systemd не проверялся</h3>
+<p>Дальнейшая информация неактуальна.</p>
+<p>Создаем сервис и таймер, который будет запускаться каждые 2 часа:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.service<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.service
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.timer<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.timer
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>systemctl<span class="w"> </span>daemon-reload
+</span></code></pre></div>
 
 
 
@@ -465,10 +564,10 @@ dir=/root/paprika/backend/media_backup</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>
