@@ -1,0 +1,9 @@
+[Unit]
+Description=Paprika Backup Dumpdata Service
+
+[Service]
+Type=oneshot
+ExecStart=~/paprika/deploy/backup.sh
+WorkingDirectory=~/paprika/deploy/
+User=root
+Group=root

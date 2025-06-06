@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Paprika backup dumpdata every 2 hours
+
+[Timer]
+OnCalendar=every 2 hours
+Persistent=true
+Unit=paprika_backup_dumpdata.service
+
+[Install]
+WantedBy=timers.target
