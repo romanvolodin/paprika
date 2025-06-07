@@ -1,10 +1,11 @@
 import { useAuthStore } from '@/stores/auth'
-import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
-import ProjectList from '@/views/ProjectList.vue'
 import ProjectCreate from '@/views/ProjectCreate.vue'
-import ShotsList from '@/views/ShotsList.vue'
+import ProjectList from '@/views/ProjectList.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
+import ShotsList from '@/views/ShotsList.vue'
+import TaskDetails from '@/views/TaskDetails.vue'
+import TaskList from '@/views/TaskList.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -39,6 +40,16 @@ const router = createRouter({
       path: '/:projectCode/shots/:shotName',
       name: 'shot-details',
       component: ShotDetails,
+    },
+    {
+      path: '/:projectCode/tasks',
+      name: 'tasks-by-project',
+      component: TaskList,
+    },
+    {
+      path: '/:projectCode/tasks/:taskId',
+      name: 'task-details-by-project',
+      component: TaskDetails,
     },
   ],
 })

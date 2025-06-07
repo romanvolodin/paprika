@@ -73,9 +73,19 @@ class ShotTaskSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    shots = ShotSerializer(many=True, read_only=True)
+
     class Meta:
         model = Task
-        fields = "__all__"
+        fields = [
+            "id",
+            "project",
+            "created_at",
+            "created_by",
+            "description",
+            "default_status",
+            "shots",
+        ]
 
 
 class StatusSerializer(serializers.ModelSerializer):

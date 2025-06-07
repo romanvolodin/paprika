@@ -33,6 +33,16 @@ urlpatterns = [
         views.ChatViewSet.as_view({"post": "create"}),
         name="chat-message-create",
     ),
+    path(
+        "api/projects/<str:project_code>/tasks/",
+        views.TaskViewSet.as_view({"get": "list"}),
+        name="tasks-by-project",
+    ),
+    path(
+        "api/projects/<str:project_code>/tasks/<int:task_id>",
+        views.TaskViewSet.as_view({"get": "retrieve"}),
+        name="task-details-by-project",
+    ),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/me/", views.CurrentUserView.as_view(), name="current_user"),
