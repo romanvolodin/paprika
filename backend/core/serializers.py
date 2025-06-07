@@ -60,10 +60,27 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ShotGroupSerializer(serializers.ModelSerializer):
+class ShotGroupListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShotGroup
         fields = "__all__"
+
+
+class ShotGroupDetailsSerializer(serializers.ModelSerializer):
+    shots = ShotSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ShotGroup
+        fields = [
+            "id",
+            "name",
+            "project",
+            "is_root",
+            "is_default",
+            "created_at",
+            "created_by",
+            "shots",
+        ]
 
 
 class ShotTaskSerializer(serializers.ModelSerializer):

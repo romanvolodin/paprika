@@ -30,7 +30,8 @@ from .serializers import (
     ChatMessageSerializer,
     GroupSerializer,
     ProjectSerializer,
-    ShotGroupSerializer,
+    ShotGroupDetailsSerializer,
+    ShotGroupListSerializer,
     ShotSerializer,
     ShotTaskSerializer,
     StatusSerializer,
@@ -338,9 +339,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 
 class ShotGroupViewSet(viewsets.ModelViewSet):
-    queryset = ShotGroup.objects.all().order_by("name")
-    serializer_class = ShotGroupSerializer
+    queryset = ShotGroup.objects.all().order_by("name").prefetch_related("shots")
+    serializer_class = ShotGroupDetailsSerializer
     # permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, project_code=None):
+        project = get_object_or_404(Project, code=project_code)
+        serializer = ShotGroupListSerializer(
+            project.shot_groups.order_by("name"),
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    def retrieve(self, request, project_code=None, shot_group_id=None):
+        project = get_object_or_404(Project, code=project_code)
+        shot_group = get_object_or_404(
+            ShotGroup,
+            project=project,
+            id=shot_group_id,
+        )
+        serializer = ShotGroupDetailsSerializer(shot_group, context={"request": request})
+        return Response(serializer.data)
 
 
 class ShotTaskViewSet(viewsets.ModelViewSet):

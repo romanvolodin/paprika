@@ -43,6 +43,16 @@ urlpatterns = [
         views.TaskViewSet.as_view({"get": "retrieve"}),
         name="task-details-by-project",
     ),
+    path(
+        "api/projects/<str:project_code>/shot-groups/",
+        views.ShotGroupViewSet.as_view({"get": "list"}),
+        name="shot-groups-by-project",
+    ),
+    path(
+        "api/projects/<str:project_code>/shot-groups/<int:shot_group_id>",
+        views.ShotGroupViewSet.as_view({"get": "retrieve"}),
+        name="shot-group-details-by-project",
+    ),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/me/", views.CurrentUserView.as_view(), name="current_user"),
