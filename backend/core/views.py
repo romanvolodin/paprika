@@ -35,7 +35,8 @@ from .serializers import (
     ShotSerializer,
     ShotTaskSerializer,
     StatusSerializer,
-    TaskSerializer,
+    TaskDetailsSerializer,
+    TaskListSerializer,
     UserSerializer,
     VersionSerializer,
 )
@@ -371,12 +372,12 @@ class ShotTaskViewSet(viewsets.ModelViewSet):
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all().order_by("description").prefetch_related("shots")
-    serializer_class = TaskSerializer
+    serializer_class = TaskListSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, project_code=None):
         project = get_object_or_404(Project, code=project_code)
-        serializer = TaskSerializer(
+        serializer = TaskListSerializer(
             project.tasks.order_by("description"),
             many=True,
             context={"request": request},
@@ -386,7 +387,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, project_code=None, task_id=None):
         project = get_object_or_404(Project, code=project_code)
         task = get_object_or_404(Task, project=project, id=task_id)
-        serializer = TaskSerializer(task, context={"request": request})
+        serializer = TaskDetailsSerializer(task, context={"request": request})
         return Response(serializer.data)
 
 

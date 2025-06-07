@@ -89,7 +89,13 @@ class ShotTaskSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = "__all__"
+
+
+class TaskDetailsSerializer(serializers.ModelSerializer):
     shots = ShotSerializer(many=True, read_only=True)
 
     class Meta:
