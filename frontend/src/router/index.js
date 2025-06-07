@@ -3,6 +3,8 @@ import LoginView from '@/views/LoginView.vue'
 import ProjectCreate from '@/views/ProjectCreate.vue'
 import ProjectList from '@/views/ProjectList.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
+import ShotGroupDetails from '@/views/ShotGroupDetails.vue'
+import ShotGroupList from '@/views/ShotGroupList.vue'
 import ShotsList from '@/views/ShotsList.vue'
 import TaskDetails from '@/views/TaskDetails.vue'
 import TaskList from '@/views/TaskList.vue'
@@ -50,6 +52,16 @@ const router = createRouter({
       path: '/:projectCode/tasks/:taskId',
       name: 'task-details-by-project',
       component: TaskDetails,
+    },
+    {
+      path: '/:projectCode/shot-groups',
+      name: 'shot-groups-by-project',
+      component: ShotGroupList,
+    },
+    {
+      path: '/:projectCode/shot-groups/:shotGroupId',
+      name: 'shot-group-details-by-project',
+      component: ShotGroupDetails,
     },
   ],
 })
