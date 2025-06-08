@@ -56,7 +56,7 @@ migrate.dev:
 	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py migrate
 
 update:
-  docker compose down
+	docker compose down
 	git pull
 	docker compose up --detach --build
 	docker compose exec paprika-app ./manage.py migrate
