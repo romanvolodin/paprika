@@ -54,3 +54,10 @@ collectstatic.dev:
 
 migrate.dev:
 	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py migrate
+
+update:
+  docker compose down
+	git pull
+	docker compose up --detach --build
+	docker compose exec paprika-app ./manage.py migrate
+	docker compose exec paprika-app ./manage.py collectstatic --no-input
