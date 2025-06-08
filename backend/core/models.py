@@ -227,6 +227,13 @@ class Task(models.Model):
         ),
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "description"], name="unique_task_description_per_project"
+            )
+        ]
+
     def __str__(self):
         return f"{self.project}:{self.description}"
 
