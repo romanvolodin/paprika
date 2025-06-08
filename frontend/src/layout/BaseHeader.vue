@@ -1,15 +1,32 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
+
 const _user = ref({})
+const _projectCode = ref(null)
 
 function logout() {
   auth.logout()
   router.push({ name: 'login' })
+}
+
+watch(
+  () => route.params.projectCode,
+  () => {
+    if (route.params.projectCode) {
+      _projectCode.value = route.params.projectCode
+    }
+  },
+)
+
+function goToHome() {
+  _projectCode.value = null
+  router.push({ name: 'home' })
 }
 
 onMounted(() => {
@@ -20,8 +37,22 @@ onMounted(() => {
 <template>
   <header>
     <nav>
-      <router-link :to="{ name: 'home' }">Проекты</router-link>
-      <router-link :to="{ name: 'shots' }">Шоты</router-link>
+      <router-link :to="{ name: 'home' }" @click="goToHome">Проекты</router-link>
+      <div v-if="_projectCode" class="project-subnav">
+        <b>{{ _projectCode }}</b>
+        <b>🢒</b>
+        <router-link
+          :to="{ name: 'shot-groups-by-project', params: { projectCode: _projectCode } }"
+        >
+          Группы
+        </router-link>
+        <router-link :to="{ name: 'shots-by-project', params: { projectCode: _projectCode } }">
+          Шоты
+        </router-link>
+        <router-link :to="{ name: 'tasks-by-project', params: { projectCode: _projectCode } }">
+          Задачи
+        </router-link>
+      </div>
     </nav>
 
     <div class="user" v-if="_user">
@@ -33,6 +64,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
+* {
+  text-decoration: none;
+}
 header {
   display: flex;
   justify-content: space-between;
@@ -56,5 +90,9 @@ nav {
 }
 .logout {
   padding: 0 5px;
+}
+.project-subnav {
+  display: flex;
+  gap: 20px;
 }
 </style>
