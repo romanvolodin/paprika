@@ -471,10 +471,10 @@
 </span></code></pre></div>
 <h2 id="_3">Скачать медиа с рабочего сервера</h2>
 <p>Скачать всю папку целиком:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Скачать только <code>*.jpg</code> с сохранением структуры директорий:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Важно:</p>
 <ul>
