@@ -80,6 +80,10 @@ async function sendMessage() {
   await fetchShot()
   _message.value = ''
 }
+
+function formatText(text) {
+  return text.replace(/\n/g, '<br>')
+}
 </script>
 
 <template>
@@ -119,9 +123,7 @@ async function sendMessage() {
               <p>Автор</p>
               <p>Текст цитаты</p>
             </blockquote>
-            <div class="text">
-              {{ message.text }}
-            </div>
+            <div class="text" v-html="formatText(message.text)"></div>
             <p class="date-time">
               {{
                 new Date(message.created_at).toLocaleString('ru-ru', {
