@@ -15,13 +15,13 @@ ssh paprika-prod "rm paprika/datadump.json"
 Скачать всю папку целиком:
 
 ```bash
-rsync -avz paprika-prod:/mnt/NAS/media .
+rsync -avz --progress --log-file=rsync.log paprika-prod:/mnt/NAS/media .
 ```
 
 Скачать только `*.jpg` с сохранением структуры директорий:
 
 ```bash
-rsync -avz --include='*/' --include='*.jpg' --exclude='*' paprika-prod:/mnt/NAS/media .
+rsync -avz --progress --log-file=rsync.log --include='*/' --include='*.jpg' --exclude='*' paprika-prod:/mnt/NAS/media .
 ```
 
 Важно:
