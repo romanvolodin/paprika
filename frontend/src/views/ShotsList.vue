@@ -25,11 +25,11 @@ const imageCellRenderer = (params) => {
 
 const _ag_colDefs = ref([
   { cellRenderer: imageCellRenderer, field: 'thumb', width: 200 },
-  { headerName: 'Имя', field: 'name' },
-  { field: 'rec_timecode' },
-  { field: 'group' },
-  { field: 'task' },
-  { field: 'created_at' },
+  { headerName: 'Имя', field: 'name', filter: true },
+  { field: 'rec_timecode', filter: true },
+  { field: 'group', filter: true },
+  { field: 'task', filter: true },
+  { field: 'created_at', filter: true },
 ])
 
 async function fetchShots() {
