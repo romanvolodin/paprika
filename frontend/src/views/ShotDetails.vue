@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -84,6 +84,10 @@ async function sendMessage() {
 function formatText(text) {
   return text.replace(/\n/g, '<br>')
 }
+
+function adminEditUrl(shot_id) {
+  return `http://paprika-app.ru/admin/core/shot/${shot_id}/change/`
+}
 </script>
 
 <template>
@@ -108,6 +112,7 @@ function formatText(text) {
     </div>
 
     <div class="chat">
+      <a :href="adminEditUrl(_shot.id)">{{ _shot.name }} в админке</a>
       <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
       <div v-else class="chat-area">
         <div class="messages">
