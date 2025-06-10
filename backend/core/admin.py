@@ -138,21 +138,15 @@ class ShotAdmin(admin.ModelAdmin):
         "get_version_preview",
         "get_name",
         "get_rec_timecode",
-        # "get_source_timecode",
         "get_shot_status",
         "get_shot_tasks",
-        # "comment",
         "get_chat_message",
-        # "get_latest_version",
         "get_shot_groups",
-        "created_at",
     )
     list_filter = (
-        "group__project",
+        "group",
         ShotStatusListFilter,
         "task",
-        "group",
-        "pixel_aspect",
     )
     inlines = (
         ChatMessageInline,
