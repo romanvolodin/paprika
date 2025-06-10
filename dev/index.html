@@ -26,6 +26,9 @@
     
       <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
       
 
 
@@ -53,7 +56,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -104,6 +114,42 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
     
     
       <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
@@ -330,7 +376,73 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#dev-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Настройка dev-окружения
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Настройка dev-окружения">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      ВАЖНО: На данный момент также необходимо сделать следующее
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Запуск dev-версии
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Наполняем сайт данными
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Наполняем сайт данными">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Заполняем базу данных
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Копируем медиа-файлы
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       Скачать дамп с рабочего сервера
     </span>
@@ -339,7 +451,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       Скачать медиа с рабочего сервера
     </span>
@@ -413,7 +525,73 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#dev-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Настройка dev-окружения
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Настройка dev-окружения">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      ВАЖНО: На данный момент также необходимо сделать следующее
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dev-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Запуск dev-версии
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Наполняем сайт данными
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Наполняем сайт данными">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Заполняем базу данных
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Копируем медиа-файлы
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       Скачать дамп с рабочего сервера
     </span>
@@ -422,7 +600,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       Скачать медиа с рабочего сервера
     </span>
@@ -463,18 +641,58 @@
 
 
 <h1 id="_1">Для разработчика</h1>
-<p><code>paprika-prod</code> — это ssh алиас для рабочего сервера.</p>
-<h2 id="_2">Скачать дамп с рабочего сервера</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission &gt; datadump.json&quot;</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>scp<span class="w"> </span>paprika-prod:paprika/datadump.json<span class="w"> </span>./datadump.json
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;rm paprika/datadump.json&quot;</span>
+<h2 id="dev-">Настройка dev-окружения</h2>
+<p>Для запуска Паприки нужны следующие пакеты:</p>
+<ul>
+<li><code>git</code></li>
+<li><code>make</code></li>
+<li><code>docker</code></li>
+</ul>
+<p>Для настройки dev-окружения выполните команду:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>make<span class="w"> </span>dev.init
 </span></code></pre></div>
-<h2 id="_3">Скачать медиа с рабочего сервера</h2>
+<p>Эта команда создаст необходимые контейнеры и <code>.env</code> файл в корне проекта.</p>
+<h3 id="_2">ВАЖНО: На данный момент также необходимо сделать следующее</h3>
+<ul>
+<li>Создать отдельный <code>.env</code> в корне фронтенда со следующим содержимым:</li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">VITE_API_URL</span><span class="o">=</span>http://localhost:8000/
+</span></code></pre></div>
+<p>это адрес и порт на котором запускается dev-контейнер бэкенда.</p>
+<ul>
+<li>Выполнить в корне фронтенда команду</li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>install
+</span></code></pre></div>
+<p>чтобы создать папку <code>node_modules</code>. Это необходимо для запуска контейнера со фронтендом.</p>
+<h2 id="dev-_1">Запуск dev-версии</h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>make<span class="w"> </span>dev
+</span></code></pre></div>
+<h2 id="_3">Наполняем сайт данными</h2>
+<p>Предполагается, что у вас есть дамп данных и медиа-файлы. TODO: нужен небольшой демо-проект.</p>
+<p>Ниже есть инструкция как скачать данные с рабочего сервера.</p>
+<h3 id="_4">Заполняем базу данных</h3>
+<p>Копируем дамп данных в докер и запускаем команду <code>loaddata</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/dump.json<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
+</span></code></pre></div>
+<h3 id="-">Копируем медиа-файлы</h3>
+<p>Предположим, что медиа-файлы скачаны в папку <code>paprika_media</code>. Копируем содержимое этой папки в докер:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>rsync<span class="w"> </span>-ahr<span class="w"> </span>--progress<span class="w"> </span>/path/to/paprika_media/*<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
+</span></code></pre></div>
+<p>После этого все картинки и видео должны корректно отображатся на сайте.</p>
+<h2 id="_5">Скачать дамп с рабочего сервера</h2>
+<p>Здесь и далее <code>paprika-prod</code> — это ssh алиас для рабочего сервера.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission &gt; datadump.json&quot;</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>scp<span class="w"> </span>paprika-prod:paprika/datadump.json<span class="w"> </span>./datadump.json
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;rm paprika/datadump.json&quot;</span>
+</span></code></pre></div>
+<h2 id="_6">Скачать медиа с рабочего сервера</h2>
 <p>Скачать всю папку целиком:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Скачать только <code>*.jpg</code> с сохранением структуры директорий:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Важно:</p>
 <ul>
