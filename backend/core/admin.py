@@ -140,6 +140,7 @@ class ShotAdmin(admin.ModelAdmin):
         "get_rec_timecode",
         "get_shot_status",
         "get_shot_tasks",
+        "get_assigned_to",
         "get_chat_message",
         "get_shot_groups",
     )
@@ -279,6 +280,18 @@ class ShotAdmin(admin.ModelAdmin):
             return mark_safe(template.format("#FF6600", "Есть комментарий"))
 
         return mark_safe(template.format("#fa0", "В работе"))
+
+    @admin.display(description="Назначено")
+    def get_assigned_to(self, shot):
+        assignees = [task.assigned_to for task in shot.task_statuses.all()]
+        return mark_safe(
+            " ".join(
+                [
+                    f"<img src='{assignee.avatar.url}' style='width:30px;height:30px;border-radius:50vh'>"
+                    for assignee in assignees
+                ]
+            )
+        )
 
     actions = [
         "add_shots_to_project",
