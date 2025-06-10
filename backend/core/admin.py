@@ -136,7 +136,7 @@ class ShotAdmin(admin.ModelAdmin):
     save_on_top = True
     list_display = (
         "get_version_preview",
-        "name",
+        "get_name",
         "get_rec_timecode",
         # "get_source_timecode",
         "get_shot_status",
@@ -202,6 +202,10 @@ class ShotAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    @admin.display(description="Шот")
+    def get_name(self, shot):
+        return mark_safe(f'<a href="/{shot.project.code}/shots/{shot.name}">{shot.name}</a>')
 
     @admin.display(description="TC")
     def get_rec_timecode(self, obj):
