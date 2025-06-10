@@ -125,8 +125,14 @@ function adminEditUrl(shot_id) {
               }}
             </p>
             <blockquote class="quote" v-if="message.reply_to">
-              <p>Автор</p>
-              <p>Текст цитаты</p>
+              <p>
+                {{
+                  getAuthorById(message.reply_to.created_by).first_name +
+                  ' ' +
+                  getAuthorById(message.reply_to.created_by).last_name
+                }}
+              </p>
+              <p>{{ message.reply_to.text }}</p>
             </blockquote>
             <div class="text" v-html="formatText(message.text)"></div>
             <p class="date-time">

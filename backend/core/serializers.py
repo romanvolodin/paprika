@@ -30,7 +30,15 @@ class VersionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class RepliedMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatMessage
+        fields = ("id", "created_by", "text")
+
+
 class ChatMessageSerializer(serializers.ModelSerializer):
+    reply_to = RepliedMessageSerializer()
+
     class Meta:
         model = ChatMessage
         fields = "__all__"
