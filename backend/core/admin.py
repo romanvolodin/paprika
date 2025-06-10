@@ -283,15 +283,19 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.display(description="Назначено")
     def get_assigned_to(self, shot):
-        assignees = [task.assigned_to for task in shot.task_statuses.all()]
-        return mark_safe(
-            " ".join(
-                [
+        assignees = [task.assigned_to for task in shot.task_statuses.all() if task.assigned_to]
+        html = []
+        for assignee in assignees:
+            if assignee.avatar:
+                html.append(
                     f"<img src='{assignee.avatar.url}' style='width:30px;height:30px;border-radius:50vh'>"
-                    for assignee in assignees
-                ]
-            )
-        )
+                )
+            else:
+                html.append(
+                    f"<div style='display:flex;align-items:center;justify-content:center;background-color:lightgray;width:30px;height:30px;border-radius:50vh'>{assignee.first_name[0]}</div>"
+                )
+
+        return mark_safe(" ".join(html))
 
     actions = [
         "add_shots_to_project",
