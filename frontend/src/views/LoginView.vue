@@ -43,6 +43,10 @@ const login = async () => {
 </template>
 
 <style scoped>
+* {
+  padding: 10px 20px;
+  font-size: 24px;
+}
 main {
   display: flex;
   justify-content: center;
