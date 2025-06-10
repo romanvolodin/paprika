@@ -6,6 +6,11 @@ import { useRoute } from 'vue-router'
 import { getCoreRowModel } from '@tanstack/table-core'
 import { FlexRender, useVueTable } from '@tanstack/vue-table'
 
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
+
+ModuleRegistry.registerModules([AllCommunityModule])
+import { AgGridVue } from 'ag-grid-vue3'
+
 let table = null
 
 const route = useRoute()
@@ -52,6 +57,22 @@ const columns = [
   },
 ]
 const _rowSelection = ref({})
+
+const imageCellRenderer = (params) => {
+  const img = document.createElement('img')
+  img.src = params.value
+  img.style.width = '200px'
+  return img
+}
+
+const _ag_colDefs = ref([
+  { cellRenderer: imageCellRenderer, field: 'thumb', width: 200 },
+  { headerName: 'Имя', field: 'name' },
+  { field: 'rec_timecode' },
+  { field: 'group' },
+  { field: 'task' },
+  { field: 'created_at' },
+])
 
 async function fetchShots() {
   try {
@@ -119,7 +140,7 @@ onMounted(async () => {
       </div>
 
       <div v-else-if="_mode === 'list'">
-        <table>
+        <!-- <table>
           <thead>
             <tr v-for="headerRow in table.getHeaderGroups()" :key="headerRow.id">
               <th v-for="header in headerRow.headers" :key="header.id">
@@ -134,7 +155,9 @@ onMounted(async () => {
               </td>
             </tr>
           </tbody>
-        </table>
+        </table> -->
+        <ag-grid-vue :rowData="_shots" :columnDefs="_ag_colDefs" style="height: 800px">
+        </ag-grid-vue>
       </div>
     </div>
   </div>
