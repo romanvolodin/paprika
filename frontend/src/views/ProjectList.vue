@@ -20,7 +20,7 @@ onMounted(async () => {
 
 <template>
   <router-link :to="{ name: 'create-project' }">Создать проект</router-link>
-  <div v-if="!!_projects" class="empty-message">
+  <div v-if="!_projects" class="empty-message">
     <p>Проектов пока нет</p>
   </div>
 
