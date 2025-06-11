@@ -1,13 +1,14 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
 
 ModuleRegistry.registerModules([AllCommunityModule])
 import { AgGridVue } from 'ag-grid-vue3'
 
+const router = useRouter()
 const route = useRoute()
 const projectCode = route.params.projectCode
 
@@ -16,15 +17,38 @@ const _loaded = ref(false)
 const _error = ref(null)
 const _mode = ref('grid')
 
-const imageCellRenderer = (params) => {
+const imageLinkCellRenderer = (params) => {
+  const link = document.createElement('a')
+  link.href = router.resolve({
+    name: 'shot-details',
+    params: { projectCode: projectCode, shotName: params.data.name },
+  }).href
+  link.style.display = 'block'
+  link.style.height = '100%'
+  link.style.width = '100%'
+  link.style.textDecoration = 'none'
+
   const img = document.createElement('img')
   img.src = params.value
-  img.style.width = '200px'
-  return img
+  img.style.height = '100%'
+  img.style.width = 'auto'
+  img.style.objectFit = 'cover'
+
+  link.appendChild(img)
+
+  link.addEventListener('click', (e) => {
+    e.preventDefault()
+    router.push({
+      name: 'shot-details',
+      params: { projectCode: projectCode, shotName: params.data.name },
+    })
+  })
+
+  return link
 }
 
 const _ag_colDefs = ref([
-  { cellRenderer: imageCellRenderer, field: 'thumb', width: 200 },
+  { cellRenderer: imageLinkCellRenderer, field: 'thumb', width: 200 },
   { headerName: 'Имя', field: 'name', filter: true },
   { field: 'rec_timecode', filter: true },
   { field: 'group', filter: true },
