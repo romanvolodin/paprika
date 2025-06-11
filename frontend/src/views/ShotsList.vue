@@ -50,7 +50,7 @@ const imageLinkCellRenderer = (params) => {
 }
 
 const _ag_colDefs = ref([
-  { cellRenderer: imageLinkCellRenderer, field: 'thumb', width: 200 },
+  { cellRenderer: imageLinkCellRenderer, field: 'thumb', width: 390 },
   { headerName: 'Имя', field: 'name', filter: true },
   { field: 'rec_timecode', filter: true },
   { field: 'group', filter: true },
@@ -111,6 +111,7 @@ onMounted(async () => {
           :rowData="_shots"
           :columnDefs="_ag_colDefs"
           :localeText="AG_GRID_LOCALE_RU"
+          :rowHeight="150"
           style="height: 800px"
         >
         </ag-grid-vue>
