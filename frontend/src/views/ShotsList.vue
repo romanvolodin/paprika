@@ -4,9 +4,11 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
+import { AgGridVue } from 'ag-grid-vue3'
+
+import AG_GRID_LOCALE_RU from '@/config/agGridLocaleRu'
 
 ModuleRegistry.registerModules([AllCommunityModule])
-import { AgGridVue } from 'ag-grid-vue3'
 
 const router = useRouter()
 const route = useRoute()
@@ -105,7 +107,12 @@ onMounted(async () => {
       </div>
 
       <div v-else-if="_mode === 'list'">
-        <ag-grid-vue :rowData="_shots" :columnDefs="_ag_colDefs" style="height: 800px">
+        <ag-grid-vue
+          :rowData="_shots"
+          :columnDefs="_ag_colDefs"
+          :localeText="AG_GRID_LOCALE_RU"
+          style="height: 800px"
+        >
         </ag-grid-vue>
       </div>
     </div>
