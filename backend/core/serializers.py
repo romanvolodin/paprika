@@ -37,7 +37,10 @@ class RepliedMessageSerializer(serializers.ModelSerializer):
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
-    reply_to = RepliedMessageSerializer(required=False, allow_null=True)
+    reply_to = serializers.PrimaryKeyRelatedField(
+        queryset=ChatMessage.objects.all(), required=False, allow_null=True
+    )
+    reply_to_display = RepliedMessageSerializer(source="reply_to", read_only=True)
 
     class Meta:
         model = ChatMessage

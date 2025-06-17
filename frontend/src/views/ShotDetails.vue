@@ -17,7 +17,8 @@ const _chat = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
 const _message = ref('')
-
+const _reply_to_message = ref(null)
+const _reply_to_id = ref(null)
 const _all_users = ref([])
 
 const getAuthorById = (id) => {
@@ -69,16 +70,17 @@ async function sendMessage() {
   }
   const msg = {
     shot: _shot.value.id,
-    reply_to: null,
+    reply_to: _reply_to_id.value,
     text: _message.value,
     created_at: new Date().toISOString(),
     created_by: _user.value.id,
   }
-  console.log(msg)
 
   await postMessage(msg)
   await fetchShot()
   _message.value = ''
+  _reply_to_id.value = null
+  _reply_to_message.value = null
 }
 
 function formatText(text) {
@@ -87,6 +89,20 @@ function formatText(text) {
 
 function adminEditUrl(shot_id) {
   return `http://paprika-app.ru/admin/core/shot/${shot_id}/change/`
+}
+
+function replyToMessage(message) {
+  _reply_to_id.value = message.id
+  _reply_to_message.value = {
+    id: message.id,
+    text: message.text,
+    created_by: message.created_by,
+  }
+}
+
+function exitReplyMode() {
+  _reply_to_id.value = null
+  _reply_to_message.value = null
 }
 </script>
 
@@ -117,22 +133,26 @@ function adminEditUrl(shot_id) {
       <div v-else class="chat-area">
         <div class="messages">
           <div class="message" v-for="message in _chat" :key="message.created_at">
-            <p class="author">
-              {{
-                getAuthorById(message.created_by).first_name +
-                ' ' +
-                getAuthorById(message.created_by).last_name
-              }}
-            </p>
-            <blockquote class="quote" v-if="message.reply_to">
-              <p>
+            <div class="message-header">
+              <p class="author">
                 {{
-                  getAuthorById(message.reply_to.created_by).first_name +
+                  getAuthorById(message.created_by).first_name +
                   ' ' +
-                  getAuthorById(message.reply_to.created_by).last_name
+                  getAuthorById(message.created_by).last_name
                 }}
               </p>
-              <p>{{ message.reply_to.text }}</p>
+              <span class="reply" @click="replyToMessage(message)">Ответить</span>
+            </div>
+
+            <blockquote class="quote" v-if="message.reply_to_display">
+              <p>
+                {{
+                  getAuthorById(message.reply_to_display.created_by).first_name +
+                  ' ' +
+                  getAuthorById(message.reply_to_display.created_by).last_name
+                }}
+              </p>
+              <p>{{ message.reply_to_display.text }}</p>
             </blockquote>
             <div class="text" v-html="formatText(message.text)"></div>
             <p class="date-time">
@@ -148,6 +168,20 @@ function adminEditUrl(shot_id) {
           </div>
         </div>
       </div>
+      <blockquote class="reply-mode" v-if="_reply_to_message">
+        <div>
+          <p>
+            В ответ
+            {{
+              getAuthorById(_reply_to_message.created_by).first_name +
+              ' ' +
+              getAuthorById(_reply_to_message.created_by).last_name
+            }}
+          </p>
+          <p>{{ _reply_to_message.text }}</p>
+        </div>
+        <button class="exit-reply-mode" @click="exitReplyMode">⨯</button>
+      </blockquote>
       <form @submit.prevent="sendMessage" class="input-field">
         <input v-model.trim="_message" placeholder="Сообщение..." />
         <button type="submit">➜</button>
@@ -205,6 +239,18 @@ function adminEditUrl(shot_id) {
   background-color: hsl(83, 10%, 92%);
   padding: 10px;
 }
+.message-header {
+  display: flex;
+  justify-content: space-between;
+}
+.reply {
+  display: none;
+  opacity: 0.4;
+  cursor: pointer;
+}
+.message:hover .reply {
+  display: inline;
+}
 .author {
   font-weight: bold;
 }
@@ -231,5 +277,22 @@ function adminEditUrl(shot_id) {
 }
 .input-field > input {
   flex-grow: 1;
+}
+.reply-mode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.exit-reply-mode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 10px;
+  outline: none;
+  border: none;
+  background: none;
+  width: 40px;
+  height: 40px;
+  font-size: 30px;
 }
 </style>
