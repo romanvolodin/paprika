@@ -37,7 +37,7 @@ class RepliedMessageSerializer(serializers.ModelSerializer):
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
-    reply_to = RepliedMessageSerializer()
+    reply_to = RepliedMessageSerializer(required=False, allow_null=True)
 
     class Meta:
         model = ChatMessage
