@@ -16,6 +16,7 @@ from .forms import (
     AddСommentToShotForm,
 )
 from .models import (
+    Attachment,
     ChatMessage,
     Project,
     Shot,
@@ -570,4 +571,9 @@ class TmpShotPreview(admin.ModelAdmin):
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
+    save_on_top = True
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
     save_on_top = True

@@ -1,6 +1,7 @@
 from colorfield.fields import ColorField
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import now
 
 
 def version_upload_path(version, filename):
@@ -13,6 +14,12 @@ def shot_preview_upload_path(preview, filename):
     shot = preview.shot
     project = shot.group.all()[0].project.code
     return f"{project}/{shot}/preview/{filename}"
+
+
+def attachment_upload_path(attachment, filename):
+    today = now().date()
+    project_code = attachment.message.shot.project.code
+    return f"{project_code}/{today.year}/{today.month:02d}/{today.day:02d}/{filename}"
 
 
 class Project(models.Model):
@@ -341,3 +348,29 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.shot}:{self.created_by.first_name}:{self.text[:15]}"
+
+
+class Attachment(models.Model):
+    message = models.ForeignKey(
+        ChatMessage,
+        on_delete=models.PROTECT,
+        related_name="attachments",
+        null=True,
+        blank=True,
+    )
+    file = models.FileField(upload_to=attachment_upload_path)
+    preview = models.ImageField(
+        upload_to=attachment_upload_path,
+        null=True,
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="attachments",
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.file.name
