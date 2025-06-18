@@ -1,7 +1,17 @@
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 
-from core.models import ChatMessage, Project, Shot, ShotGroup, ShotTask, Status, Task, Version
+from core.models import (
+    Attachment,
+    ChatMessage,
+    Project,
+    Shot,
+    ShotGroup,
+    ShotTask,
+    Status,
+    Task,
+    Version,
+)
 from users.models import User
 
 
@@ -30,6 +40,12 @@ class VersionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = "__all__"
+
+
 class RepliedMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
@@ -41,6 +57,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         queryset=ChatMessage.objects.all(), required=False, allow_null=True
     )
     reply_to_display = RepliedMessageSerializer(source="reply_to", read_only=True)
+    attachments = AttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = ChatMessage

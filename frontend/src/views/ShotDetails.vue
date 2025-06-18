@@ -154,6 +154,13 @@ function exitReplyMode() {
               </p>
               <p>{{ message.reply_to_display.text }}</p>
             </blockquote>
+            <div v-if="message.attachments" class="attachments-wrapper">
+              <div v-for="attachment in message.attachments" :key="attachment" class="attachment">
+                <a :href="attachment.file" target="_blank">
+                  <img :src="attachment.file" />
+                </a>
+              </div>
+            </div>
             <div class="text" v-html="formatText(message.text)"></div>
             <p class="date-time">
               {{
@@ -294,5 +301,26 @@ function exitReplyMode() {
   width: 40px;
   height: 40px;
   font-size: 30px;
+}
+.attachments-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  margin: 5px 0;
+  max-width: 600px;
+}
+.attachment {
+  border-radius: 5px;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.attachment img {
+  filter: brightness(0.75);
+  aspect-ratio: 1;
+  width: 100%;
+  object-fit: cover;
+}
+.attachment img:hover {
+  filter: brightness(1);
 }
 </style>
