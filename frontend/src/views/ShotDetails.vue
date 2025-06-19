@@ -20,6 +20,7 @@ const _message = ref('')
 const _reply_to_message = ref(null)
 const _reply_to_id = ref(null)
 const _all_users = ref([])
+const _attachments = ref([])
 
 const getAuthorById = (id) => {
   return _all_users.value.find((user) => {
@@ -74,7 +75,9 @@ async function sendMessage() {
     text: _message.value,
     created_at: new Date().toISOString(),
     created_by: _user.value.id,
+    attachments: _attachments.value,
   }
+  console.log(msg)
 
   await postMessage(msg)
   await fetchShot()
@@ -103,6 +106,10 @@ function replyToMessage(message) {
 function exitReplyMode() {
   _reply_to_id.value = null
   _reply_to_message.value = null
+}
+
+function setAttanchments(event) {
+  _attachments.value = event.target.files
 }
 </script>
 
@@ -190,8 +197,14 @@ function exitReplyMode() {
         <button class="exit-reply-mode" @click="exitReplyMode">⨯</button>
       </blockquote>
       <form @submit.prevent="sendMessage" class="input-field">
-        <input v-model.trim="_message" placeholder="Сообщение..." />
-        <button type="submit">➜</button>
+        <div class="form-row">
+          <input v-model.trim="_message" placeholder="Сообщение..." />
+          <button type="submit">➜</button>
+        </div>
+
+        <div class="form-row">
+          <input @change="setAttanchments" type="file" multiple />
+        </div>
       </form>
     </div>
   </div>
@@ -272,17 +285,16 @@ function exitReplyMode() {
   opacity: 0.4;
   text-align: right;
 }
-.input-field {
+.form-row {
   display: flex;
-  padding: 20px;
   font-size: 18px;
 }
-.input-field > input,
-.input-field > button {
+.form-row > input,
+.form-row > button {
   padding: 10px;
   font-size: inherit;
 }
-.input-field > input {
+.form-row > input {
   flex-grow: 1;
 }
 .reply-mode {
