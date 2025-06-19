@@ -202,9 +202,9 @@ function setAttanchments(event) {
           <button type="submit">➜</button>
         </div>
 
-        <div class="form-row">
+        <!--div class="form-row">
           <input @change="setAttanchments" type="file" multiple />
-        </div>
+        </div-->
       </form>
     </div>
   </div>
