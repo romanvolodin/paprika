@@ -22,7 +22,16 @@ def attachment_upload_path(attachment, filename):
     return f"{project_code}/{today.year}/{today.month:02d}/{today.day:02d}/{filename}"
 
 
+def project_thumb_upload_path(project, filename):
+    return f"{project.code}/thumb/{filename}"
+
+
 class Project(models.Model):
+    thumb = models.ImageField(
+        upload_to=project_thumb_upload_path,
+        null=True,
+        blank=True,
+    )
     name = models.CharField(
         "название",
         max_length=150,
