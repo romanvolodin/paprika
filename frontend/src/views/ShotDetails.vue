@@ -21,6 +21,7 @@ const _reply_to_message = ref(null)
 const _reply_to_id = ref(null)
 const _all_users = ref([])
 const _attachments = ref([])
+const _selected_version = ref(null)
 
 const getAuthorById = (id) => {
   return _all_users.value.find((user) => {
@@ -48,6 +49,7 @@ async function fetchShot() {
     const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
     _shot.value = response.data
     _versions.value = response.data.versions
+    _selected_version.value = response.data.versions.at(-1)
     _chat.value = response.data.chat_messages
   } catch (error) {
     _error.value = `${error.status}: ${error.response.data.detail}`
@@ -111,6 +113,10 @@ function exitReplyMode() {
 function setAttanchments(event) {
   _attachments.value = event.target.files
 }
+
+function setSelectedVersion(version) {
+  _selected_version.value = version
+}
 </script>
 
 <template>
@@ -124,14 +130,26 @@ function setAttanchments(event) {
     <div v-if="_versions.length === 0" class="empty">Версий пока нет</div>
     <div v-else class="player">
       <video
-        v-if="_versions[0].video"
-        :src="_versions[0].video"
+        v-if="_selected_version.video"
+        :src="_selected_version.video"
         controls
         muted
         autoplay
         loop
       ></video>
-      <img v-else :src="_versions[0].preview" alt="" />
+      <img v-else :src="_selected_version.preview" alt="" />
+
+      <div class="versions-panel">
+        <div
+          class="version"
+          v-for="version in _versions.reverse()"
+          :key="version"
+          @click="setSelectedVersion(version)"
+        >
+          <img :src="version.preview" />
+          <p>{{ version.name }}</p>
+        </div>
+      </div>
     </div>
 
     <div class="chat">
@@ -232,7 +250,9 @@ function setAttanchments(event) {
   width: 100%;
 }
 .player > video {
+  aspect-ratio: 2 / 1;
   width: 100%;
+  object-fit: cover;
 }
 .player > img {
   width: 100%;
@@ -334,5 +354,32 @@ function setAttanchments(event) {
 }
 .attachment img:hover {
   filter: brightness(1);
+}
+.versions-panel {
+  display: flex;
+  gap: 5px;
+}
+.version {
+  position: relative;
+  filter: brightness(0.75);
+  cursor: pointer;
+  border-radius: 5px;
+  width: 160px;
+  height: 90px;
+  overflow: hidden;
+}
+.version:hover {
+  filter: brightness(1);
+}
+.version img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.version p {
+  position: absolute;
+  top: 0;
+  padding: 5px 10px;
+  color: white;
 }
 </style>
