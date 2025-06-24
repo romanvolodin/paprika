@@ -9,10 +9,8 @@
       
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../backup/">
       
-      
-        <link rel="next" href="../dev-prod/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +18,7 @@
     
     
       
-        <title>Бэкап данных - Паприка</title>
+        <title>Запуск production версии для разработки - Паприка</title>
       
     
     
@@ -72,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#_1" class="md-skip">
+        <a href="#production" class="md-skip">
           Перейти к содержанию
         </a>
       
@@ -108,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Бэкап данных
+              Запуск production версии для разработки
             
           </span>
         </div>
@@ -346,6 +344,29 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Бэкап данных
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -363,7 +384,7 @@
   
   
   <span class="md-ellipsis">
-    Бэкап данных
+    Запуск production версии для разработки
     
   </span>
   
@@ -376,7 +397,7 @@
   
   
   <span class="md-ellipsis">
-    Бэкап данных
+    Запуск production версии для разработки
     
   </span>
   
@@ -399,9 +420,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Дублируем переменные окружения
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
-      Бэкап медиа
+      Настраиваем переменные окружения для фронтенда
     </span>
   </a>
   
@@ -410,42 +440,9 @@
         <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
-      Заполняем базу данными
+      Запускаем
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Заполняем базу данными">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#git" class="md-nav__link">
-    <span class="md-ellipsis">
-      Бэкап данных в Git
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cron" class="md-nav__link">
-    <span class="md-ellipsis">
-      Добавляем запуск скрипта в Cron
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск через systemd не проверялся
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -453,29 +450,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dev-prod/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Запуск production версии для разработки
-    
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -515,9 +489,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Дублируем переменные окружения
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
-      Бэкап медиа
+      Настраиваем переменные окружения для фронтенда
     </span>
   </a>
   
@@ -526,42 +509,9 @@
         <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     <span class="md-ellipsis">
-      Заполняем базу данными
+      Запускаем
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Заполняем базу данными">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#git" class="md-nav__link">
-    <span class="md-ellipsis">
-      Бэкап данных в Git
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cron" class="md-nav__link">
-    <span class="md-ellipsis">
-      Добавляем запуск скрипта в Cron
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск через systemd не проверялся
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -581,7 +531,7 @@
 
 
   
-    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/dev/backup.md" title="Редактировать страницу" class="md-content__button md-icon">
+    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/dev/dev-prod.md" title="Редактировать страницу" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -590,73 +540,27 @@
     
       
     
-    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/dev/backup.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
+    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/dev/dev-prod.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="_1">Бэкап данных</h1>
-<p>Ниже даны команды для использования во время разработки.</p>
-<p>Для боевого сервера нужно убрать аргумент <code>--file docker-compose-dev.yml</code>.</p>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>dumpdata<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w"> </span>--format<span class="o">=</span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w"> </span>--indent<span class="o">=</span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w"> </span>--natural-primary<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w"> </span>--natural-foreign<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w"> </span>--exclude<span class="w"> </span>sessions.session<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w"> </span>--exclude<span class="w"> </span>auth.permission<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w"> </span>--exclude<span class="w"> </span>admin.logentry<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w"> </span>--exclude<span class="w"> </span>contenttypes<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w"> </span>--output<span class="w"> </span>dump.json
+<h1 id="production">Запуск production версии для разработки</h1>
+<p>Это может быть полезно когда какие-то ошибки вылазят только на production версии Паприки. Я столкнулся с этим когда при разработке всё было хорошо, а на боевом сервере попытка открыть страницу шота с несколькими версиями вешала вкладку браузера.</p>
+<p>Оказалось, что <code>vite</code> при сборке фронтенда хитро оптимизирует код и локально всё работало хорошо. Как выяснилось позже, в консоли браузера была сообщении о бесконечной рекурсии, но т.к. визуально всё работало, то консоль я не открывал.</p>
+<h2 id="_1">Дублируем переменные окружения</h2>
+<p>Нужно скопировать содержимое <code>.env.dev</code> в <code>.env</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cp<span class="w"> </span>.env.dev<span class="w"> </span>.env
 </span></code></pre></div>
-<p>Не сохраняются <code>auth.permissions</code> и <code>contenttypes</code>, чтобы избежать ошибки <code>IntegrityError</code> при дальнейшей загрузке данных. Происходит она потому, что Джанго заново генерит id записей. Эту ошибку должны исправить ключи <code>--natural-primary</code> и <code>--natural-foreign</code>, но указанные таблицы пока всё равно не сохраняются. Считай это данью традиции.</p>
-<p>Таблицы <code>sessions.session</code> и <code>admin.logentry</code> игнорируются, ибо не содержат важных данных (это сессии и лог действий в админке).</p>
-<h2 id="_2">Бэкап медиа</h2>
-<p>Установка Я.Диска</p>
-<p>echo "deb http://repo.yandex.ru/yandex-disk/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/yandex-disk.list &gt; /dev/null &amp;&amp; wget http://repo.yandex.ru/yandex-disk/YANDEX-DISK-KEY.GPG -O- | sudo apt-key add - &amp;&amp; sudo apt-get update &amp;&amp; sudo apt-get install -y yandex-disk</p>
-<p>yandex-disk token -- Важно! выберите правильный аккаунт в браузере</p>
-<p>Если ошиблись -- удалите .config/yandex-disk/passwd и попробуйте заново</p>
-<p>Указываем папку
-nano .config/yandex-disk/config.cfg
-dir=/root/paprika/backend/media_backup</p>
-<h2 id="_3">Заполняем базу данными</h2>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>dump.json<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
+<h2 id="_2">Настраиваем переменные окружения для фронтенда</h2>
+<p>Нужно прописать <code>http://localhost</code> в <code>frontend/.env</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">VITE_API_URL</span><span class="o">=</span>http://localhost
 </span></code></pre></div>
-<h3 id="git">Бэкап данных в Git</h3>
-<p>Сгенерируйте shh-ключ на сервере:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ssh-keygen
-</span></code></pre></div>
-<p>Теперь надо добавить ключ в аккаут на сайте вашего гит-хостинга, чтобы сервер мог заливать данные в репозиторий.</p>
-<p>Для этого выводим в терминале публичную часть ключа:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cat<span class="w"> </span>.ssh/id_rsa.pub
-</span></code></pre></div>
-<p>Публичную часть ключа надо скопировать и добавьте её в настройки аккаута на сайте вашего гит-хостинга.</p>
-<p>Создайте репозиторий на вашем гит-хостинге. В моём случае репозиторий будет называться <code>paprika_dumpdata</code>.</p>
-<p>Заходим на сервер Паприки, переходим в папку бэкапов и клонируем репозиторий.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>clone<span class="w"> </span>ssh://git@host/username/paprika_dumpdata.git
-</span></code></pre></div>
-<p>ssh сообщит, что хост неизвестен и точно ли мы хотим подключится? Отвечаем <code>yes</code>.</p>
-<h3 id="cron">Добавляем запуск скрипта в Cron</h3>
-<p>Открываем файл <code>crontab</code> в текстовом редакторе. Если файл не существует, он будет создан. При первом запуске команда спросит какой тексовый редактор использовать:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>crontab<span class="w"> </span>-e
-</span></code></pre></div>
-<p>Добавляем в файл строчку:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>0 */2 * * * /root/paprika/deploy/backup.sh
-</span></code></pre></div>
-<p>Это правило будет заускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.</p>
-<p>Обычно больше ничего делать не нужно, <code>сron</code> сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис <code>cron</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cron
-</span></code></pre></div>
-<h3 id="systemd">Запуск через systemd не проверялся</h3>
-<p>Дальнейшая информация неактуальна.</p>
-<p>Создаем сервис и таймер, который будет запускаться каждые 2 часа:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.service<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.service
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.timer<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.timer
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>systemctl<span class="w"> </span>daemon-reload
+<p>Либо можно временно переместить или переименовать этот файл.</p>
+<h2 id="_3">Запускаем</h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>make<span class="w"> </span>run
 </span></code></pre></div>
 
 
