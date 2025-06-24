@@ -142,8 +142,8 @@ function setSelectedVersion(version) {
       <div class="versions-panel">
         <div
           class="version"
-          v-for="version in _versions.reverse()"
-          :key="version"
+          v-for="version in _versions"
+          :key="version.id"
           @click="setSelectedVersion(version)"
         >
           <img :src="version.preview" />
