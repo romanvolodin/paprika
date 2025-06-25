@@ -65,7 +65,7 @@ sudo rsync -ahr --progress /path/to/paprika_media/* /var/lib/docker/volumes/papr
 
 ## Скачать дамп с рабочего сервера
 
-Здесь и далее `paprika-prod` — это ssh алиас для рабочего сервера.
+Здесь и далее `paprika-prod` — это [ssh алиас](../admin/ssh-alias.md) для рабочего сервера.
 
 ```bash
 ssh paprika-prod "cd paprika/ && docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission > datadump.json"
