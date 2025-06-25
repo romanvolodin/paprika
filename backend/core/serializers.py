@@ -34,10 +34,18 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-class VersionSerializer(serializers.ModelSerializer):
+class VersionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Version
-        fields = "__all__"
+        fields = (
+            "id",
+            "url",
+            "name",
+            "video",
+            "preview",
+            "created_at",
+            "created_by",
+        )
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
@@ -80,6 +88,15 @@ class ShotSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         latest_version = shot.versions.latest()
         return request.build_absolute_uri(latest_version.preview.url)
+
+    def to_representation(self, shot):
+        data = super().to_representation(shot)
+        data["versions"] = VersionSerializer(
+            shot.versions.order_by("-created_at"),
+            many=True,
+            context={"request": self.context.get("request")},
+        ).data
+        return data
 
 
 class ProjectSerializer(serializers.ModelSerializer):
