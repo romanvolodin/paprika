@@ -29,6 +29,11 @@ urlpatterns = [
         name="shot-detail",
     ),
     path(
+        "api/projects/<str:project_code>/shots/<str:shot_name>/versions/",
+        views.VersionViewSet.as_view({"post": "create"}),
+        name="create-shot-version",
+    ),
+    path(
         "api/projects/<str:project_code>/shots/<str:shot_name>/chat_messages/",
         views.ChatViewSet.as_view({"post": "create"}),
         name="chat-message-create",

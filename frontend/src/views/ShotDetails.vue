@@ -22,6 +22,7 @@ const _reply_to_id = ref(null)
 const _all_users = ref([])
 const _attachments = ref([])
 const _selected_version = ref(null)
+const _versionUploading = ref(false)
 
 const getAuthorById = (id) => {
   return _all_users.value.find((user) => {
@@ -117,6 +118,31 @@ function setAttanchments(event) {
 function setSelectedVersion(version) {
   _selected_version.value = version
 }
+
+const handleVersionUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  _versionUploading.value = true
+
+  const formData = new FormData()
+  formData.append('shot', _shot.value.id)
+  formData.append('file', file)
+
+  try {
+    await axios.post(`/api/projects/${projectCode}/shots/${shotName}/versions/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    await fetchShot()
+  } catch (error) {
+    console.error('Ошибка загрузки:', error)
+  } finally {
+    _versionUploading.value = false
+  }
+}
 </script>
 
 <template>
@@ -140,6 +166,18 @@ function setSelectedVersion(version) {
       <img v-else :src="_selected_version.preview" alt="" />
 
       <div class="versions-panel">
+        <form method="post" enctype="multipart/form-data">
+          <input type="file" id="uploading-version" hidden @change="handleVersionUpload" />
+          <label for="uploading-version" class="version version-upload">
+            <div v-if="_versionUploading" class="version-loader">
+              <div class="spinner"></div>
+              <p>Загружается...</p>
+            </div>
+
+            <p v-else>Загрузить версию</p>
+          </label>
+        </form>
+
         <div
           class="version"
           v-for="version in _versions"
@@ -358,12 +396,13 @@ function setSelectedVersion(version) {
 .versions-panel {
   display: flex;
   gap: 5px;
+  padding: 0 5px;
 }
 .version {
   position: relative;
   filter: brightness(0.75);
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 7px;
   width: 160px;
   height: 90px;
   overflow: hidden;
@@ -381,5 +420,42 @@ function setSelectedVersion(version) {
   top: 0;
   padding: 5px 10px;
   color: white;
+}
+.version-upload {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px dashed gray;
+}
+.version-upload:hover {
+  background-color: #eee;
+}
+.version-upload p {
+  position: relative;
+  color: #ccc;
+  font-size: 14px;
+}
+.version-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

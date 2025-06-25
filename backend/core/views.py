@@ -402,6 +402,33 @@ class VersionViewSet(viewsets.ModelViewSet):
     serializer_class = VersionSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, project_code=None, shot_name=None):
+        project = get_object_or_404(Project, code=project_code)
+        shot = get_object_or_404(Shot, project=project, name=shot_name)
+        uploaded_version = request.FILES.get("file")
+        version = Version.objects.create(
+            name=Path(uploaded_version.name).stem,
+            shot=shot,
+            video=uploaded_version,
+            created_by=request.user,
+        )
+
+        cmd = [
+            "ffmpeg",
+            "-hide_banner",
+            "-y",
+            "-i",
+            version.video.path,
+            "-frames:v",
+            "1",
+            f"{version.video.path}.jpg",
+        ]
+        subprocess.run(cmd)
+        version.preview = f"{version.video.name}.jpg"
+        version.save()
+        serializer = VersionSerializer(version, context={"request": request})
+        return Response(serializer.data)
+
 
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = ChatMessage.objects.all().order_by("-created_at")
