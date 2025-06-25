@@ -288,9 +288,10 @@ const handleVersionUpload = async (event) => {
   width: 100%;
 }
 .player > video {
-  aspect-ratio: 2 / 1;
+  background-color: #000;
+  aspect-ratio: 16 / 9;
   width: 100%;
-  object-fit: cover;
+  max-width: 1400px;
 }
 .player > img {
   width: 100%;
