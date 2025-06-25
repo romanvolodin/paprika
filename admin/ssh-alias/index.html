@@ -9,25 +9,25 @@
       
       
       
-        <link rel="prev" href="../admin/ssh-alias/">
+        <link rel="prev" href="../check-free-space/">
       
       
-        <link rel="next" href="backup/">
+        <link rel="next" href="../../dev/">
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
-        <title>Настройка dev-окружения - Паприка</title>
+        <title>Алиасы в SSH - Паприка</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -46,7 +46,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dev-" class="md-skip">
+        <a href="#ssh" class="md-skip">
           Перейти к содержанию
         </a>
       
@@ -88,7 +88,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Верхний колонтитул">
-    <a href=".." title="Паприка" class="md-header__button md-logo" aria-label="Паприка" data-md-component="logo">
+    <a href="../.." title="Паприка" class="md-header__button md-logo" aria-label="Паприка" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Настройка dev-окружения
+              Алиасы в SSH
             
           </span>
         </div>
@@ -234,7 +234,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Навигация" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Паприка" class="md-nav__button md-logo" aria-label="Паприка" data-md-component="logo">
+    <a href="../.." title="Паприка" class="md-nav__button md-logo" aria-label="Паприка" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -264,7 +264,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -275,97 +275,6 @@
   
 
       </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Admin
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            Admin
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../admin/check-free-space/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Как узнать свободное место на диске
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../admin/ssh-alias/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Алиасы в SSH
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -387,15 +296,15 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    Dev
+    Admin
     
   </span>
   
@@ -403,12 +312,35 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Dev
+            Admin
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../check-free-space/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Как узнать свободное место на диске
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -431,7 +363,7 @@
   
   
   <span class="md-ellipsis">
-    Настройка dev-окружения
+    Алиасы в SSH
     
   </span>
   
@@ -444,7 +376,7 @@
   
   
   <span class="md-ellipsis">
-    Настройка dev-окружения
+    Алиасы в SSH
     
   </span>
   
@@ -467,69 +399,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
+  <a href="#ssh_1" class="md-nav__link">
     <span class="md-ellipsis">
-      ВАЖНО: На данный момент также необходимо сделать следующее
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dev-_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск dev-версии
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Наполняем сайт данными
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Наполняем сайт данными">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Заполняем базу данных
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-" class="md-nav__link">
-    <span class="md-ellipsis">
-      Копируем медиа-файлы
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      Скачать дамп с рабочего сервера
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      Скачать медиа с рабочего сервера
+      Файл конфигурации SSH
     </span>
   </a>
   
@@ -544,6 +416,51 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Dev
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Dev
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -551,7 +468,30 @@
   
   
     <li class="md-nav__item">
-      <a href="backup/" class="md-nav__link">
+      <a href="../../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Настройка dev-окружения
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/backup/" class="md-nav__link">
         
   
   
@@ -574,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="dev-prod/" class="md-nav__link">
+      <a href="../../dev/dev-prod/" class="md-nav__link">
         
   
   
@@ -624,69 +564,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
+  <a href="#ssh_1" class="md-nav__link">
     <span class="md-ellipsis">
-      ВАЖНО: На данный момент также необходимо сделать следующее
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dev-_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск dev-версии
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      Наполняем сайт данными
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Наполняем сайт данными">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      Заполняем базу данных
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-" class="md-nav__link">
-    <span class="md-ellipsis">
-      Копируем медиа-файлы
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      Скачать дамп с рабочего сервера
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      Скачать медиа с рабочего сервера
+      Файл конфигурации SSH
     </span>
   </a>
   
@@ -708,7 +588,7 @@
 
 
   
-    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/dev/index.md" title="Редактировать страницу" class="md-content__button md-icon">
+    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/admin/ssh-alias.md" title="Редактировать страницу" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -717,71 +597,32 @@
     
       
     
-    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/dev/index.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
+    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/admin/ssh-alias.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="dev-">Настройка dev-окружения</h1>
-<p>Для запуска Паприки нужны следующие пакеты:</p>
-<ul>
-<li><code>git</code></li>
-<li><code>make</code></li>
-<li><code>docker</code></li>
-</ul>
-<p>Для настройки dev-окружения выполните команду:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>make<span class="w"> </span>dev.init
+<h1 id="ssh">Алиасы в SSH</h1>
+<p>Алиасы в SSH позволяют упростить подключение к удаленным серверам, присваивая им короткие имена. Вместо постоянного набора, например, <code>ssh paprika-user@123.45.67.89 -p 2222</code> можно будет использовать <code>ssh paprika-prod</code>. А с автодополнением достаточно будет набрать только <code>ssh p</code> и нажать <code>Tab</code></p>
+<h2 id="ssh_1">Файл конфигурации SSH</h2>
+<p>Обычно файл конфигурации SSH находится в домашней директории пользователя по пути <code>~/.ssh/config</code>. Открываем файл для редактирования (если файл не существует он будет создан):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nano<span class="w"> </span>~/.ssh/config
 </span></code></pre></div>
-<p>Эта команда создаст необходимые контейнеры и <code>.env</code> файл в корне проекта.</p>
-<h2 id="_1">ВАЖНО: На данный момент также необходимо сделать следующее</h2>
-<ul>
-<li>Создать отдельный <code>.env</code> в корне фронтенда со следующим содержимым:</li>
-</ul>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">VITE_API_URL</span><span class="o">=</span>http://localhost:8000/
+<p>Добавьте алиас:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Host<span class="w"> </span>&lt;имя_алиаса&gt;
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>HostName<span class="w"> </span>&lt;имя_хоста_или_IP_адрес&gt;
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>User<span class="w"> </span>&lt;имя_пользователя&gt;
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>Port<span class="w"> </span>&lt;порт_ssh&gt;
 </span></code></pre></div>
-<p>это адрес и порт на котором запускается dev-контейнер бэкенда.</p>
-<ul>
-<li>Выполнить в корне фронтенда команду</li>
-</ul>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>install
+<p>Пример:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Host<span class="w"> </span>paprika-prod
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>HostName<span class="w"> </span><span class="m">123</span>.45.67.89
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>User<span class="w"> </span>paprika-user
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>Port<span class="w"> </span><span class="m">2222</span>
 </span></code></pre></div>
-<p>чтобы создать папку <code>node_modules</code>. Это необходимо для запуска контейнера со фронтендом.</p>
-<h2 id="dev-_1">Запуск dev-версии</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>make<span class="w"> </span>dev
-</span></code></pre></div>
-<h2 id="_2">Наполняем сайт данными</h2>
-<p>Предполагается, что у вас есть дамп данных и медиа-файлы. TODO: нужен небольшой демо-проект.</p>
-<p>Ниже есть инструкция как скачать данные с рабочего сервера.</p>
-<h3 id="_3">Заполняем базу данных</h3>
-<p>Копируем дамп данных в докер и запускаем команду <code>loaddata</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/dump.json<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
-</span></code></pre></div>
-<h3 id="-">Копируем медиа-файлы</h3>
-<p>Предположим, что медиа-файлы скачаны в папку <code>paprika_media</code>. Копируем содержимое этой папки в докер:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>rsync<span class="w"> </span>-ahr<span class="w"> </span>--progress<span class="w"> </span>/path/to/paprika_media/*<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
-</span></code></pre></div>
-<p>После этого все картинки и видео должны корректно отображатся на сайте.</p>
-<h2 id="_4">Скачать дамп с рабочего сервера</h2>
-<p>Здесь и далее <code>paprika-prod</code> — это <a href="../admin/ssh-alias/">ssh алиас</a> для рабочего сервера.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission &gt; datadump.json&quot;</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>scp<span class="w"> </span>paprika-prod:paprika/datadump.json<span class="w"> </span>./datadump.json
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;rm paprika/datadump.json&quot;</span>
-</span></code></pre></div>
-<h2 id="_5">Скачать медиа с рабочего сервера</h2>
-<p>Скачать всю папку целиком:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
-</span></code></pre></div>
-<p>Скачать только <code>*.jpg</code> с сохранением структуры директорий:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
-</span></code></pre></div>
-<p>Важно:</p>
-<ul>
-<li>Порядок include/exclude важен. Сначала разрешаем вход в директории (*/) и включаем нужные файлы, потом всё остальное исключаем.</li>
-<li>Убедитесь, что на стороне источника есть доступ к файлам (права чтения).</li>
-</ul>
+<p>Если порт используется дефолтный, его можно не указывать.</p>
 
 
 
@@ -830,10 +671,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>
