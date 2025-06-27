@@ -61,6 +61,9 @@ def read_xlsx(request):
         pixel_aspect_column = form.cleaned_data["pixel_aspect_column"]
         retime_speed_column = form.cleaned_data["retime_speed_column"]
         scene_column = form.cleaned_data["scene_column"]
+        task_column = form.cleaned_data["task_column"]
+
+        status_not_started = Status.objects.get(title="Не начата")
 
         new_shots = []
 
@@ -69,6 +72,7 @@ def read_xlsx(request):
         for row_number in range(start_row, end_row + 1):
             fields = {
                 "created_by": created_by,
+                "project": shot_group.project,
             }
 
             name = active_sheet[f"{shot_name_column}{row_number}"].value
@@ -103,10 +107,28 @@ def read_xlsx(request):
             if scene is not None:
                 fields["scene"] = scene
 
-            new_shots.append(Shot(**fields))
-        created_shots = Shot.objects.bulk_create(new_shots)
-        for shot in created_shots:
+            task_description = active_sheet[f"{task_column}{row_number}"].value
+            if task_description is not None:
+                try:
+                    task = Task.objects.get(description=task_description)
+                except ObjectDoesNotExist:
+                    task = Task.objects.create(
+                        project=shot_group.project,
+                        created_by=created_by,
+                        description=task_description,
+                        default_status=status_not_started,
+                    )
+
+            shot = Shot.objects.create(**fields)
             shot.group.set([shot_group])
+
+            new_shots.append(shot)
+
+            ShotTask.objects.create(
+                shot=shot,
+                task=task,
+                status=status_not_started,
+            )
         return HttpResponse(f"{len(new_shots)} shot(s) created.")
     else:
         form = ReadXlsxForm()

@@ -19,6 +19,7 @@ class ReadXlsxForm(forms.Form):
     pixel_aspect_column = forms.CharField(help_text="(A,B,C,...)")
     retime_speed_column = forms.CharField(help_text="(A,B,C,...)")
     scene_column = forms.CharField(help_text="(A,B,C,...)")
+    task_column = forms.CharField(help_text="(A,B,C,...)")
 
 
 class AddShotsToGroupsForm(forms.Form):
