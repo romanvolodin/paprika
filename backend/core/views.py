@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, get_object_or_404, render
+from django.utils import timezone
 from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
@@ -448,6 +449,14 @@ class VersionViewSet(viewsets.ModelViewSet):
         subprocess.run(cmd)
         version.preview = f"{version.video.name}.jpg"
         version.save()
+
+        ChatMessage.objects.create(
+            shot=shot,
+            created_by=request.user,
+            created_at=timezone.now(),
+            text=f"Загружена версия {version.name}",
+        )
+
         serializer = VersionSerializer(version, context={"request": request})
         return Response(serializer.data)
 
