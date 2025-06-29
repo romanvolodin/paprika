@@ -4,6 +4,9 @@ import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+import {useTextareaAutosize} from '@vueuse/core'
+
+
 const route = useRoute()
 const projectCode = route.params.projectCode
 const shotName = route.params.shotName
@@ -16,13 +19,15 @@ const _versions = ref([])
 const _chat = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
-const _message = ref('')
+// const _message = ref('')
 const _reply_to_message = ref(null)
 const _reply_to_id = ref(null)
 const _all_users = ref([])
 const _attachments = ref([])
 const _selected_version = ref(null)
 const _versionUploading = ref(false)
+
+const { textarea: userMessageTextarea, input: _message } = useTextareaAutosize({ styleProp: 'minHeight' })
 
 const getAuthorById = (id) => {
   return _all_users.value.find((user) => {
@@ -254,7 +259,12 @@ const handleVersionUpload = async (event) => {
       </blockquote>
       <form @submit.prevent="sendMessage" class="input-field">
         <div class="form-row">
-          <input v-model.trim="_message" placeholder="Сообщение..." />
+          <textarea
+            ref="userMessageTextarea"
+            v-model="_message"
+            class="resize-none"
+            placeholder="Сообщение..."
+          ></textarea>
           <button type="submit">➜</button>
         </div>
 
@@ -353,7 +363,7 @@ const handleVersionUpload = async (event) => {
   padding: 10px;
   font-size: inherit;
 }
-.form-row > input {
+.form-row > textarea {
   flex-grow: 1;
 }
 .reply-mode {
