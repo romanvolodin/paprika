@@ -438,7 +438,14 @@ class ShotAdmin(admin.ModelAdmin):
 
         wb = Workbook()
         ws = wb.active
-        ws.append(("№", "Название шота", "Задачи"))
+        ws.append(
+            (
+                "№",
+                "Название шота",
+                "Таймкод",
+                "Задачи",
+            )
+        )
         for counter, shot in enumerate(queryset, start=1):
             counter_cell = ws.cell(row=counter + 1, column=1, value=counter)
             counter_cell.alignment = Alignment(vertical="top", horizontal="left")
@@ -446,9 +453,12 @@ class ShotAdmin(admin.ModelAdmin):
             name_cell = ws.cell(row=counter + 1, column=2, value=shot.name)
             name_cell.alignment = Alignment(vertical="top", horizontal="left")
 
+            name_cell = ws.cell(row=counter + 1, column=3, value=shot.rec_timecode)
+            name_cell.alignment = Alignment(vertical="top", horizontal="left")
+
             ws.cell(
                 row=counter + 1,
-                column=3,
+                column=4,
                 value="\n".join([task.description for task in shot.task.all()]),
             )
 
