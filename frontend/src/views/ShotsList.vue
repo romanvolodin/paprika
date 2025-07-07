@@ -22,15 +22,14 @@ const _selectedStatuses = ref([])
 const _isStatusFilterInverted = ref(false)
 
 const shot_status_colors = {
-  "Нет задач": "#CCCCCC",
-  "Не начат": "#D40000",
-  "В работе": "#FFAA00",
-  "Готов": "#009900",
-  "Есть комментарий": "#FF6600",
-  "Принят": "#0088CC",
-  "Отдан": "#7700BE",
-  "Отмена": "#999999",
-
+  'Нет задач': '#CCCCCC',
+  'Не начат': '#D40000',
+  'В работе': '#FFAA00',
+  Готов: '#009900',
+  'Есть комментарий': '#FF6600',
+  Принят: '#0088CC',
+  Отдан: '#7700BE',
+  Отмена: '#999999',
 }
 
 const imageLinkCellRenderer = (params) => {
@@ -95,16 +94,16 @@ const statuses = computed(() => {
 const filteredShots = computed(() => {
   if (_selectedStatuses.value.length === 0) return _shots.value
 
- return _shots.value.filter(task => {
-        const matches = _selectedStatuses.value.includes(task.status);
-        return _isStatusFilterInverted.value ? !matches : matches;
-      });
+  return _shots.value.filter((task) => {
+    const matches = _selectedStatuses.value.includes(task.status)
+    return _isStatusFilterInverted.value ? !matches : matches
+  })
 })
 
 const selectedShots = computed(() => {
- return _shots.value.filter(shot => {
-      return shot.is_selected === true
-    });
+  return _shots.value.filter((shot) => {
+    return shot.is_selected === true
+  })
 })
 
 function toggleShotSelection(shot) {
@@ -136,9 +135,15 @@ function toggleShotSelection(shot) {
         <button @click="_mode = 'grid'">Сетка</button>
       </div>
       <div v-if="_mode === 'grid'" class="shots-grid">
-        <div v-for="shot in filteredShots" :key="shot.url" class="shot-card" :class="{'shot-card-selected': shot.is_selected}" @click.alt="toggleShotSelection(shot)">
+        <div
+          v-for="shot in filteredShots"
+          :key="shot.url"
+          class="shot-card"
+          :class="{ 'shot-card-selected': shot.is_selected }"
+          @click.alt="toggleShotSelection(shot)"
+        >
           <label class="shot-checkbox">
-            <input type="checkbox" v-model="shot.is_selected">
+            <input type="checkbox" v-model="shot.is_selected" />
           </label>
 
           <router-link
@@ -147,7 +152,11 @@ function toggleShotSelection(shot) {
               params: { projectCode: projectCode, shotName: shot.name },
             }"
           >
-          <span class="shot-status" :style="{'background-color': shot_status_colors[shot.status]}">{{ shot.status }}</span>
+            <span
+              class="shot-status"
+              :style="{ 'background-color': shot_status_colors[shot.status] }"
+              >{{ shot.status }}</span
+            >
 
             <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
             <div v-else class="shot-no-thumb">Нет превью</div>
@@ -174,7 +183,7 @@ function toggleShotSelection(shot) {
       <div>
         <h3>Статус</h3>
 
-        <p style="margin-bottom: 10px;">
+        <p style="margin-bottom: 10px">
           <label>
             <input type="checkbox" v-model="_isStatusFilterInverted" />
             Инвертировать фильтр
@@ -182,10 +191,14 @@ function toggleShotSelection(shot) {
         </p>
 
         <p v-for="status in statuses" :key="status">
-          <label >
-          <input type="checkbox" :value="status" v-model="_selectedStatuses">
-          <span class="shot-status-filter" :style="{'background-color': shot_status_colors[status]}">{{ status }}</span>
-        </label>
+          <label>
+            <input type="checkbox" :value="status" v-model="_selectedStatuses" />
+            <span
+              class="shot-status-filter"
+              :style="{ 'background-color': shot_status_colors[status] }"
+              >{{ status }}</span
+            >
+          </label>
         </p>
       </div>
     </aside>
@@ -212,8 +225,8 @@ function toggleShotSelection(shot) {
 }
 
 .shots-list {
-  padding: 1rem;
   display: flex;
+  padding: 1rem;
 }
 
 .shots-area {
@@ -243,10 +256,10 @@ function toggleShotSelection(shot) {
 }
 
 .shot-card {
+  position: relative;
   transition: transform 0.1s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  position: relative;
 }
 
 .shot-card-selected {
@@ -258,34 +271,34 @@ function toggleShotSelection(shot) {
 }
 .shot-checkbox {
   position: absolute;
-  width: 80px;
-  height: 80px;
+  z-index: 1;
   padding: 10px;
   padding-left: 13px;
-  z-index: 1;
+  width: 80px;
+  height: 80px;
 }
-.shot-checkbox > input[type="checkbox"] {
+.shot-checkbox > input[type='checkbox'] {
   display: none;
 }
-.shot-checkbox > input[type="checkbox"]:checked,
-.shot-checkbox:hover > input[type="checkbox"] {
+.shot-checkbox > input[type='checkbox']:checked,
+.shot-checkbox:hover > input[type='checkbox'] {
   display: block;
 }
 .shot-status {
-  color:#fff;
-  padding:2px 7px;
   position: absolute;
   right: 0;
-  border-radius: 5px;
   margin: 5px;
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: #fff;
   font-size: 12px;
 }
 
 .shot-status-filter {
-  color:#fff;
-  padding:2px 7px;
-  border-radius: 5px;
   margin: 5px;
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: #fff;
   font-size: 12px;
 }
 
@@ -320,8 +333,8 @@ td {
 }
 
 .filter-panel {
-  max-width: 300px;
-  padding: 20px;
   flex-shrink: 1;
+  padding: 20px;
+  max-width: 300px;
 }
 </style>
