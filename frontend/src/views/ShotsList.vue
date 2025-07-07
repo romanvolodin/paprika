@@ -100,13 +100,27 @@ const filteredShots = computed(() => {
         return _isStatusFilterInverted.value ? !matches : matches;
       });
 })
+
+const selectedShots = computed(() => {
+ return _shots.value.filter(shot => {
+      return shot.is_selected === true
+    });
+})
+
+function toggleShotSelection(shot) {
+  shot.is_selected = !shot.is_selected
+}
 </script>
 
 <template>
-  <h1 v-if="filteredShots">
+  <header class="shots-header">
+    <h1 v-if="filteredShots">
       Шоты
       <sub>({{ filteredShots.length }})</sub>
     </h1>
+    <div v-if="selectedShots.length > 0">Выделено: {{ selectedShots.length }}</div>
+  </header>
+
   <div v-if="!_loaded" class="empty">Загрузка...</div>
 
   <div v-else-if="_error" class="error">
@@ -122,7 +136,11 @@ const filteredShots = computed(() => {
         <button @click="_mode = 'grid'">Сетка</button>
       </div>
       <div v-if="_mode === 'grid'" class="shots-grid">
-        <div v-for="shot in filteredShots" :key="shot.url" class="shot-card">
+        <div v-for="shot in filteredShots" :key="shot.url" class="shot-card" :class="{'shot-card-selected': shot.is_selected}" @click.alt="toggleShotSelection(shot)">
+          <label class="shot-checkbox">
+            <input type="checkbox" v-model="shot.is_selected">
+          </label>
+
           <router-link
             :to="{
               name: 'shot-details',
@@ -130,6 +148,7 @@ const filteredShots = computed(() => {
             }"
           >
           <span class="shot-status" :style="{'background-color': shot_status_colors[shot.status]}">{{ shot.status }}</span>
+
             <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
             <div v-else class="shot-no-thumb">Нет превью</div>
             <div class="shot-info">
@@ -186,6 +205,11 @@ const filteredShots = computed(() => {
   width: 100%;
   height: 90vh;
 }
+.shots-header {
+  display: flex;
+  align-items: end;
+  gap: 30px;
+}
 
 .shots-list {
   padding: 1rem;
@@ -225,10 +249,28 @@ const filteredShots = computed(() => {
   position: relative;
 }
 
+.shot-card-selected {
+  border: 3px solid #ff00ff;
+}
+
 .shot-card:hover {
   transform: translateY(-4px);
 }
-
+.shot-checkbox {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  padding: 10px;
+  padding-left: 13px;
+  z-index: 1;
+}
+.shot-checkbox > input[type="checkbox"] {
+  display: none;
+}
+.shot-checkbox > input[type="checkbox"]:checked,
+.shot-checkbox:hover > input[type="checkbox"] {
+  display: block;
+}
 .shot-status {
   color:#fff;
   padding:2px 7px;
