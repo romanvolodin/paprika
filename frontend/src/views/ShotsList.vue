@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
@@ -20,6 +20,7 @@ const _error = ref(null)
 const _mode = ref('grid')
 const _selectedStatuses = ref([])
 const _isStatusFilterInverted = ref(false)
+const _addTaskPanel = ref(null)
 
 const shot_status_colors = {
   'Нет задач': '#CCCCCC',
@@ -109,6 +110,22 @@ const selectedShots = computed(() => {
 function toggleShotSelection(shot) {
   shot.is_selected = !shot.is_selected
 }
+
+function handleKeyDown(event) {
+  if (event.code === 'KeyT') {
+    if (_addTaskPanel.value && !_addTaskPanel.value.open) {
+      _addTaskPanel.value.showModal()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 
 <template>
@@ -203,6 +220,19 @@ function toggleShotSelection(shot) {
       </div>
     </aside>
   </div>
+
+  <dialog ref="_addTaskPanel">
+    <header>
+      <h2>Добавить задачи</h2>
+      <button @click="_addTaskPanel.close()"> 𐄂 </button>
+    </header>
+
+    <div class="dialog-content">...</div>
+
+    <footer>
+      <button>Добавить задачи</button>
+    </footer>
+  </dialog>
 </template>
 
 <style scoped>
@@ -336,5 +366,28 @@ td {
   flex-shrink: 1;
   padding: 20px;
   max-width: 300px;
+}
+dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: none;
+  padding: 10px;
+  width: 700px;
+}
+dialog > header {
+  display: flex;
+  justify-content: space-between;
+}
+dialog > header > button {
+  padding: 10px;
+}
+dialog > footer {
+  display: flex;
+  justify-content: end;
+}
+dialog > footer > button {
+  padding: 10px;
 }
 </style>
