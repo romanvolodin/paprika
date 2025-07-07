@@ -4,8 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import {useTextareaAutosize} from '@vueuse/core'
-
+import { useTextareaAutosize } from '@vueuse/core'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -27,7 +26,9 @@ const _attachments = ref([])
 const _selected_version = ref(null)
 const _versionUploading = ref(false)
 
-const { textarea: userMessageTextarea, input: _message } = useTextareaAutosize({ styleProp: 'minHeight' })
+const { textarea: userMessageTextarea, input: _message } = useTextareaAutosize({
+  styleProp: 'minHeight',
+})
 
 const getAuthorById = (id) => {
   return _all_users.value.find((user) => {
