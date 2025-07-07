@@ -74,6 +74,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 class ShotSerializer(serializers.ModelSerializer):
     thumb = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     versions = VersionSerializer(many=True, read_only=True)
     chat_messages = ChatMessageSerializer(many=True, read_only=True)
 
@@ -88,6 +89,36 @@ class ShotSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         latest_version = shot.versions.latest()
         return request.build_absolute_uri(latest_version.preview.url)
+
+    def get_status(self, shot):
+        statuses = [
+            shot_task.status.title
+            for shot_task in shot.task_statuses.all()
+            if shot_task.task.description != "Выдать материал"
+        ]
+
+        if set() == set(statuses):
+            return "Нет задач"
+
+        if set(("Не начата",)) == set(statuses):
+            return "Не начат"
+
+        if set(("Отмена",)) == set(statuses):
+            return "Отмена"
+
+        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
+            return "Принят"
+
+        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова")) == set(statuses):
+            return "Готов"
+
+        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано")) == set(statuses):
+            return "Отдан"
+
+        if "Есть комментарий" in statuses:
+            return "Есть комментарий"
+
+        return "В работе"
 
     def to_representation(self, shot):
         data = super().to_representation(shot)

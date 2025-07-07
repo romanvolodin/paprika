@@ -19,6 +19,18 @@ const _loaded = ref(false)
 const _error = ref(null)
 const _mode = ref('grid')
 
+const shot_status_colors = {
+  "Нет задач": "#CCCCCC",
+  "Не начат": "#D40000",
+  "В работе": "#FFAA00",
+  "Готов": "#009900",
+  "Есть комментарий": "#FF6600",
+  "Принят": "#0088CC",
+  "Отдан": "#7700BE",
+  "Отмена": "#999999",
+
+}
+
 const imageLinkCellRenderer = (params) => {
   const link = document.createElement('a')
   link.href = router.resolve({
@@ -52,6 +64,7 @@ const imageLinkCellRenderer = (params) => {
 const _ag_colDefs = ref([
   { cellRenderer: imageLinkCellRenderer, field: 'thumb', width: 390 },
   { headerName: 'Имя', field: 'name', filter: true },
+  { headerName: 'Статус', field: 'status', filter: true },
   { field: 'rec_timecode', filter: true },
   { field: 'group', filter: true },
   { field: 'task', filter: true },
@@ -97,6 +110,7 @@ onMounted(async () => {
               params: { projectCode: projectCode, shotName: shot.name },
             }"
           >
+          <span class="shot-status" :style="{'background-color': shot_status_colors[shot.status]}">{{ shot.status }}</span>
             <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
             <div v-else class="shot-no-thumb">Нет превью</div>
             <div class="shot-info">
@@ -164,10 +178,21 @@ onMounted(async () => {
   transition: transform 0.1s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  position: relative;
 }
 
 .shot-card:hover {
   transform: translateY(-4px);
+}
+
+.shot-status {
+  color:#fff;
+  padding:2px 7px;
+  position: absolute;
+  right: 0;
+  border-radius: 5px;
+  margin: 5px;
+  font-size: 12px;
 }
 
 .shot-image {
