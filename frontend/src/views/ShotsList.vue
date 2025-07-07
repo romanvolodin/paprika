@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
@@ -18,6 +18,8 @@ const _shots = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
 const _mode = ref('grid')
+const _selectedStatuses = ref([])
+const _isStatusFilterInverted = ref(false)
 
 const shot_status_colors = {
   "Нет задач": "#CCCCCC",
@@ -85,6 +87,19 @@ async function fetchShots() {
 onMounted(async () => {
   await fetchShots()
 })
+
+const statuses = computed(() => {
+  return Object.keys(shot_status_colors)
+})
+
+const filteredShots = computed(() => {
+  if (_selectedStatuses.value.length === 0) return _shots.value
+
+ return _shots.value.filter(task => {
+        const matches = _selectedStatuses.value.includes(task.status);
+        return _isStatusFilterInverted.value ? !matches : matches;
+      });
+})
 </script>
 
 <template>
@@ -97,13 +112,13 @@ onMounted(async () => {
   <div v-else class="shots-list">
     <div v-if="_shots.length === 0" class="empty">Шотов пока нет</div>
 
-    <div v-else>
+    <div v-else class="shots-area">
       <div>
         <button @click="_mode = 'list'">Список</button>
         <button @click="_mode = 'grid'">Сетка</button>
       </div>
       <div v-if="_mode === 'grid'" class="shots-grid">
-        <div v-for="shot in _shots" :key="shot.url" class="shot-card">
+        <div v-for="shot in filteredShots" :key="shot.url" class="shot-card">
           <router-link
             :to="{
               name: 'shot-details',
@@ -131,6 +146,28 @@ onMounted(async () => {
         </ag-grid-vue>
       </div>
     </div>
+
+    <aside class="filter-panel">
+      <div>
+        <h3>Статус</h3>
+        <p v-if="filteredShots">
+          Отфильтровано шотов: {{ filteredShots.length }}
+        </p>
+        <p style="margin-bottom: 10px;">
+          <label>
+            <input type="checkbox" v-model="_isStatusFilterInverted" />
+            Инвертировать фильтр
+          </label>
+        </p>
+
+        <p v-for="status in statuses" :key="status">
+          <label >
+          <input type="checkbox" :value="status" v-model="_selectedStatuses">
+          <span class="shot-status-filter" :style="{'background-color': shot_status_colors[status]}">{{ status }}</span>
+        </label>
+        </p>
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -150,6 +187,11 @@ onMounted(async () => {
 
 .shots-list {
   padding: 1rem;
+  display: flex;
+}
+
+.shots-area {
+  flex-grow: 1;
 }
 
 .error-message {
@@ -195,6 +237,14 @@ onMounted(async () => {
   font-size: 12px;
 }
 
+.shot-status-filter {
+  color:#fff;
+  padding:2px 7px;
+  border-radius: 5px;
+  margin: 5px;
+  font-size: 12px;
+}
+
 .shot-image {
   width: 100%;
   height: 200px;
@@ -223,5 +273,11 @@ th,
 td {
   border: 1px solid #ccc;
   padding: 8px;
+}
+
+.filter-panel {
+  max-width: 300px;
+  padding: 20px;
+  flex-shrink: 1;
 }
 </style>
