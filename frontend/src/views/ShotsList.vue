@@ -103,6 +103,10 @@ const filteredShots = computed(() => {
 </script>
 
 <template>
+  <h1 v-if="filteredShots">
+      Шоты
+      <sub>({{ filteredShots.length }})</sub>
+    </h1>
   <div v-if="!_loaded" class="empty">Загрузка...</div>
 
   <div v-else-if="_error" class="error">
@@ -150,9 +154,7 @@ const filteredShots = computed(() => {
     <aside class="filter-panel">
       <div>
         <h3>Статус</h3>
-        <p v-if="filteredShots">
-          Отфильтровано шотов: {{ filteredShots.length }}
-        </p>
+
         <p style="margin-bottom: 10px;">
           <label>
             <input type="checkbox" v-model="_isStatusFilterInverted" />
