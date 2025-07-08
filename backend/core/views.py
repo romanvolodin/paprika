@@ -436,12 +436,29 @@ class VersionViewSet(viewsets.ModelViewSet):
             created_by=request.user,
         )
 
+        duration = float(
+            subprocess.check_output(
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    version.video.path,
+                ]
+            )
+        )
+
         cmd = [
             "ffmpeg",
             "-hide_banner",
             "-y",
             "-i",
             version.video.path,
+            "-ss",
+            str(duration / 2),
             "-frames:v",
             "1",
             f"{version.video.path}.jpg",
