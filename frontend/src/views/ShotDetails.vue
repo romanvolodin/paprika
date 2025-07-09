@@ -18,7 +18,6 @@ const _versions = ref([])
 const _chat = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
-// const _message = ref('')
 const _reply_to_message = ref(null)
 const _reply_to_id = ref(null)
 const _all_users = ref([])
@@ -268,10 +267,6 @@ const handleVersionUpload = async (event) => {
           ></textarea>
           <button type="submit">➜</button>
         </div>
-
-        <!--div class="form-row">
-          <input @change="setAttanchments" type="file" multiple />
-        </div-->
       </form>
     </div>
   </div>
