@@ -116,7 +116,7 @@ function exitReplyMode() {
   _reply_to_message.value = null
 }
 
-function setAttanchments(event) {
+function setAttachments(event) {
   _attachments.value = event.target.files
 }
 
@@ -147,6 +147,27 @@ const handleVersionUpload = async (event) => {
   } finally {
     _versionUploading.value = false
   }
+}
+
+const _attachmentPreviews = ref([])
+
+const handleFileChange = (event) => {
+  setAttachments(event)
+
+  const files = Array.from(event.target.files)
+  _attachmentPreviews.value = []
+
+  files.forEach((file) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      _attachmentPreviews.value.push({
+        name: file.name,
+        type: file.type,
+        url: e.target.result,
+      })
+    }
+    reader.readAsDataURL(file)
+  })
 }
 </script>
 
@@ -257,8 +278,30 @@ const handleVersionUpload = async (event) => {
         </div>
         <button class="exit-reply-mode" @click="exitReplyMode">⨯</button>
       </blockquote>
-      <form @submit.prevent="sendMessage" class="input-field">
+
+      <div v-if="_attachmentPreviews.length" class="attachments-wrapper">
+        <div v-for="attachment in _attachmentPreviews" :key="attachment" class="attachment">
+          <img :src="attachment.url" />
+        </div>
+      </div>
+
+      <form
+        @submit.prevent="sendMessage"
+        class="input-field"
+        method="post"
+        enctype="multipart/form-data"
+      >
         <div class="form-row">
+          <label>
+            <input
+              type="file"
+              id="uploading-attachments"
+              @change="handleFileChange"
+              multiple
+              hidden
+            />
+            📎
+          </label>
           <textarea
             ref="userMessageTextarea"
             v-model="_message"
@@ -354,10 +397,14 @@ const handleVersionUpload = async (event) => {
   display: flex;
   font-size: 18px;
 }
-.form-row > input,
+.form-row > label,
 .form-row > button {
   padding: 10px;
   font-size: inherit;
+}
+.form-row > label:hover,
+.form-row > button:hover {
+  background-color: #eee;
 }
 .form-row > textarea {
   flex-grow: 1;
