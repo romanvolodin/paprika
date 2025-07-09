@@ -254,7 +254,7 @@ const handleVersionUpload = async (event) => {
               getAuthorById(_reply_to_message.created_by).last_name
             }}
           </p>
-          <p>{{ _reply_to_message.text }}</p>
+          <p class="truncate">{{ _reply_to_message.text }}</p>
         </div>
         <button class="exit-reply-mode" @click="exitReplyMode">⨯</button>
       </blockquote>
@@ -469,5 +469,13 @@ const handleVersionUpload = async (event) => {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.truncate {
+  /* FIXME: Ширина должна подстраиваться под ширину чата, а не быть фиксированной */
+  width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
