@@ -124,8 +124,11 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         notification_message = (
             f"*{author.first_name} {author.last_name}:*\n"
             f">{escaped_text.replace('\n', '\n>')}\n"
-            f"[{shot.name.replace('_', '\_')}]"
-            "(http://paprika-app.ru/{shot.project.code}/shots/{shot.name})"
+            "[{}](http://paprika-app.ru/{}/shots/{})".format(
+                shot.name.replace("_", "\_"),
+                shot.project.code,
+                shot.name,
+            )
         )
 
         for tg_id in ids_to_notify:
