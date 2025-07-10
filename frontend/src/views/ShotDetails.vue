@@ -187,7 +187,21 @@ const handleFileChange = (event) => {
   </div>
 
   <div v-else class="wrapper">
-    <div v-if="_versions.length === 0" class="empty">Версий пока нет</div>
+    <div v-if="_versions.length === 0" class="empty">
+      <p>Версий пока нет</p>
+
+      <form method="post" enctype="multipart/form-data">
+          <input type="file" id="uploading-version" hidden @change="handleVersionUpload" />
+          <label for="uploading-version" class="version version-upload">
+            <div v-if="_versionUploading" class="version-loader">
+              <div class="spinner"></div>
+              <p>Загружается...</p>
+            </div>
+            <p v-else>Загрузить версию</p>
+          </label>
+        </form>
+    </div>
+
     <div v-else class="player">
       <video
         v-if="_selected_version.video"
@@ -338,6 +352,8 @@ const handleFileChange = (event) => {
 }
 .empty {
   display: flex;
+  flex-direction: column;
+  gap: 20px;
   flex-grow: 1;
   justify-content: center;
   align-items: center;
