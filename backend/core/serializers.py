@@ -123,8 +123,8 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
         notification_message = (
             f"*{author.first_name} {author.last_name}:*\n"
-            f">{escaped_text.replace('\n', '\n>')}\n"
-            "[{}](http://paprika-app.ru/{}/shots/{})".format(
+            + ">{}\n".format(escaped_text.replace("\n", "\n>"))
+            + "[{}](http://paprika-app.ru/{}/shots/{})".format(
                 shot.name.replace("_", "\_"),
                 shot.project.code,
                 shot.name,
