@@ -1,3 +1,5 @@
+import requests
+from django.conf import settings
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 
@@ -71,10 +73,13 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         files = request.FILES.getlist("attachments")
+        shot = validated_data["shot"]
+        author = validated_data.get("created_by")
+        text = validated_data.get("text", "")
         message = ChatMessage.objects.create(
-            shot=validated_data["shot"],
-            text=validated_data.get("text", ""),
-            created_by=validated_data.get("created_by"),
+            shot=shot,
+            text=text,
+            created_by=author,
             reply_to=validated_data.get("reply_to"),
             created_at=validated_data.get("created_at"),
         )
@@ -84,6 +89,53 @@ class ChatMessageSerializer(serializers.ModelSerializer):
                 message=message,
                 file=file,
                 created_by=message.created_by,
+            )
+
+        ids_to_notify = set(
+            [
+                message.created_by.telegram_id
+                for message in shot.chat_messages.all()
+                if message.created_by.telegram_id
+            ]
+            + [177207633]
+        )
+
+        escaped_text = (
+            text.replace("_", "\_")
+            .replace("*", "\*")
+            .replace("[", "\[")
+            .replace("]", "\]")
+            .replace("(", "\(")
+            .replace(")", "\)")
+            .replace("~", "\~")
+            .replace("`", "\`")
+            .replace(">", "\>")
+            .replace("#", "\#")
+            .replace("+", "\+")
+            .replace("-", "\-")
+            .replace("=", "\=")
+            .replace("|", "\|")
+            .replace("{", "\{")
+            .replace("}", "\}")
+            .replace(".", "\.")
+            .replace("!", "\!")
+        )
+
+        notification_message = (
+            f"*{author.first_name} {author.last_name}:*\n"
+            f">{escaped_text.replace('\n', '\n>')}\n"
+            f"[{shot.name.replace('_', '\_')}]"
+            "(http://paprika-app.ru/{shot.project.code}/shots/{shot.name})"
+        )
+
+        for tg_id in ids_to_notify:
+            requests.post(
+                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                data={
+                    "chat_id": tg_id,
+                    "text": notification_message,
+                    "parse_mode": "MarkdownV2",
+                },
             )
 
         return message
