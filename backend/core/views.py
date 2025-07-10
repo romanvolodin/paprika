@@ -12,6 +12,7 @@ from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from users.models import User
 
@@ -481,4 +482,5 @@ class VersionViewSet(viewsets.ModelViewSet):
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = ChatMessage.objects.all().order_by("-created_at")
     serializer_class = ChatMessageSerializer
+    parser_classes = [MultiPartParser, FormParser]
     # permission_classes = [permissions.IsAuthenticated]

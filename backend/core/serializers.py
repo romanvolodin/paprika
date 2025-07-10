@@ -61,15 +61,32 @@ class RepliedMessageSerializer(serializers.ModelSerializer):
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
-    reply_to = serializers.PrimaryKeyRelatedField(
-        queryset=ChatMessage.objects.all(), required=False, allow_null=True
-    )
     reply_to_display = RepliedMessageSerializer(source="reply_to", read_only=True)
     attachments = AttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = ChatMessage
         fields = "__all__"
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        files = request.FILES.getlist("attachments")
+        message = ChatMessage.objects.create(
+            shot=validated_data["shot"],
+            text=validated_data.get("text", ""),
+            created_by=validated_data.get("created_by"),
+            reply_to=validated_data.get("reply_to"),
+            created_at=validated_data.get("created_at"),
+        )
+
+        for file in files:
+            Attachment.objects.create(
+                message=message,
+                file=file,
+                created_by=message.created_by,
+            )
+
+        return message
 
 
 class ShotSerializer(serializers.ModelSerializer):

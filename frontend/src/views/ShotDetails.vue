@@ -65,33 +65,41 @@ async function fetchShot() {
   }
 }
 
-async function postMessage(message) {
-  try {
-    await axios.post(`/api/projects/${projectCode}/shots/${shotName}/chat_messages/`, message)
-  } catch (error) {
-    console.log(error)
-  }
-}
-
 async function sendMessage() {
-  if (!_message.value) {
-    return
-  }
-  const msg = {
-    shot: _shot.value.id,
-    reply_to: _reply_to_id.value,
-    text: _message.value,
-    created_at: new Date().toISOString(),
-    created_by: _user.value.id,
-    attachments: _attachments.value,
-  }
-  console.log(msg)
+  if (!_message.value && !_attachments.value.length) return
 
-  await postMessage(msg)
-  await fetchShot()
-  _message.value = ''
-  _reply_to_id.value = null
-  _reply_to_message.value = null
+  const formData = new FormData()
+
+  formData.append('shot', _shot.value.id)
+  formData.append('text', _message.value)
+  formData.append('created_by', _user.value.id)
+  formData.append('created_at', new Date().toISOString())
+
+  if (_reply_to_id.value) {
+    formData.append('reply_to', _reply_to_id.value)
+  }
+
+  _attachments.value.forEach((file) => {
+    formData.append(`attachments`, file)
+  })
+
+  try {
+    await axios.post(`/api/projects/${projectCode}/shots/${shotName}/chat_messages/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    _message.value = ''
+    _attachments.value = []
+    _attachmentPreviews.value = []
+    _reply_to_id.value = null
+    _reply_to_message.value = null
+
+    await fetchShot()
+  } catch (error) {
+    console.error('Ошибка при отправке сообщения:', error)
+  }
 }
 
 function formatText(text) {
@@ -117,7 +125,7 @@ function exitReplyMode() {
 }
 
 function setAttachments(event) {
-  _attachments.value = event.target.files
+  _attachments.value = Array.from(event.target.files)
 }
 
 function setSelectedVersion(version) {
@@ -283,6 +291,9 @@ const handleFileChange = (event) => {
         <div v-for="attachment in _attachmentPreviews" :key="attachment" class="attachment">
           <img :src="attachment.url" />
         </div>
+        <p style="margin-left: 40px; grid-column-start: 1; grid-column-end: -1">
+          Введите описание ↓
+        </p>
       </div>
 
       <form
