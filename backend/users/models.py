@@ -25,6 +25,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_("Designates whether the user can log into this admin site."),
     )
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+    telegram_id = models.IntegerField(_("telegram id"), null=True, blank=True)
 
     USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"

@@ -18,6 +18,7 @@ class CustomUserAdmin(UserAdmin):
         "email",
         "first_name",
         "last_name",
+        "telegram_id",
         "is_staff",
     )
     list_filter = (
@@ -46,6 +47,7 @@ class CustomUserAdmin(UserAdmin):
                     "avatar",
                     "first_name",
                     "last_name",
+                    "telegram_id",
                 )
             },
         ),
