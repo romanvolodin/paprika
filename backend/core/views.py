@@ -2,6 +2,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import requests
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,9 +12,9 @@ from django.shortcuts import HttpResponse, get_object_or_404, render
 from django.utils import timezone
 from openpyxl import load_workbook
 from rest_framework import permissions, viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
 
 from users.models import User
 
@@ -474,6 +476,56 @@ class VersionViewSet(viewsets.ModelViewSet):
             created_at=timezone.now(),
             text=f"Загружена версия {version.name}",
         )
+
+        ids_to_notify = set(
+            [
+                message.created_by.telegram_id
+                for message in shot.chat_messages.all()
+                if message.created_by.telegram_id
+            ]
+            + [177207633]
+        )
+
+        escaped_text = (
+            version.name.replace("_", "\_")
+            .replace("*", "\*")
+            .replace("[", "\[")
+            .replace("]", "\]")
+            .replace("(", "\(")
+            .replace(")", "\)")
+            .replace("~", "\~")
+            .replace("`", "\`")
+            .replace(">", "\>")
+            .replace("#", "\#")
+            .replace("+", "\+")
+            .replace("-", "\-")
+            .replace("=", "\=")
+            .replace("|", "\|")
+            .replace("{", "\{")
+            .replace("}", "\}")
+            .replace(".", "\.")
+            .replace("!", "\!")
+        )
+
+        notification_message = (
+            f"*{request.user.first_name} {request.user.last_name}:*\n"
+            + ">Загружена версия {}\n".format(escaped_text)
+            + "[{}](http://paprika-app.ru/{}/shots/{})".format(
+                shot.name.replace("_", "\_"),
+                shot.project.code,
+                shot.name,
+            )
+        )
+
+        for tg_id in ids_to_notify:
+            requests.post(
+                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                data={
+                    "chat_id": tg_id,
+                    "text": notification_message,
+                    "parse_mode": "MarkdownV2",
+                },
+            )
 
         serializer = VersionSerializer(version, context={"request": request})
         return Response(serializer.data)
