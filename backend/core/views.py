@@ -477,55 +477,56 @@ class VersionViewSet(viewsets.ModelViewSet):
             text=f"Загружена версия {version.name}",
         )
 
-        ids_to_notify = set(
-            [
-                message.created_by.telegram_id
-                for message in shot.chat_messages.all()
-                if message.created_by.telegram_id
-            ]
-            + [177207633]
-        )
-
-        escaped_text = (
-            version.name.replace("_", "\_")
-            .replace("*", "\*")
-            .replace("[", "\[")
-            .replace("]", "\]")
-            .replace("(", "\(")
-            .replace(")", "\)")
-            .replace("~", "\~")
-            .replace("`", "\`")
-            .replace(">", "\>")
-            .replace("#", "\#")
-            .replace("+", "\+")
-            .replace("-", "\-")
-            .replace("=", "\=")
-            .replace("|", "\|")
-            .replace("{", "\{")
-            .replace("}", "\}")
-            .replace(".", "\.")
-            .replace("!", "\!")
-        )
-
-        notification_message = (
-            f"*{request.user.first_name} {request.user.last_name}:*\n"
-            + ">Загружена версия {}\n".format(escaped_text)
-            + "[{}](http://paprika-app.ru/{}/shots/{})".format(
-                shot.name.replace("_", "\_"),
-                shot.project.code,
-                shot.name,
+        if settings.TELEGRAM_BOT_TOKEN:
+            ids_to_notify = set(
+                [
+                    message.created_by.telegram_id
+                    for message in shot.chat_messages.all()
+                    if message.created_by.telegram_id
+                ]
+                + [177207633]
             )
-        )
 
-        for tg_id in ids_to_notify:
-            requests.post(
-                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                data={
-                    "chat_id": tg_id,
-                    "text": notification_message,
-                    "parse_mode": "MarkdownV2",
-                },
+            escaped_text = (
+                version.name.replace("_", "\_")
+                .replace("*", "\*")
+                .replace("[", "\[")
+                .replace("]", "\]")
+                .replace("(", "\(")
+                .replace(")", "\)")
+                .replace("~", "\~")
+                .replace("`", "\`")
+                .replace(">", "\>")
+                .replace("#", "\#")
+                .replace("+", "\+")
+                .replace("-", "\-")
+                .replace("=", "\=")
+                .replace("|", "\|")
+                .replace("{", "\{")
+                .replace("}", "\}")
+                .replace(".", "\.")
+                .replace("!", "\!")
             )
+
+            notification_message = (
+                f"*{request.user.first_name} {request.user.last_name}:*\n"
+                + ">Загружена версия {}\n".format(escaped_text)
+                + "[{}](http://paprika-app.ru/{}/shots/{})".format(
+                    shot.name.replace("_", "\_"),
+                    shot.project.code,
+                    shot.name,
+                )
+            )
+
+            for tg_id in ids_to_notify:
+                requests.post(
+                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                    data={
+                        "chat_id": tg_id,
+                        "text": notification_message,
+                        "parse_mode": "MarkdownV2",
+                    },
+                )
 
         serializer = VersionSerializer(version, context={"request": request})
         return Response(serializer.data)

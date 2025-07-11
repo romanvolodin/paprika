@@ -91,55 +91,56 @@ class ChatMessageSerializer(serializers.ModelSerializer):
                 created_by=message.created_by,
             )
 
-        ids_to_notify = set(
-            [
-                message.created_by.telegram_id
-                for message in shot.chat_messages.all()
-                if message.created_by.telegram_id
-            ]
-            + [177207633]
-        )
-
-        escaped_text = (
-            text.replace("_", "\_")
-            .replace("*", "\*")
-            .replace("[", "\[")
-            .replace("]", "\]")
-            .replace("(", "\(")
-            .replace(")", "\)")
-            .replace("~", "\~")
-            .replace("`", "\`")
-            .replace(">", "\>")
-            .replace("#", "\#")
-            .replace("+", "\+")
-            .replace("-", "\-")
-            .replace("=", "\=")
-            .replace("|", "\|")
-            .replace("{", "\{")
-            .replace("}", "\}")
-            .replace(".", "\.")
-            .replace("!", "\!")
-        )
-
-        notification_message = (
-            f"*{author.first_name} {author.last_name}:*\n"
-            + ">{}\n".format(escaped_text.replace("\n", "\n>"))
-            + "[{}](http://paprika-app.ru/{}/shots/{})".format(
-                shot.name.replace("_", "\_"),
-                shot.project.code,
-                shot.name,
+        if settings.TELEGRAM_BOT_TOKEN:
+            ids_to_notify = set(
+                [
+                    message.created_by.telegram_id
+                    for message in shot.chat_messages.all()
+                    if message.created_by.telegram_id
+                ]
+                + [177207633]
             )
-        )
 
-        for tg_id in ids_to_notify:
-            requests.post(
-                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                data={
-                    "chat_id": tg_id,
-                    "text": notification_message,
-                    "parse_mode": "MarkdownV2",
-                },
+            escaped_text = (
+                text.replace("_", "\_")
+                .replace("*", "\*")
+                .replace("[", "\[")
+                .replace("]", "\]")
+                .replace("(", "\(")
+                .replace(")", "\)")
+                .replace("~", "\~")
+                .replace("`", "\`")
+                .replace(">", "\>")
+                .replace("#", "\#")
+                .replace("+", "\+")
+                .replace("-", "\-")
+                .replace("=", "\=")
+                .replace("|", "\|")
+                .replace("{", "\{")
+                .replace("}", "\}")
+                .replace(".", "\.")
+                .replace("!", "\!")
             )
+
+            notification_message = (
+                f"*{author.first_name} {author.last_name}:*\n"
+                + ">{}\n".format(escaped_text.replace("\n", "\n>"))
+                + "[{}](http://paprika-app.ru/{}/shots/{})".format(
+                    shot.name.replace("_", "\_"),
+                    shot.project.code,
+                    shot.name,
+                )
+            )
+
+            for tg_id in ids_to_notify:
+                requests.post(
+                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                    data={
+                        "chat_id": tg_id,
+                        "text": notification_message,
+                        "parse_mode": "MarkdownV2",
+                    },
+                )
 
         return message
 
