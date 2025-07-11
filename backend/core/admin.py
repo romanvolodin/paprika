@@ -262,19 +262,32 @@ class ShotAdmin(admin.ModelAdmin):
         if set() == set(statuses):
             return mark_safe(template.format("#ccc", "Нет задач"))
 
-        if set(("Не начата",)) == set(statuses):
-            return mark_safe(template.format("#900", "Не начат"))
-
         if set(("Отмена",)) == set(statuses):
             return mark_safe(template.format("#999", "Отмена"))
 
-        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
+        if set(("На паузе",)) == set(statuses) or set(("Отмена", "На паузе")) == set(statuses):
+            return mark_safe(template.format("#3d3d3d", "На паузе"))
+
+        if (
+            set(("Не начата",)) == set(statuses)
+            or set(("Не начата", "На паузе")) == set(statuses)
+            or set(("Отмена", "Не начата", "На паузе")) == set(statuses)
+        ):
+            return mark_safe(template.format("#900", "Не начат"))
+
+        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята", "На паузе")) == set(
+            statuses
+        ):
             return mark_safe(template.format("#099", "Принят"))
 
-        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова")) == set(statuses):
+        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова", "На паузе")) == set(
+            statuses
+        ):
             return mark_safe(template.format("#090", "Готов"))
 
-        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано")) == set(statuses):
+        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано", "На паузе")) == set(
+            statuses
+        ):
             return mark_safe(template.format("#7700BE", "Отдан"))
 
         if "Есть комментарий" in statuses:

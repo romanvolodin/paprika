@@ -31,6 +31,7 @@ const shot_status_colors = {
   Принят: '#0088CC',
   Отдан: '#7700BE',
   Отмена: '#999999',
+  'На паузе': '#3D3D3D',
 }
 
 const imageLinkCellRenderer = (params) => {

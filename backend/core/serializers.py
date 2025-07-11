@@ -172,19 +172,32 @@ class ShotSerializer(serializers.ModelSerializer):
         if set() == set(statuses):
             return "Нет задач"
 
-        if set(("Не начата",)) == set(statuses):
-            return "Не начат"
-
         if set(("Отмена",)) == set(statuses):
             return "Отмена"
 
-        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята")) == set(statuses):
+        if set(("На паузе",)) == set(statuses) or set(("Отмена", "На паузе")) == set(statuses):
+            return "На паузе"
+
+        if (
+            set(("Не начата",)) == set(statuses)
+            or set(("Не начата", "На паузе")) == set(statuses)
+            or set(("Отмена", "Не начата", "На паузе")) == set(statuses)
+        ):
+            return "Не начат"
+
+        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята", "На паузе")) == set(
+            statuses
+        ):
             return "Принят"
 
-        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова")) == set(statuses):
+        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова", "На паузе")) == set(
+            statuses
+        ):
             return "Готов"
 
-        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано")) == set(statuses):
+        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано", "На паузе")) == set(
+            statuses
+        ):
             return "Отдан"
 
         if "Есть комментарий" in statuses:
