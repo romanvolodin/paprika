@@ -126,7 +126,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 TELEGRAM_BOT_TOKEN = env.str("TELEGRAM_BOT_TOKEN", "")
