@@ -91,16 +91,3 @@ crontab -e
 ```bash
 systemctl restart cron
 ```
-
-### Запуск через systemd не проверялся
-
-Дальнейшая информация неактуальна.
-
-Создаем сервис и таймер, который будет запускаться каждые 2 часа:
-
-```bash
-ln -s paprika/deploy/paprika_backup_dumpdata.service /etc/systemd/system/paprika_backup_dumpdata.service
-ln -s paprika/deploy/paprika_backup_dumpdata.timer /etc/systemd/system/paprika_backup_dumpdata.timer
-
-systemctl daemon-reload
-```
