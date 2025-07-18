@@ -526,15 +526,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск через systemd не проверялся
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -642,15 +633,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#systemd" class="md-nav__link">
-    <span class="md-ellipsis">
-      Запуск через systemd не проверялся
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -740,14 +722,6 @@ dir=/root/paprika/backend/media_backup</p>
 <p>Это правило будет заускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.</p>
 <p>Обычно больше ничего делать не нужно, <code>сron</code> сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис <code>cron</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cron
-</span></code></pre></div>
-<h3 id="systemd">Запуск через systemd не проверялся</h3>
-<p>Дальнейшая информация неактуальна.</p>
-<p>Создаем сервис и таймер, который будет запускаться каждые 2 часа:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.service<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.service
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>paprika/deploy/paprika_backup_dumpdata.timer<span class="w"> </span>/etc/systemd/system/paprika_backup_dumpdata.timer
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>systemctl<span class="w"> </span>daemon-reload
 </span></code></pre></div>
 
 
