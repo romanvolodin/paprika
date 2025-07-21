@@ -90,7 +90,7 @@ onMounted(async () => {
 })
 
 const statuses = computed(() => {
-  return Object.keys(shot_status_colors)
+  return [...new Set(_shots.value.map(shot => shot.status))]
 })
 
 const filteredShots = computed(() => {
