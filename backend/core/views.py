@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, get_object_or_404, render
 from django.utils import timezone
@@ -366,7 +367,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 
 class ShotGroupViewSet(viewsets.ModelViewSet):
-    queryset = ShotGroup.objects.all().order_by("name").prefetch_related("shots")
+    # queryset = ShotGroup.objects.all().order_by("name").prefetch_related("shots")
+    queryset = (
+        ShotGroup.objects.all()
+        .order_by("name")
+        .prefetch_related(Prefetch("shots", Shot.objects.order_by("name")))
+    )
     serializer_class = ShotGroupDetailsSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
@@ -397,7 +403,12 @@ class ShotTaskViewSet(viewsets.ModelViewSet):
 
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all().order_by("description").prefetch_related("shots")
+    # queryset = Task.objects.all().order_by("description").prefetch_related("shots")
+    queryset = (
+        Task.objects.all()
+        .order_by("description")
+        .prefetch_related(Prefetch("shots", Shot.objects.order_by("name")))
+    )
     serializer_class = TaskListSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
