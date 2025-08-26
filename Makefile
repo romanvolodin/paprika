@@ -58,3 +58,9 @@ update:
 	docker compose up --detach --build
 	docker compose exec paprika-app ./manage.py migrate
 	docker compose exec paprika-app ./manage.py collectstatic --no-input
+
+dev.sync:
+	@set -a; . ./.env.dev; set +a; \
+	sudo cp $$DEV_SYNC_DUMP_PATH /var/lib/docker/volumes/paprika_media_volume/_data; \
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py loaddata media/dump.json; \
+	sudo rsync -ahr --progress $$DEV_SYNC_MEDIA_PATH/* /var/lib/docker/volumes/paprika_media_volume/_data;
