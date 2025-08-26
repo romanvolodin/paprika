@@ -67,6 +67,18 @@ docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py loadda
 sudo rsync -ahr --progress /path/to/paprika_media/* /var/lib/docker/volumes/paprika_media_volume/_data
 ```
 
+Проверяем:
+
+```bash
+sudo ls /var/lib/docker/volumes/paprika_media_volume/_data
+```
+
+Должно вывести что-то вроде этого — папка с аватарками пользователей и папки с файлами проектов:
+
+```bash
+avatars  PRJ1  PRJ2  ...
+```
+
 После этого все картинки и видео должны корректно отображаться на сайте.
 
 ## Скачать дамп с рабочего сервера
