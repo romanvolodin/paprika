@@ -790,28 +790,28 @@ dir=/root/paprika/backend/media_backup</p>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
 </span></code></pre></div>
 <h3 id="git">Бэкап данных в Git</h3>
-<p>Сгенерируйте shh-ключ на сервере:</p>
+<p>Сгенерируйте ssh-ключ на сервере:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ssh-keygen
 </span></code></pre></div>
-<p>Теперь надо добавить ключ в аккаут на сайте вашего гит-хостинга, чтобы сервер мог заливать данные в репозиторий.</p>
+<p>Теперь надо добавить ключ в аккаунт на сайте вашего гит-хостинга, чтобы сервер мог заливать данные в репозиторий.</p>
 <p>Для этого выводим в терминале публичную часть ключа:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cat<span class="w"> </span>.ssh/id_rsa.pub
 </span></code></pre></div>
-<p>Публичную часть ключа надо скопировать и добавьте её в настройки аккаута на сайте вашего гит-хостинга.</p>
+<p>Публичную часть ключа надо скопировать и добавьте её в настройки аккаунта на сайте вашего гит-хостинга.</p>
 <p>Создайте репозиторий на вашем гит-хостинге. В моём случае репозиторий будет называться <code>paprika_dumpdata</code>.</p>
 <p>Заходим на сервер Паприки, переходим в папку бэкапов и клонируем репозиторий.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>clone<span class="w"> </span>ssh://git@host/username/paprika_dumpdata.git
 </span></code></pre></div>
 <p>ssh сообщит, что хост неизвестен и точно ли мы хотим подключится? Отвечаем <code>yes</code>.</p>
 <h3 id="cron">Добавляем запуск скрипта в Cron</h3>
-<p>Открываем файл <code>crontab</code> в текстовом редакторе. Если файл не существует, он будет создан. При первом запуске команда спросит какой тексовый редактор использовать:</p>
+<p>Открываем файл <code>crontab</code> в текстовом редакторе. Если файл не существует, он будет создан. При первом запуске команда спросит какой текстовый редактор использовать:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>crontab<span class="w"> </span>-e
 </span></code></pre></div>
 <p>Добавляем в файл строчку:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>0 */2 * * * /root/paprika/deploy/backup.sh
 </span></code></pre></div>
-<p>Это правило будет заускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.</p>
-<p>Обычно больше ничего делать не нужно, <code>сron</code> сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис <code>cron</code>:</p>
+<p>Это правило будет запускать указанный скрипт каждые 2 часа. Сохраняем и закрываем файл.</p>
+<p>Обычно больше ничего делать не нужно, <code>сron</code> сам перечитает файл и подхватит изменения. Если нужно чтобы изменения подхватились немедленно, перезапустите сервис <code>сron</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cron
 </span></code></pre></div>
 
