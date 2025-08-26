@@ -590,6 +590,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Синхронизация данных dev-версии с рабочим сервером
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -826,7 +849,12 @@
 <h2 id="_2">Наполняем сайт данными</h2>
 <p>Предполагается, что у вас есть дамп данных и медиа-файлы. TODO: нужен небольшой демо-проект.</p>
 <p>Ниже есть инструкция как скачать данные с рабочего сервера.</p>
+<p>Инструкция как <a href="sync/">заполнить командой <code>make dev.sync</code></a>.</p>
+<p>Дальше инструкция как заполнить вручную.</p>
 <h3 id="_3">Заполняем базу данных</h3>
+<blockquote>
+<p>⚠️ ВАЖНО: Паприка должна быть запущена командой <code>make dev</code>.</p>
+</blockquote>
 <p>Копируем дамп данных в докер и запускаем команду <code>loaddata</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/dump.json<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>--file<span class="w"> </span>docker-compose-dev.yml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>paprika-app<span class="w"> </span>./manage.py<span class="w"> </span>loaddata<span class="w"> </span>media/dump.json
