@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -835,19 +835,25 @@
 <p>Предположим, что медиа-файлы скачаны в папку <code>paprika_media</code>. Копируем содержимое этой папки в докер:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>rsync<span class="w"> </span>-ahr<span class="w"> </span>--progress<span class="w"> </span>/path/to/paprika_media/*<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
 </span></code></pre></div>
+<p>Проверяем:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>ls<span class="w"> </span>/var/lib/docker/volumes/paprika_media_volume/_data
+</span></code></pre></div>
+<p>Должно вывести что-то вроде этого — папка с аватарками пользователей и папки с файлами проектов:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>avatars<span class="w">  </span>PRJ1<span class="w">  </span>PRJ2<span class="w">  </span>...
+</span></code></pre></div>
 <p>После этого все картинки и видео должны корректно отображаться на сайте.</p>
 <h2 id="_4">Скачать дамп с рабочего сервера</h2>
 <p>Здесь и далее <code>paprika-prod</code> — это <a href="../admin/ssh-alias/">ssh алиас</a> для рабочего сервера.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission &gt; datadump.json&quot;</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>scp<span class="w"> </span>paprika-prod:paprika/datadump.json<span class="w"> </span>./datadump.json
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;rm paprika/datadump.json&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py dumpdata --exclude=contenttypes --exclude=auth.permission &gt; datadump.json&quot;</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>scp<span class="w"> </span>paprika-prod:paprika/datadump.json<span class="w"> </span>./datadump.json
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;rm paprika/datadump.json&quot;</span>
 </span></code></pre></div>
 <h2 id="_5">Скачать медиа с рабочего сервера</h2>
 <p>Скачать всю папку целиком:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Скачать только <code>*.jpg</code> с сохранением структуры директорий:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--progress<span class="w"> </span>--log-file<span class="o">=</span>rsync.log<span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*/&#39;</span><span class="w"> </span>--include<span class="o">=</span><span class="s1">&#39;*.jpg&#39;</span><span class="w"> </span>--exclude<span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="w"> </span>paprika-prod:/mnt/NAS/media<span class="w"> </span>.
 </span></code></pre></div>
 <p>Важно:</p>
 <ul>
@@ -902,10 +908,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.select", "content.code.copy", "content.action.view", "content.action.edit"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>
