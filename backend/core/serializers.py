@@ -208,11 +208,19 @@ class ShotSerializer(serializers.ModelSerializer):
 
     def to_representation(self, shot):
         data = super().to_representation(shot)
+
         data["versions"] = VersionSerializer(
             shot.versions.order_by("-created_at"),
             many=True,
             context={"request": self.context.get("request")},
         ).data
+
+        data["chat_messages"] = ChatMessageSerializer(
+            shot.chat_messages.order_by("id"),
+            many=True,
+            context=self.context,
+        ).data
+
         return data
 
 
