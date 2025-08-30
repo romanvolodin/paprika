@@ -3,6 +3,7 @@ from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
+from .api import api
 
 
 router = routers.DefaultRouter()
@@ -18,11 +19,12 @@ router.register("versions", views.VersionViewSet)
 router.register("chats", views.ChatViewSet)
 
 urlpatterns = [
-    path(
-        "api/projects/<str:project_code>/shots/",
-        views.ShotViewSet.as_view({"get": "list"}),
-        name="shot-list",
-    ),
+    path("api/", api.urls),
+    # path(
+    #     "api/projects/<str:project_code>/shots/",
+    #     views.ShotViewSet.as_view({"get": "list"}),
+    #     name="shot-list",
+    # ),
     path(
         "api/projects/<str:project_code>/shots/<str:shot_name>/",
         views.ShotViewSet.as_view({"get": "retrieve"}),
