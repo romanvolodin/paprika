@@ -457,6 +457,8 @@ class ShotAdmin(admin.ModelAdmin):
                 "Название шота",
                 "Таймкод",
                 "Задачи",
+                "Часы",
+                "Исполнитель",
             )
         )
         for counter, shot in enumerate(queryset, start=1):
@@ -473,6 +475,21 @@ class ShotAdmin(admin.ModelAdmin):
                 row=counter + 1,
                 column=4,
                 value="\n".join([task.description for task in shot.task.all()]),
+            )
+
+            ws.cell(
+                row=counter + 1,
+                column=5,
+                value="\n".join([str(shot_task.hours) for shot_task in shot.task_statuses.all()]),
+            )
+
+            ws.cell(
+                row=counter + 1,
+                column=6,
+                value="\n".join([
+                    shot_task.assigned_to.first_name if shot_task.assigned_to else "—"
+                    for shot_task in shot.task_statuses.all()
+                ]),
             )
 
         for i, column in enumerate(ws.columns, 1):
