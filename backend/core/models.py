@@ -283,13 +283,13 @@ class ShotTask(models.Model):
     shot = models.ForeignKey(
         Shot,
         on_delete=models.CASCADE,
-        related_name="task_statuses",
+        related_name="shot_tasks",
         verbose_name="шот",
     )
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE,
-        related_name="used_in_shots",
+        related_name="shot_tasks",
         verbose_name="задача",
     )
     status = models.ForeignKey(

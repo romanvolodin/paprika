@@ -25,6 +25,13 @@ class ShotGroupOut(Schema):
     shots: List[ShotOut]
 
 
+class ShotTaskOut(Schema):
+    id: int
+    task: str
+    status: str
+    shot: ShotOut
+
+
 @api.get("/projects/{project_code}/shots/", response=List[ShotGroupOut])
 def project_shots(request, project_code: str):
     project = get_object_or_404(Project, code=project_code)
@@ -46,4 +53,23 @@ def project_shots(request, project_code: str):
             ],
         }
         for shot_group in shot_groups
+    ]
+
+
+@api.get("/projects/{project_code}/shot_tasks/my", response=List[ShotTaskOut])
+def get_my_shot_tasks(request, project_code: str):
+    user = request.user
+    shot_tasks = user.assigned_tasks.filter(shot__project__code=project_code)
+    return [
+        {
+            "id": t.id,
+            "task": t.task.description,
+            "status": t.status.title,
+            "shot": {
+                "id": t.shot.id,
+                "name": t.shot.name,
+                "created_at": t.shot.created_at,
+                "thumb": request.build_absolute_uri(t.shot.versions.latest().preview.url),
+            },
+        } for t in shot_tasks
     ]
