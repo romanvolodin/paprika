@@ -53,8 +53,14 @@ dev.env:
 dev.collectstatic:
 	docker compose exec --file docker-compose-dev.yml paprika-app ./manage.py collectstatic --no-input
 
+dev.makemigrations:
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py makemigrations
+
 dev.migrate:
 	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py migrate
+
+dev.shell:
+	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py shell
 
 update:
 	docker compose down
