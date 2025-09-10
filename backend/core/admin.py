@@ -108,28 +108,28 @@ class ShotStatusListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "no_tasks":
-            return queryset.filter(task_statuses=None)
+            return queryset.filter(shot_tasks=None)
 
         if self.value() == "canceled":
-            return queryset.filter(task_statuses__status__title="Отмена")
+            return queryset.filter(shot_tasks__status__title="Отмена")
 
         if self.value() == "not_started":
-            return queryset.filter(task_statuses__status__title="Не начата")
+            return queryset.filter(shot_tasks__status__title="Не начата")
 
         if self.value() == "in_progress":
-            return queryset.filter(task_statuses__status__title="В работе")
+            return queryset.filter(shot_tasks__status__title="В работе")
 
         if self.value() == "done":
-            return queryset.filter(task_statuses__status__title="Готова")
+            return queryset.filter(shot_tasks__status__title="Готова")
 
         if self.value() == "commented":
-            return queryset.filter(task_statuses__status__title="Есть комментарий")
+            return queryset.filter(shot_tasks__status__title="Есть комментарий")
 
         if self.value() == "approved":
-            return queryset.filter(task_statuses__status__title="Принята")
+            return queryset.filter(shot_tasks__status__title="Принята")
 
         if self.value() == "delivered":
-            return queryset.filter(task_statuses__status__title="Отдано")
+            return queryset.filter(shot_tasks__status__title="Отдано")
 
 
 @admin.register(Shot)
@@ -254,7 +254,7 @@ class ShotAdmin(admin.ModelAdmin):
     def get_shot_status(self, obj):
         statuses = [
             shot_task.status.title
-            for shot_task in obj.task_statuses.all()
+            for shot_task in obj.shot_tasks.all()
             if shot_task.task.description != "Выдать материал"
         ]
         template = "<span style='background-color:{};color:#fff;padding:3px 7px'>{}</span>"
@@ -297,7 +297,7 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.display(description="Назначено")
     def get_assigned_to(self, shot):
-        assignees = [task.assigned_to for task in shot.task_statuses.all() if task.assigned_to]
+        assignees = [task.assigned_to for task in shot.shot_tasks.all() if task.assigned_to]
         html = []
         for assignee in assignees:
             if assignee.avatar:
@@ -480,7 +480,7 @@ class ShotAdmin(admin.ModelAdmin):
             ws.cell(
                 row=counter + 1,
                 column=5,
-                value="\n".join([str(shot_task.hours) for shot_task in shot.task_statuses.all()]),
+                value="\n".join([str(shot_task.hours) for shot_task in shot.shot_tasks.all()]),
             )
 
             ws.cell(
@@ -488,7 +488,7 @@ class ShotAdmin(admin.ModelAdmin):
                 column=6,
                 value="\n".join([
                     shot_task.assigned_to.first_name if shot_task.assigned_to else "—"
-                    for shot_task in shot.task_statuses.all()
+                    for shot_task in shot.shot_tasks.all()
                 ]),
             )
 

@@ -166,7 +166,7 @@ class ShotSerializer(serializers.ModelSerializer):
     def get_status(self, shot):
         statuses = [
             shot_task.status.title
-            for shot_task in shot.task_statuses.all()
+            for shot_task in shot.shot_tasks.all()
             if shot_task.task.description != "Выдать материал"
         ]
 
