@@ -4,10 +4,15 @@ from typing import List, Union
 from django.shortcuts import get_object_or_404
 from ninja import NinjaAPI, Schema
 
-from .models import Project
+from .models import Project, Shot
 
 
 api = NinjaAPI(title="Paprika API")
+
+
+class CreateShotRequest(Schema):
+    name: str
+
 
 
 class ShotOut(Schema):
@@ -54,6 +59,21 @@ def project_shots(request, project_code: str):
         }
         for shot_group in shot_groups
     ]
+
+
+@api.post("/projects/{project_code}/shots/", response=List[ShotOut])
+def create_shots(request, project_code: str, shots: list[CreateShotRequest]):
+    user = request.user
+    project = get_object_or_404(Project, code=project_code)
+    new_shots = []
+    for shot in shots:
+        s = Shot.objects.create(
+            name=shot.name,
+            project=project,
+            created_by=user,
+        )
+        new_shots.append(s)
+    return new_shots
 
 
 @api.get("/projects/{project_code}/shot_tasks/my", response=List[ShotTaskOut])

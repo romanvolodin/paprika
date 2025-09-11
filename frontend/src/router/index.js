@@ -2,6 +2,7 @@ import { useAuthStore } from '@/stores/auth'
 import LoginView from '@/views/LoginView.vue'
 import ProjectCreate from '@/views/ProjectCreate.vue'
 import ProjectList from '@/views/ProjectList.vue'
+import ShotCreate from '@/views/ShotCreate.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
 import ShotGroupDetails from '@/views/ShotGroupDetails.vue'
 import ShotGroupList from '@/views/ShotGroupList.vue'
@@ -37,6 +38,11 @@ const router = createRouter({
       path: '/:projectCode/shots',
       name: 'shots-by-project',
       component: ShotsList,
+    },
+    {
+      path: '/:projectCode/shots/create',
+      name: 'create-shots',
+      component: ShotCreate,
     },
     {
       path: '/:projectCode/shots/:shotName',
