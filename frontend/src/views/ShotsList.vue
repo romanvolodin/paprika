@@ -90,7 +90,7 @@ onMounted(async () => {
 })
 
 const statuses = computed(() => {
-  return [...new Set(_shots.value.map(shot => shot.status))]
+  return [...new Set(_shots.value.map((shot) => shot.status))]
 })
 
 const filteredShots = computed(() => {
@@ -225,7 +225,7 @@ onUnmounted(() => {
   <dialog ref="_addTaskPanel">
     <header>
       <h2>Добавить задачи</h2>
-      <button @click="_addTaskPanel.close()"> 𐄂 </button>
+      <button @click="_addTaskPanel.close()">𐄂</button>
     </header>
 
     <div class="dialog-content">...</div>
