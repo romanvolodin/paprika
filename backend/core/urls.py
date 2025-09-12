@@ -3,7 +3,7 @@ from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
-from .api import api
+from .api.api import api
 
 
 router = routers.DefaultRouter()

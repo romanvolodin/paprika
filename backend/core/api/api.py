@@ -4,15 +4,19 @@ from typing import List, Union
 from django.shortcuts import get_object_or_404
 from ninja import NinjaAPI, Schema
 
-from .models import Project, Shot
+from core.models import Project, Shot
+
+from .auth import JWTAuth
 
 
-api = NinjaAPI(title="Paprika API")
+api = NinjaAPI(
+    title="Paprika API",
+    auth=JWTAuth(),
+)
 
 
 class CreateShotRequest(Schema):
     name: str
-
 
 
 class ShotOut(Schema):
@@ -35,6 +39,11 @@ class ShotTaskOut(Schema):
     task: str
     status: str
     shot: ShotOut
+
+
+@api.post("/me")
+def me(request):
+    return {"user": str(request.user), "is_authenticated": request.user.is_authenticated}
 
 
 @api.get("/projects/{project_code}/shots/", response=List[ShotGroupOut])
