@@ -24,7 +24,7 @@ async function submitNewShots() {
     if (newShots.value.length === 0) {
       throw new Error('Нет объектов для отправки')
     }
-    const response = await axios.post(`/api2/projects/${projectCode}/shots/`, newShots.value)
+    const response = await axios.post(`/api/projects/${projectCode}/shots/create`, newShots.value)
     console.log('Ответ сервера:', response.data)
   } catch (error) {
     console.error('Ошибка:', error)

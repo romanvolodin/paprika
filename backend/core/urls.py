@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
 from .api.api import api
+from .drf.urls import urlpatterns as drf_urlpatterns
 
 
 router = routers.DefaultRouter()
@@ -105,3 +106,5 @@ urlpatterns = [
     ),
     path("api/", views.api),
 ]
+
+urlpatterns += drf_urlpatterns
