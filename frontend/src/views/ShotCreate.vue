@@ -1,9 +1,8 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-const router = useRouter()
 const route = useRoute()
 const projectCode = route.params.projectCode
 
