@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
 import axios from '@/config/axiosConfig'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -12,6 +12,8 @@ const newShots = ref([])
 function addShot() {
   newShots.value.push({
     name: '',
+    rec_timecode: '',
+    task: '',
   })
 }
 
@@ -40,6 +42,8 @@ async function submitNewShots() {
   <div v-if="newShots.length > 0">
     <div v-for="(shot, index) in newShots" :key="index">
       <input v-model="shot.name" placeholder="SHOT_0010" />
+      <input v-model="shot.rec_timecode" placeholder="00:00:00:00" />
+      <input v-model="shot.task" placeholder="Задача" />
       <button @click="removeShot(index)" class="btn-remove">⨯</button>
     </div>
   </div>
