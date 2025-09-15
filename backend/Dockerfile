@@ -1,11 +1,11 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && apt-get install -y netcat-openbsd && apt install -y ffmpeg
+RUN apk update && apk add netcat-openbsd && apk add ffmpeg
 
 RUN pip install --upgrade pip
 COPY ./requirements.txt .
