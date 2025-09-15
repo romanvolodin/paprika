@@ -26,12 +26,25 @@ def create_shots(request, project_code: str):
                     default_status=status_not_started,
                 )
 
+        group_description = shot.get("group")
+        if group_description is not None:
+            try:
+                group = ShotGroup.objects.get(name=group_description)
+            except ObjectDoesNotExist:
+                group = ShotGroup.objects.create(
+                    name=group_description,
+                    project=project,
+                    created_by=user,
+                )
+
         s = Shot.objects.create(
             name=shot["name"],
             project=project,
             rec_timecode=shot.get("rec_timecode"),
             created_by=user,
         )
+
+        s.group.set([group])
 
         ShotTask.objects.create(
             shot=s,
