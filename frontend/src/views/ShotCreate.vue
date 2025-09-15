@@ -1,32 +1,61 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+import Handsontable from 'handsontable'
+import 'handsontable/dist/handsontable.full.min.css'
+
+const router = useRouter()
 const route = useRoute()
 const projectCode = route.params.projectCode
 
-const newShots = ref([])
+const tableContainer = ref(null)
+let hotInstance = null
 
-function addShot() {
-  newShots.value.push({
-    name: '',
-    rec_timecode: '',
-    task: '',
+const data = [
+  { name: '', rec_timecode: '', group: '', task: '' },
+  { name: '', rec_timecode: '', group: '', task: '' },
+  { name: '', rec_timecode: '', group: '', task: '' },
+  { name: '', rec_timecode: '', group: '', task: '' },
+  { name: '', rec_timecode: '', group: '', task: '' },
+]
+
+const colHeaders = Object.keys(data[0])
+
+onMounted(() => {
+  if (!tableContainer.value) return
+
+  hotInstance = new Handsontable(tableContainer.value, {
+    data,
+    colHeaders,
+    rowHeaders: true,
+    height: 'auto',
+    licenseKey: 'non-commercial-and-evaluation',
+    manualRowMove: true,
+    manualColumnMove: true,
+    contextMenu: true,
+    stretchH: 'all',
+    autoInsertRow: true,
   })
-}
+})
 
-function removeShot(index) {
-  newShots.value.splice(index, 1)
-}
+onUnmounted(() => {
+  if (hotInstance) {
+    hotInstance.destroy()
+  }
+})
 
 async function submitNewShots() {
   try {
-    if (newShots.value.length === 0) {
+    const newShots = hotInstance.getSourceData()
+    console.log(newShots)
+
+    if (newShots.length === 0) {
       throw new Error('Нет объектов для отправки')
     }
-    const response = await axios.post(`/api/projects/${projectCode}/shots/create`, newShots.value)
-    console.log('Ответ сервера:', response.data)
+    await axios.post(`/api/projects/${projectCode}/shots/create`, newShots)
+    router.push({name: 'shots-by-project', params: {projectCode}})
   } catch (error) {
     console.error('Ошибка:', error)
   }
@@ -34,31 +63,7 @@ async function submitNewShots() {
 </script>
 
 <template>
-  <h1>Новые шоты</h1>
+  <div ref="tableContainer" style="width: 100%; margin: 20px auto"></div>
 
-  <button @click="addShot" class="btn-add">+ Добавить шот</button>
-
-  <div v-if="newShots.length > 0">
-    <div v-for="(shot, index) in newShots" :key="index">
-      <input v-model="shot.name" placeholder="SHOT_0010" />
-      <input v-model="shot.rec_timecode" placeholder="00:00:00:00" />
-      <input v-model="shot.task" placeholder="Задача" />
-      <button @click="removeShot(index)" class="btn-remove">⨯</button>
-    </div>
-  </div>
-
-  <hr />
-
-  <button @click="submitNewShots" class="btn-submit">Отправить на сервер</button>
+  <button @click="submitNewShots">Отправить</button>
 </template>
-
-<style scoped>
-.btn-add,
-.btn-submit,
-.btn-remove {
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-}
-</style>
