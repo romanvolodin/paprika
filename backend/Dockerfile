@@ -2,8 +2,8 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 RUN apk update && apk add netcat-openbsd && apk add ffmpeg
 
