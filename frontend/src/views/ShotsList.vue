@@ -22,6 +22,8 @@ const _selectedStatuses = ref([])
 const _isStatusFilterInverted = ref(false)
 const _addTaskPanel = ref(null)
 
+document.title = `${projectCode}: Шоты`
+
 const shot_status_colors = {
   'Нет задач': '#CCCCCC',
   'Не начат': '#D40000',

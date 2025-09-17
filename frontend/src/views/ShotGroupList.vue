@@ -10,6 +10,8 @@ const _shotGroups = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
 
+document.title = `${projectCode}: Группы`
+
 async function fetchShotGroups() {
   try {
     const response = await axios.get(`/api/projects/${projectCode}/shot-groups/`)

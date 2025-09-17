@@ -10,6 +10,8 @@ const _tasks = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
 
+document.title = `${projectCode}: Задачи`
+
 async function fetchTasks() {
   try {
     const response = await axios.get(`/api/projects/${projectCode}/tasks/`)

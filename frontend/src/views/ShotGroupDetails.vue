@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -26,6 +26,12 @@ async function fetchShotGroup() {
     _loaded.value = true
   }
 }
+
+watchEffect(() => {
+  if (_shotGroup.value) {
+    document.title = `${projectCode}: ${_shotGroup.value.name}`
+  }
+})
 </script>
 
 <template>

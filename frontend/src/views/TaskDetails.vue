@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -26,6 +26,12 @@ async function fetchTask() {
     _loaded.value = true
   }
 }
+
+watchEffect(() => {
+  if (_task.value) {
+    document.title = `${projectCode}: ${_task.value.description}`
+  }
+})
 </script>
 
 <template>

@@ -1,7 +1,9 @@
 <script setup>
+import { useProjectsStore } from '@/stores/projects'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useProjectsStore } from '@/stores/projects'
+
+document.title = 'Проекты'
 
 const router = useRouter()
 const projectsStore = useProjectsStore()

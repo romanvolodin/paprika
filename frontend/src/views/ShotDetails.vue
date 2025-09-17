@@ -1,7 +1,7 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
@@ -177,6 +177,12 @@ const handleFileChange = (event) => {
     reader.readAsDataURL(file)
   })
 }
+
+watchEffect(() => {
+  if (_shot.value) {
+    document.title = _shot.value.name
+  }
+})
 </script>
 
 <template>
