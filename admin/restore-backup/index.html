@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../restore-backup/">
+        <link rel="prev" href="../prod-install/">
       
       
-        <link rel="next" href="../../dev/">
+        <link rel="next" href="../ssh-alias/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Алиасы в SSH - Паприка</title>
+        <title>Восстановление бэкапов - Паприка</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ssh" class="md-skip">
+        <a href="#_1" class="md-skip">
           Перейти к содержанию
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Алиасы в SSH
+              Восстановление бэкапов
             
           </span>
         </div>
@@ -392,29 +392,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../restore-backup/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Восстановление бэкапов
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -432,7 +409,7 @@
   
   
   <span class="md-ellipsis">
-    Алиасы в SSH
+    Восстановление бэкапов
     
   </span>
   
@@ -445,7 +422,7 @@
   
   
   <span class="md-ellipsis">
-    Алиасы в SSH
+    Восстановление бэкапов
     
   </span>
   
@@ -468,9 +445,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#ssh_1" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
-      Файл конфигурации SSH
+      Заполняем базу данных
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Копируем медиа-файлы
     </span>
   </a>
   
@@ -480,6 +466,29 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssh-alias/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Алиасы в SSH
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -724,9 +733,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#ssh_1" class="md-nav__link">
+  <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
-      Файл конфигурации SSH
+      Заполняем базу данных
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      Копируем медиа-файлы
     </span>
   </a>
   
@@ -748,7 +766,7 @@
 
 
   
-    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/admin/ssh-alias.md" title="Редактировать страницу" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/romanvolodin/paprika/blob/main/docs/docs/admin/restore-backup.md" title="Редактировать страницу" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -757,32 +775,26 @@
     
       
     
-    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/admin/ssh-alias.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
+    <a href="https://github.com/romanvolodin/paprika/raw/main/docs/docs/admin/restore-backup.md" title="Посмотреть исходный код страницы" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="ssh">Алиасы в SSH</h1>
-<p>Алиасы в SSH позволяют упростить подключение к удаленным серверам, присваивая им короткие имена. Вместо постоянного набора, например, <code>ssh paprika-user@123.45.67.89 -p 2222</code> можно будет использовать <code>ssh paprika-prod</code>. А с автодополнением достаточно будет набрать только <code>ssh p</code> и нажать <code>Tab</code></p>
-<h2 id="ssh_1">Файл конфигурации SSH</h2>
-<p>Обычно файл конфигурации SSH находится в домашней директории пользователя по пути <code>~/.ssh/config</code>. Открываем файл для редактирования (если файл не существует он будет создан):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>nano<span class="w"> </span>~/.ssh/config
+<h1 id="_1">Восстановление бэкапов</h1>
+<p>Восстанавливаем бэкап на рабочем сервере. Предполагается, создан <a href="../ssh-alias/">ssh алиас</a> для рабочего сервера — <code>paprika-prod</code>.</p>
+<h2 id="_2">Заполняем базу данных</h2>
+<p>Копируем дамп данных на сервер:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>dump.json<span class="w"> </span>paprika-prod:/var/lib/docker/volumes/paprika_media_volume/_data/
 </span></code></pre></div>
-<p>Добавьте алиас:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Host<span class="w"> </span>&lt;имя_алиаса&gt;
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>HostName<span class="w"> </span>&lt;имя_хоста_или_IP_адрес&gt;
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>User<span class="w"> </span>&lt;имя_пользователя&gt;
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>Port<span class="w"> </span>&lt;порт_ssh&gt;
+<p>Заполняем базу данных из дампа:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ssh<span class="w"> </span>paprika-prod<span class="w"> </span><span class="s2">&quot;cd paprika/ &amp;&amp; docker compose exec paprika-app python manage.py loaddata media/dump.json&quot;</span>
 </span></code></pre></div>
-<p>Пример:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Host<span class="w"> </span>paprika-prod
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>HostName<span class="w"> </span><span class="m">123</span>.45.67.89
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>User<span class="w"> </span>paprika-user
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>Port<span class="w"> </span><span class="m">2222</span>
+<h2 id="-">Копируем медиа-файлы</h2>
+<p>Перейдите в папку с файлами и выполните команду:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>rsync<span class="w"> </span>-ahr<span class="w"> </span>--progress<span class="w"> </span>./*<span class="w"> </span>paprika-prod:/var/lib/docker/volumes/paprika_media_volume/_data
 </span></code></pre></div>
-<p>Если порт используется дефолтный, его можно не указывать.</p>
 
 
 
