@@ -165,11 +165,6 @@ class Shot(models.Model):
         related_name="shots",
         verbose_name="задача на шот",
     )
-    comment = models.TextField(
-        verbose_name="Комментарий",
-        null=True,
-        blank=True,
-    )
 
     class Meta:
         constraints = [
@@ -314,18 +309,6 @@ class ShotTask(models.Model):
 
     def __str__(self):
         return f"{self.shot}: {self.task} ({self.status})"
-
-
-class TmpShotPreview(models.Model):
-    shot = models.OneToOneField(
-        Shot,
-        on_delete=models.PROTECT,
-        related_name="tmp_preview",
-    )
-    image = models.FileField(upload_to=shot_preview_upload_path)
-
-    def __str__(self):
-        return self.shot.name
 
 
 class ChatMessage(models.Model):

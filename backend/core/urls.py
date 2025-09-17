@@ -68,7 +68,6 @@ urlpatterns = [
     path("dj/api-auth/", include("rest_framework.urls", namespace="drf")),
     #
     path("dj/shots/from_xlsx/", views.read_xlsx),
-    path("dj/shots/upload_previews/", views.save_multiple_uploaded_shot_previews),
     path(
         "dj/<str:project_code>/groups/",
         views.shot_group_list,

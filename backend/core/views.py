@@ -20,17 +20,7 @@ from rest_framework.views import APIView
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
-from .models import (
-    ChatMessage,
-    Project,
-    Shot,
-    ShotGroup,
-    ShotTask,
-    Status,
-    Task,
-    TmpShotPreview,
-    Version,
-)
+from .models import ChatMessage, Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from .serializers import (
     ChatMessageSerializer,
     GroupSerializer,
@@ -138,39 +128,6 @@ def read_xlsx(request):
     else:
         form = ReadXlsxForm()
     return render(request, "core/xlsx_read.html", {"form": form})
-
-
-@login_required
-def save_multiple_uploaded_shot_previews(request):
-    if request.method == "POST":
-        form = UploadMultiplePreviewsForm(request.POST, request.FILES)
-        if not form.is_valid():
-            return render(request, "core/upload_multiple_shot_previews.html", {"form": form})
-
-        previews = form.cleaned_data["previews"]
-        successful_count = 0
-        errors = []
-        for preview in previews:
-            shot_name = preview.name.split(".")[0]
-
-            if shot_name is None:
-                errors.append(f"Нет имени шота в '{preview.name}'")
-                continue
-
-            try:
-                shot = Shot.objects.get(name=shot_name)
-            except ObjectDoesNotExist:
-                errors.append(f"Шот '{shot_name}' не найден")
-                continue
-
-            TmpShotPreview.objects.create(shot=shot, image=preview)
-            successful_count += 1
-        return HttpResponse(
-            f"{successful_count} картинок загружено.<br><br>Ошибки:<br>{'<br>'.join(errors)}"
-        )
-    else:
-        form = UploadMultiplePreviewsForm()
-    return render(request, "core/upload_multiple_shot_previews.html", {"form": form})
 
 
 @login_required

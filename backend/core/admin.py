@@ -24,7 +24,6 @@ from .models import (
     ShotTask,
     Status,
     Task,
-    TmpShotPreview,
     Version,
 )
 
@@ -193,7 +192,6 @@ class ShotAdmin(admin.ModelAdmin):
                         "created_by",
                         "created_at",
                     ),
-                    ("comment",),
                 )
             },
         ),
@@ -602,11 +600,6 @@ class ShotTaskAdmin(admin.ModelAdmin):
         "status",
         "assigned_to",
     )
-
-
-@admin.register(TmpShotPreview)
-class TmpShotPreview(admin.ModelAdmin):
-    save_on_top = True
 
 
 @admin.register(ChatMessage)
