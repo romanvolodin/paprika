@@ -55,7 +55,7 @@ async function fetchShot() {
     const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
     _shot.value = response.data
     _versions.value = response.data.versions
-    _selected_version.value = response.data.versions.at(-1)
+    _selected_version.value = response.data.versions.at(0)
     _chat.value = response.data.chat_messages
   } catch (error) {
     _error.value = `${error.status}: ${error.response.data.detail}`
