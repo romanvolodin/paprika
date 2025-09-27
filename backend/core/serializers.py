@@ -14,6 +14,7 @@ from core.models import (
     Task,
     Version,
 )
+from core.utils import calc_shot_status
 from users.models import User
 
 
@@ -169,42 +170,7 @@ class ShotSerializer(serializers.ModelSerializer):
             for shot_task in shot.shot_tasks.all()
             if shot_task.task.description != "Выдать материал"
         ]
-
-        if set() == set(statuses):
-            return "Нет задач"
-
-        if set(("Отмена",)) == set(statuses):
-            return "Отмена"
-
-        if set(("На паузе",)) == set(statuses) or set(("Отмена", "На паузе")) == set(statuses):
-            return "На паузе"
-
-        if (
-            set(("Не начата",)) == set(statuses)
-            or set(("Не начата", "На паузе")) == set(statuses)
-            or set(("Отмена", "Не начата", "На паузе")) == set(statuses)
-        ):
-            return "Не начат"
-
-        if set(("Принята",)) == set(statuses) or set(("Отмена", "Принята", "На паузе")) == set(
-            statuses
-        ):
-            return "Принят"
-
-        if set(("Готова",)) == set(statuses) or set(("Отмена", "Готова", "На паузе")) == set(
-            statuses
-        ):
-            return "Готов"
-
-        if set(("Отдано",)) == set(statuses) or set(("Отмена", "Отдано", "На паузе")) == set(
-            statuses
-        ):
-            return "Отдан"
-
-        if "Есть комментарий" in statuses:
-            return "Есть комментарий"
-
-        return "В работе"
+        return calc_shot_status(statuses)
 
     def to_representation(self, shot):
         data = super().to_representation(shot)
