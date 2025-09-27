@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task
+from core.utils import calc_shot_status
 
 
 @api_view(["POST"])
@@ -53,6 +54,44 @@ def create_shots(request, project_code: str):
         )
         new_shots.append(s)
     return Response({"shots": len(new_shots)})
+
+
+@api_view(["GET"])
+def list_shots(request, project_code: str):
+    project = get_object_or_404(Project, code=project_code)
+    shot_groups = project.shot_groups.filter(is_root=True)
+    out_shot_groups = []
+    for shot_group in shot_groups:
+        shots = []
+        for shot in shot_group.shots.all():
+            thumb = None
+            if shot.versions.all():
+                thumb = request.build_absolute_uri(shot.versions.latest().preview.url)
+            statuses = [
+                shot_task.status.title
+                for shot_task in shot.shot_tasks.all()
+                if shot_task.task.description != "Выдать материал"
+            ]
+            shots.append(
+                {
+                    "id": shot.id,
+                    "name": shot.name,
+                    "created_at": shot.created_at,
+                    "thumb": thumb,
+                    "status": calc_shot_status(statuses),
+                }
+            )
+
+        out_shot_groups.append(
+            {
+                "id": shot_group.id,
+                "name": shot_group.name,
+                "is_default": shot_group.is_default,
+                "is_root": shot_group.is_default,
+                "shots": shots,
+            }
+        )
+    return Response(out_shot_groups)
 
 
 @api_view(["POST"])

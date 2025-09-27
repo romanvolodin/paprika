@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import create_shot_groups, create_shots
+from .views import create_shot_groups, create_shots, list_shots
 
 
 urlpatterns = [
@@ -8,6 +8,11 @@ urlpatterns = [
         "api/projects/<str:project_code>/shots/create",
         create_shots,
         name="create-shots",
+    ),
+    path(
+        "drf/projects/<str:project_code>/shots/",
+        list_shots,
+        name="list-shots",
     ),
     path(
         "api/projects/<str:project_code>/shot-groups/create",
