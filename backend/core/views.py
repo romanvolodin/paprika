@@ -456,31 +456,31 @@ class VersionViewSet(viewsets.ModelViewSet):
             )
 
             escaped_text = (
-                version.name.replace("_", "\_")
-                .replace("*", "\*")
-                .replace("[", "\[")
-                .replace("]", "\]")
-                .replace("(", "\(")
-                .replace(")", "\)")
-                .replace("~", "\~")
-                .replace("`", "\`")
-                .replace(">", "\>")
-                .replace("#", "\#")
-                .replace("+", "\+")
-                .replace("-", "\-")
-                .replace("=", "\=")
-                .replace("|", "\|")
-                .replace("{", "\{")
-                .replace("}", "\}")
-                .replace(".", "\.")
-                .replace("!", "\!")
+                version.name.replace("_", r"\_")
+                .replace("*", r"\*")
+                .replace("[", r"\[")
+                .replace("]", r"\]")
+                .replace("(", r"\(")
+                .replace(")", r"\)")
+                .replace("~", r"\~")
+                .replace("`", r"\`")
+                .replace(">", r"\>")
+                .replace("#", r"\#")
+                .replace("+", r"\+")
+                .replace("-", r"\-")
+                .replace("=", r"\=")
+                .replace("|", r"\|")
+                .replace("{", r"\{")
+                .replace("}", r"\}")
+                .replace(".", r"\.")
+                .replace("!", r"\!")
             )
 
             notification_message = (
                 f"*{request.user.first_name} {request.user.last_name}:*\n"
                 + ">Загружена версия {}\n".format(escaped_text)
                 + "[{}](http://paprika-app.ru/{}/shots/{})".format(
-                    shot.name.replace("_", "\_"),
+                    shot.name.replace("_", r"\_"),
                     shot.project.code,
                     shot.name,
                 )

@@ -103,31 +103,31 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             )
 
             escaped_text = (
-                text.replace("_", "\_")
-                .replace("*", "\*")
-                .replace("[", "\[")
-                .replace("]", "\]")
-                .replace("(", "\(")
-                .replace(")", "\)")
-                .replace("~", "\~")
-                .replace("`", "\`")
-                .replace(">", "\>")
-                .replace("#", "\#")
-                .replace("+", "\+")
-                .replace("-", "\-")
-                .replace("=", "\=")
-                .replace("|", "\|")
-                .replace("{", "\{")
-                .replace("}", "\}")
-                .replace(".", "\.")
-                .replace("!", "\!")
+                text.replace("_", r"\_")
+                .replace("*", r"\*")
+                .replace("[", r"\[")
+                .replace("]", r"\]")
+                .replace("(", r"\(")
+                .replace(")", r"\)")
+                .replace("~", r"\~")
+                .replace("`", r"\`")
+                .replace(">", r"\>")
+                .replace("#", r"\#")
+                .replace("+", r"\+")
+                .replace("-", r"\-")
+                .replace("=", r"\=")
+                .replace("|", r"\|")
+                .replace("{", r"\{")
+                .replace("}", r"\}")
+                .replace(".", r"\.")
+                .replace("!", r"\!")
             )
 
             notification_message = (
                 f"*{author.first_name} {author.last_name}:*\n"
                 + ">{}\n".format(escaped_text.replace("\n", "\n>"))
                 + "[{}](http://paprika-app.ru/{}/shots/{})".format(
-                    shot.name.replace("_", "\_"),
+                    shot.name.replace("_", r"\_"),
                     shot.project.code,
                     shot.name,
                 )
