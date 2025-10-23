@@ -2,7 +2,7 @@ import router from '@/router'
 import axios from 'axios'
 
 const instance = axios.create({
-  timeout: 10000,
+  timeout: 30000,
   baseURL: import.meta.env.VITE_API_URL,
 })
 
