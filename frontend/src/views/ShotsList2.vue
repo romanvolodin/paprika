@@ -45,6 +45,7 @@ onMounted(async () => {
 })
 
 const statuses = computed(() => {
+  console.log(typeof _groups.value, Array.isArray(_groups.value), _groups.value)
   return [...new Set(_groups.value.flatMap((ep) => ep.shots.map((shot) => shot.status)))]
 })
 
