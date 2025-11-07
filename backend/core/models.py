@@ -87,6 +87,13 @@ class ShotGroup(models.Model):
         auto_now_add=True,
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "name"], name="unique_group_name_per_project"
+            )
+        ]
+
     def __str__(self):
         return f"{self.project.code}:{self.name}"
 
