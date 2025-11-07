@@ -50,7 +50,9 @@ const statuses = computed(() => {
 })
 
 const filteredGroups = computed(() => {
-  if (_selectedStatuses.value.length === 0) return _groups.value
+  if (_selectedStatuses.value.length === 0) {
+    return [..._groups.value].sort((a, b) => a.name.localeCompare(b.name))
+  }
 
   const filteredData = _groups.value
     .map((group) => {
@@ -65,6 +67,7 @@ const filteredGroups = computed(() => {
       }
     })
     .filter((group) => group.shots.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return filteredData
 })
