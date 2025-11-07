@@ -58,6 +58,8 @@ const filteredGroups = computed(() => {
         return _isStatusFilterInverted.value ? !hasAllowedStatus : hasAllowedStatus
       })
 
+      filteredShots.sort((a, b) => a.name.localeCompare(b.name))
+
       return {
         ...group,
         shots: filteredShots,
