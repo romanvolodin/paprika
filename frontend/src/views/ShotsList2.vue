@@ -1,4 +1,5 @@
 <script setup>
+import ShotCard from '@/components/ShotCard.vue'
 import axios from '@/config/axiosConfig'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -81,9 +82,16 @@ const filteredGroups = computed(() => {
     <div v-else class="shots-area">
       <div v-for="grp in filteredGroups" :key="grp.url">
         <h2>{{ grp.name }}</h2>
-
-        <div v-for="shot in grp.shots" :key="shot.url">
-          {{ shot.name }}
+        <div class="shots-grid">
+        <ShotCard
+          v-for="shot in grp.shots"
+          :key="shot.url"
+          :project-code="projectCode"
+          :name="shot.name"
+          :status="shot.status"
+          :status-color="shot_status_colors[shot.status]"
+          :thumb="shot.thumb"
+        />
         </div>
       </div>
     </div>
@@ -177,13 +185,6 @@ const filteredGroups = computed(() => {
   gap: 5px;
 }
 
-.shot-card {
-  position: relative;
-  transition: transform 0.1s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
 .shot-card-selected {
   border: 3px solid #ff00ff;
 }
@@ -206,15 +207,6 @@ const filteredGroups = computed(() => {
 .shot-checkbox:hover > input[type='checkbox'] {
   display: block;
 }
-.shot-status {
-  position: absolute;
-  right: 0;
-  margin: 5px;
-  border-radius: 5px;
-  padding: 2px 7px;
-  color: #fff;
-  font-size: 12px;
-}
 
 .shot-status-filter {
   margin: 5px;
@@ -222,26 +214,6 @@ const filteredGroups = computed(() => {
   padding: 2px 7px;
   color: #fff;
   font-size: 12px;
-}
-
-.shot-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.shot-no-thumb {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #ddd;
-  width: 100%;
-  height: 200px;
-  color: #999;
-}
-
-.shot-info {
-  padding: 2px 5px;
 }
 
 table {
