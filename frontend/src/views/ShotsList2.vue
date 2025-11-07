@@ -30,7 +30,7 @@ const shot_status_colors = {
 
 async function fetchShots() {
   try {
-    const response = await axios.get(`/drf/projects/${projectCode}/shots/`)
+    const response = await axios.get(`/api/projects/${projectCode}/shots2/`)
     _groups.value = response.data
     console.log(response.data)
   } catch (error) {

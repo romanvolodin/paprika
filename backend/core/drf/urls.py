@@ -10,7 +10,7 @@ urlpatterns = [
         name="create-shots",
     ),
     path(
-        "drf/projects/<str:project_code>/shots/",
+        "api/projects/<str:project_code>/shots2/",
         list_shots,
         name="list-shots",
     ),
