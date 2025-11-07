@@ -150,9 +150,9 @@ class ShotAdmin(admin.ModelAdmin):
         "task",
     )
     inlines = (
-        ChatMessageInline,
+        # ChatMessageInline,
         ShotTaskInline,
-        VersionInline,
+        # VersionInline,
     )
     ordering = ("name",)
     readonly_fields = (
