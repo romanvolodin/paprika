@@ -97,7 +97,7 @@ const filteredGroups = computed(() => {
     </div>
 
     <aside class="filter-panel">
-      <div>
+      <div v-if="_loaded && !_error">
         <h3>Статус</h3>
 
         <p style="margin-bottom: 10px">
