@@ -12,7 +12,6 @@ const _loaded = ref(false)
 const _error = ref(null)
 const _selectedStatuses = ref([])
 const _isStatusFilterInverted = ref(false)
-const _addTaskPanel = ref(null)
 
 document.title = `${projectCode}: Шоты`
 
@@ -32,7 +31,6 @@ async function fetchShots() {
   try {
     const response = await axios.get(`/api/projects/${projectCode}/shots2/`)
     _groups.value = response.data
-    console.log(response.data)
   } catch (error) {
     _error.value = `${error.status}: ${error.response.data.detail}`
   } finally {
@@ -45,7 +43,6 @@ onMounted(async () => {
 })
 
 const statuses = computed(() => {
-  console.log(typeof _groups.value, Array.isArray(_groups.value), _groups.value)
   return [...new Set(_groups.value.flatMap((ep) => ep.shots.map((shot) => shot.status)))]
 })
 
@@ -127,43 +124,16 @@ const filteredGroups = computed(() => {
       </div>
     </aside>
   </div>
-
-  <dialog ref="_addTaskPanel">
-    <header>
-      <h2>Добавить задачи</h2>
-      <button @click="_addTaskPanel.close()">𐄂</button>
-    </header>
-
-    <div class="dialog-content">...</div>
-
-    <footer>
-      <button>Добавить задачи</button>
-    </footer>
-  </dialog>
 </template>
 
 <style scoped>
 * {
   text-decoration: none;
 }
-.empty-message {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 90vh;
-}
 .group-header {
   font-size: 36px;
   margin-top: 50px;
   margin-bottom: 20px;
-}
-.shots-header {
-  display: flex;
-  align-items: end;
-  gap: 30px;
 }
 
 .shots-list {
@@ -175,49 +145,10 @@ const filteredGroups = computed(() => {
   flex-grow: 1;
 }
 
-.error-message {
-  margin: 1rem 0;
-  border: 1px solid #dc3545;
-  border-radius: 4px;
-  background-color: #f8d7da;
-  padding: 1rem;
-  color: #dc3545;
-}
-
-.loading {
-  padding: 2rem;
-  color: #666;
-  font-size: 1.2rem;
-  text-align: center;
-}
-
 .shots-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 5px;
-}
-
-.shot-card-selected {
-  border: 3px solid #ff00ff;
-}
-
-.shot-card:hover {
-  transform: translateY(-4px);
-}
-.shot-checkbox {
-  position: absolute;
-  z-index: 1;
-  padding: 10px;
-  padding-left: 13px;
-  width: 80px;
-  height: 80px;
-}
-.shot-checkbox > input[type='checkbox'] {
-  display: none;
-}
-.shot-checkbox > input[type='checkbox']:checked,
-.shot-checkbox:hover > input[type='checkbox'] {
-  display: block;
 }
 
 .shot-status-filter {
@@ -228,42 +159,9 @@ const filteredGroups = computed(() => {
   font-size: 12px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-
 .filter-panel {
   flex-shrink: 1;
   padding: 20px;
   max-width: 300px;
-}
-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border: none;
-  padding: 10px;
-  width: 700px;
-}
-dialog > header {
-  display: flex;
-  justify-content: space-between;
-}
-dialog > header > button {
-  padding: 10px;
-}
-dialog > footer {
-  display: flex;
-  justify-content: end;
-}
-dialog > footer > button {
-  padding: 10px;
 }
 </style>
