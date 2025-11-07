@@ -85,7 +85,10 @@ const filteredGroups = computed(() => {
 
     <div v-else class="shots-area">
       <div v-for="grp in filteredGroups" :key="grp.url">
-        <h2>{{ grp.name }}</h2>
+        <h2 class="group-header">
+          {{ grp.name }}
+          <sub>({{ grp.shots.length }})</sub>
+        </h2>
         <div class="shots-grid">
         <ShotCard
           v-for="shot in grp.shots"
@@ -151,6 +154,11 @@ const filteredGroups = computed(() => {
   gap: 10px;
   width: 100%;
   height: 90vh;
+}
+.group-header {
+  font-size: 36px;
+  margin-top: 50px;
+  margin-bottom: 20px;
 }
 .shots-header {
   display: flex;
