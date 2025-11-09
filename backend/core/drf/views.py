@@ -82,6 +82,8 @@ def list_shots(request, project_code: str):
                 }
             )
 
+        shots.sort(key=lambda shot: shot["name"])
+
         out_shot_groups.append(
             {
                 "id": shot_group.id,
