@@ -48,7 +48,9 @@ const statuses = computed(() => {
 
 const filteredGroups = computed(() => {
   if (_selectedStatuses.value.length === 0) {
-    return [..._groups.value].sort((a, b) => a.name.localeCompare(b.name))
+    return [..._groups.value].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }),
+    )
   }
 
   const filteredData = _groups.value
@@ -58,7 +60,9 @@ const filteredGroups = computed(() => {
         return _isStatusFilterInverted.value ? !hasAllowedStatus : hasAllowedStatus
       })
 
-      filteredShots.sort((a, b) => a.name.localeCompare(b.name))
+      filteredShots.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }),
+      )
 
       return {
         ...group,
@@ -66,7 +70,7 @@ const filteredGroups = computed(() => {
       }
     })
     .filter((group) => group.shots.length > 0)
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
 
   return filteredData
 })
@@ -89,15 +93,15 @@ const filteredGroups = computed(() => {
           <sub>({{ grp.shots.length }})</sub>
         </h2>
         <div class="shots-grid">
-        <ShotCard
-          v-for="shot in grp.shots"
-          :key="shot.url"
-          :project-code="projectCode"
-          :name="shot.name"
-          :status="shot.status"
-          :status-color="shot_status_colors[shot.status]"
-          :thumb="shot.thumb"
-        />
+          <ShotCard
+            v-for="shot in grp.shots"
+            :key="shot.url"
+            :project-code="projectCode"
+            :name="shot.name"
+            :status="shot.status"
+            :status-color="shot_status_colors[shot.status]"
+            :thumb="shot.thumb"
+          />
         </div>
       </div>
     </div>
