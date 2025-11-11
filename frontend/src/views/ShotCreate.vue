@@ -4,7 +4,8 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Handsontable from 'handsontable'
-import 'handsontable/dist/handsontable.full.min.css'
+import 'handsontable/styles/handsontable.css'
+import 'handsontable/styles/ht-theme-classic.css'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,6 +29,7 @@ onMounted(() => {
 
   hotInstance = new Handsontable(tableContainer.value, {
     data,
+    themeName: "ht-theme-classic-dark-auto",
     colHeaders,
     rowHeaders: true,
     height: 'auto',
