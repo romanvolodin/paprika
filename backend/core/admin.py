@@ -459,36 +459,34 @@ class ShotAdmin(admin.ModelAdmin):
                 "Исполнитель",
             )
         )
+        row_counter = 1
         for counter, shot in enumerate(queryset, start=1):
-            counter_cell = ws.cell(row=counter + 1, column=1, value=counter)
+            counter_cell = ws.cell(row=counter + row_counter, column=1, value=counter)
             counter_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-            name_cell = ws.cell(row=counter + 1, column=2, value=shot.name)
+            name_cell = ws.cell(row=counter + row_counter, column=2, value=shot.name)
             name_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-            name_cell = ws.cell(row=counter + 1, column=3, value=shot.rec_timecode)
+            name_cell = ws.cell(row=counter + row_counter, column=3, value=shot.rec_timecode)
             name_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-            ws.cell(
-                row=counter + 1,
-                column=4,
-                value="\n".join([task.description for task in shot.task.all()]),
-            )
-
-            ws.cell(
-                row=counter + 1,
-                column=5,
-                value="\n".join([str(shot_task.hours) for shot_task in shot.shot_tasks.all()]),
-            )
-
-            ws.cell(
-                row=counter + 1,
-                column=6,
-                value="\n".join([
-                    shot_task.assigned_to.first_name if shot_task.assigned_to else "—"
-                    for shot_task in shot.shot_tasks.all()
-                ]),
-            )
+            for task_counter, shot_task in enumerate(shot.shot_tasks.all()):
+                row_counter += 1 if task_counter else 0
+                ws.cell(
+                    row=counter + row_counter,
+                    column=4,
+                    value=shot_task.task.description,
+                )
+                ws.cell(
+                    row=counter + row_counter,
+                    column=5,
+                    value=shot_task.hours if shot_task.hours else 0,
+                )
+                ws.cell(
+                    row=counter + row_counter,
+                    column=6,
+                    value=shot_task.assigned_to.first_name if shot_task.assigned_to else "—",
+                )
 
         for i, column in enumerate(ws.columns, 1):
             lengths = (
