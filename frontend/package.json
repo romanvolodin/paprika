@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@handsontable/vue3": "^16.0.1",
-    "@vueuse/core": "^13.4.0",
+    "@vueuse/core": "^14.0.0",
     "ag-grid-vue3": "^33.3.2",
     "axios": "^1.7.9",
     "handsontable": "^16.0.1",
