@@ -4,3 +4,19 @@
   padding: 0;
   font-family: sans-serif;
 }
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+}
+html.dark {
+  --bg-color: #282828;
+  --text-color: #e0e0e0;
+}
+body, textarea, button {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+a {
+  color: var(--text-color);
+  text-decoration: none;
+}

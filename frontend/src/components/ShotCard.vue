@@ -59,6 +59,10 @@ defineProps({
   height: 200px;
   color: #999;
 }
+html.dark .shot-no-thumb {
+  background-color: black;
+  color: #ccc;
+}
 .shot-info {
   padding: 2px 5px;
 }

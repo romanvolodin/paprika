@@ -400,6 +400,9 @@ watchEffect(() => {
   background-color: hsl(83, 10%, 92%);
   padding: 10px;
 }
+html.dark .message {
+  background-color: #444;
+}
 .message-header {
   display: flex;
   justify-content: space-between;
@@ -421,6 +424,10 @@ watchEffect(() => {
   border-radius: 5px;
   background-color: hsl(83, 15%, 80%);
   padding: 3px 6px;
+}
+html.dark .quote {
+  border-left: 4px solid #6e8a40;
+  background-color: #686c60;
 }
 .date-time {
   opacity: 0.4;
