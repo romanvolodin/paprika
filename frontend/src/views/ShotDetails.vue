@@ -1,7 +1,7 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
-import { onMounted, ref, watchEffect } from 'vue'
+import { onMounted, ref, watchEffect, onUpdated, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
@@ -24,6 +24,22 @@ const _all_users = ref([])
 const _attachments = ref([])
 const _selected_version = ref(null)
 const _versionUploading = ref(false)
+const _chatArea = ref(null)
+
+const scrollToLastMessage = () => {
+  nextTick(() => {
+    if (_chatArea.value) {
+      _chatArea.value.scrollTo({
+        top: _chatArea.value.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
+  })
+}
+
+onUpdated(() => {
+  scrollToLastMessage()
+})
 
 const { textarea: userMessageTextarea, input: _message } = useTextareaAutosize({
   styleProp: 'minHeight',
@@ -39,6 +55,7 @@ onMounted(async () => {
   _user.value = auth.user
   await fetchAllUsers()
   await fetchShot()
+  scrollToLastMessage()
 })
 
 async function fetchAllUsers() {
@@ -247,7 +264,7 @@ watchEffect(() => {
     <div class="chat">
       <a :href="adminEditUrl(_shot.id)">{{ _shot.name }} в админке</a>
       <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
-      <div v-else class="chat-area">
+      <div v-else class="chat-area" ref="_chatArea">
         <div class="messages">
           <div class="message" v-for="message in _chat" :key="message.created_at">
             <div class="message-header">
@@ -387,6 +404,7 @@ watchEffect(() => {
 }
 .chat-area {
   flex-grow: 1;
+  overflow-y: scroll;
 }
 .messages {
   display: flex;
