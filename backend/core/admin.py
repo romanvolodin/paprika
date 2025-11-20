@@ -10,10 +10,10 @@ from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from .forms import (
+    AddCommentToShotForm,
     AddShotsToGroupsForm,
     AddShotsToProjectForm,
     AddTasksToShotForm,
-    AddСommentToShotForm,
 )
 from .models import (
     Attachment,
@@ -370,7 +370,7 @@ class ShotAdmin(admin.ModelAdmin):
     @admin.action(description="Добавить комментарий")
     def add_comments_to_shot(modeladmin, request, queryset):
         if "apply" in request.POST:
-            form = AddСommentToShotForm(request.POST)
+            form = AddCommentToShotForm(request.POST)
             if form.is_valid():
                 comment = form.cleaned_data["comment"]
                 created_by = form.cleaned_data["created_by"]
@@ -386,7 +386,7 @@ class ShotAdmin(admin.ModelAdmin):
 
         context = {
             "shots": queryset,
-            "form": AddСommentToShotForm,
+            "form": AddCommentToShotForm,
         }
         return render(
             request,

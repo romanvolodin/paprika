@@ -32,7 +32,7 @@ class AddTasksToShotForm(forms.Form):
     tasks = forms.ModelMultipleChoiceField(Task.objects.all())
 
 
-class AddСommentToShotForm(forms.Form):
+class AddCommentToShotForm(forms.Form):
     _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
     created_by = forms.ModelChoiceField(User.objects.all())
     comment = forms.CharField(help_text="Комментарий длиной до 255 символов")
