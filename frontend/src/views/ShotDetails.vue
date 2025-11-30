@@ -1,6 +1,7 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
+import { useShot } from '@/composables/useShot'
 import { onMounted, ref, watchEffect, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -10,14 +11,13 @@ const route = useRoute()
 const projectCode = route.params.projectCode
 const shotName = route.params.shotName
 
+const { shot, isLoading, error, fetchShot } = useShot(projectCode, shotName)
+
 const auth = useAuthStore()
 const _user = ref({})
 
-const _shot = ref(null)
 const _versions = ref([])
 const _chat = ref([])
-const _loaded = ref(false)
-const _error = ref(null)
 const _reply_to_message = ref(null)
 const _reply_to_id = ref(null)
 const _all_users = ref([])
@@ -53,7 +53,12 @@ onMounted(async () => {
   _user.value = auth.user
   await fetchAllUsers()
   await fetchShot()
-  scrollToLastMessage()
+  if (shot.value) {
+    _versions.value = shot.value.versions
+    _selected_version.value = shot.value.versions.at(0)
+    _chat.value = shot.value.chat_messages
+    scrollToLastMessage()
+  }
 })
 
 async function fetchAllUsers() {
@@ -61,22 +66,7 @@ async function fetchAllUsers() {
     const response = await axios.get(`/api/users/`)
     _all_users.value = response.data.results
   } catch (error) {
-    _error.value = `${error.status}: ${error.response.data.detail}`
-  }
-}
-
-async function fetchShot() {
-  try {
-    const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
-    _shot.value = response.data
-    _versions.value = response.data.versions
-    _selected_version.value = response.data.versions.at(0)
-    _chat.value = response.data.chat_messages
-  } catch (error) {
-    _error.value = `${error.status}: ${error.response.data.detail}`
-    _shot.value = null
-  } finally {
-    _loaded.value = true
+    error.value = `${error.status}: ${error.response.data.detail}`
   }
 }
 
@@ -85,7 +75,7 @@ async function sendMessage() {
 
   const formData = new FormData()
 
-  formData.append('shot', _shot.value.id)
+  formData.append('shot', shot.value.id)
   formData.append('text', _message.value)
   formData.append('created_by', _user.value.id)
   formData.append('created_at', new Date().toISOString())
@@ -154,7 +144,7 @@ const handleVersionUpload = async (event) => {
   _versionUploading.value = true
 
   const formData = new FormData()
-  formData.append('shot', _shot.value.id)
+  formData.append('shot', shot.value.id)
   formData.append('file', file)
 
   try {
@@ -194,17 +184,17 @@ const handleFileChange = (event) => {
 }
 
 watchEffect(() => {
-  if (_shot.value) {
-    document.title = _shot.value.name
+  if (shot.value) {
+    document.title = shot.value.name
   }
 })
 </script>
 
 <template>
-  <div v-if="!_loaded" class="empty">Загрузка...</div>
+  <div v-if="isLoading" class="empty">Загрузка...</div>
 
-  <div v-else-if="_error" class="error">
-    {{ _error }}
+  <div v-else-if="error" class="error">
+    {{ error }}
   </div>
 
   <div v-else class="wrapper">
@@ -260,7 +250,7 @@ watchEffect(() => {
     </div>
 
     <div class="chat">
-      <a :href="adminEditUrl(_shot.id)">{{ _shot.name }} в админке</a>
+      <a v-if="shot" :href="adminEditUrl(shot.id)">{{ shot.name }} в админке</a>
       <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
       <div v-else class="chat-area" ref="_chatArea">
         <div class="messages">
