@@ -1,7 +1,7 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
-import { onMounted, ref, watchEffect, onUpdated, nextTick } from 'vue'
+import { onMounted, ref, watchEffect, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
@@ -26,19 +26,17 @@ const _selected_version = ref(null)
 const _versionUploading = ref(false)
 const _chatArea = ref(null)
 
-const scrollToLastMessage = () => {
-  nextTick(() => {
-    if (_chatArea.value) {
-      _chatArea.value.scrollTo({
-        top: _chatArea.value.scrollHeight,
-        behavior: 'smooth',
-      })
-    }
-  })
+function scrollToLastMessage() {
+  if (_chatArea.value) {
+    _chatArea.value.scrollTo({
+      top: _chatArea.value.scrollHeight,
+      behavior: 'smooth',
+    })
+  }
 }
 
-onUpdated(() => {
-  scrollToLastMessage()
+watch(_chat, () => {
+  nextTick(scrollToLastMessage)
 })
 
 const { textarea: userMessageTextarea, input: _message } = useTextareaAutosize({
