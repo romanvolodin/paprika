@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     #
     "core",
     "users",
-    "chat",
 ]
 
 MIDDLEWARE = [
