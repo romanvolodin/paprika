@@ -1,9 +1,10 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task
+from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from core.utils import calc_shot_status
 
 
@@ -59,19 +60,37 @@ def create_shots(request, project_code: str):
 @api_view(["GET"])
 def list_shots(request, project_code: str):
     project = get_object_or_404(Project, code=project_code)
-    shot_groups = project.shot_groups.filter(is_root=True)
+
+    shot_groups = project.shot_groups.filter(is_root=True).prefetch_related(
+        Prefetch(
+            "shots",
+            queryset=Shot.objects.prefetch_related(
+                Prefetch(
+                    "versions",
+                    queryset=Version.objects.order_by("-created_at"),
+                    to_attr="version_list",
+                ),
+                Prefetch(
+                    "shot_tasks",
+                    queryset=ShotTask.objects.select_related("task", "status").exclude(
+                        task__description="Выдать материал"
+                    ),
+                    to_attr="filtered_tasks",
+                ),
+            ),
+        )
+    )
+
     out_shot_groups = []
     for shot_group in shot_groups:
         shots = []
         for shot in shot_group.shots.all():
             thumb = None
-            if shot.versions.all():
-                thumb = request.build_absolute_uri(shot.versions.latest().preview.url)
-            statuses = [
-                shot_task.status.title
-                for shot_task in shot.shot_tasks.all()
-                if shot_task.task.description != "Выдать материал"
-            ]
+            if hasattr(shot, "version_list") and shot.version_list:
+                thumb = request.build_absolute_uri(shot.version_list[0].preview.url)
+
+            statuses = [st.status.title for st in shot.filtered_tasks]
+
             shots.append(
                 {
                     "id": shot.id,
