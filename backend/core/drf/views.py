@@ -108,7 +108,7 @@ def list_shots(request, project_code: str):
                 "id": shot_group.id,
                 "name": shot_group.name,
                 "is_default": shot_group.is_default,
-                "is_root": shot_group.is_default,
+                "is_root": shot_group.is_root,
                 "shots": shots,
             }
         )
