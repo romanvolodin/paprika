@@ -1,8 +1,8 @@
 <script setup>
+import { useShot } from '@/composables/useShot'
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
-import { useShot } from '@/composables/useShot'
-import { onMounted, ref, watchEffect, watch, nextTick } from 'vue'
+import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
@@ -102,6 +102,7 @@ async function sendMessage() {
     _reply_to_message.value = null
 
     await fetchShot()
+    _chat.value = shot.value.chat_messages
   } catch (error) {
     console.error('Ошибка при отправке сообщения:', error)
   }
@@ -155,6 +156,10 @@ const handleVersionUpload = async (event) => {
     })
 
     await fetchShot()
+    _selected_version.value = shot.value.versions.at(0)
+    _versions.value = shot.value.versions
+    _chat.value = shot.value.chat_messages
+    scrollToLastMessage()
   } catch (error) {
     console.error('Ошибка загрузки:', error)
   } finally {
