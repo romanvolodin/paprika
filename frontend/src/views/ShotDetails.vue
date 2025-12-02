@@ -7,6 +7,8 @@ import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
 
+import MessageBubble from '@/components/chat/MessageBubble.vue'
+
 const route = useRoute()
 const projectCode = route.params.projectCode
 const shotName = route.params.shotName
@@ -108,10 +110,6 @@ async function sendMessage() {
   }
 }
 
-function formatText(text) {
-  return text.replace(/\n/g, '<br>')
-}
-
 function adminEditUrl(shot_id) {
   return `http://paprika-app.ru/admin/core/shot/${shot_id}/change/`
 }
@@ -193,6 +191,26 @@ watchEffect(() => {
     document.title = shot.value.name
   }
 })
+
+function formatAuthorName(authorId) {
+  if (!authorId) {
+    return ''
+  }
+
+  const author = getAuthorById(authorId)
+  return `${author.first_name} ${author.last_name}`
+}
+
+function formatDateTime(datetime) {
+
+  return new Date(datetime).toLocaleString('ru-ru', {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: 'numeric',
+  })
+
+}
 </script>
 
 <template>
@@ -259,47 +277,17 @@ watchEffect(() => {
       <div v-if="_chat.length === 0" class="empty">Сообщений пока нет</div>
       <div v-else class="chat-area" ref="_chatArea">
         <div class="messages">
-          <div class="message" v-for="message in _chat" :key="message.created_at">
-            <div class="message-header">
-              <p class="author">
-                {{
-                  getAuthorById(message.created_by).first_name +
-                  ' ' +
-                  getAuthorById(message.created_by).last_name
-                }}
-              </p>
-              <span class="reply" @click="replyToMessage(message)">Ответить</span>
-            </div>
-
-            <blockquote class="quote" v-if="message.reply_to_display">
-              <p>
-                {{
-                  getAuthorById(message.reply_to_display.created_by).first_name +
-                  ' ' +
-                  getAuthorById(message.reply_to_display.created_by).last_name
-                }}
-              </p>
-              <p>{{ message.reply_to_display.text }}</p>
-            </blockquote>
-            <div v-if="message.attachments" class="attachments-wrapper">
-              <div v-for="attachment in message.attachments" :key="attachment" class="attachment">
-                <a :href="attachment.file" target="_blank">
-                  <img :src="attachment.file" />
-                </a>
-              </div>
-            </div>
-            <div class="text" v-html="formatText(message.text)"></div>
-            <p class="date-time">
-              {{
-                new Date(message.created_at).toLocaleString('ru-ru', {
-                  month: 'short',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: 'numeric',
-                })
-              }}
-            </p>
-          </div>
+          <MessageBubble
+            v-for="message in _chat"
+            :key="message.created_at"
+            :author="formatAuthorName(message.created_by)"
+            :body="message.text"
+            :datetime="formatDateTime(message.created_at)"
+            :attachments="message.attachments"
+            :reply-to-author="formatAuthorName(message.reply_to_display?.created_by)"
+            :reply-to-text="message.reply_to_display?.text"
+            @reply="replyToMessage(message)"
+          />
         </div>
       </div>
       <blockquote class="reply-mode" v-if="_reply_to_message">
@@ -405,45 +393,6 @@ watchEffect(() => {
   gap: 20px;
   padding: 20px;
 }
-.message {
-  border-radius: 10px;
-  border-bottom-left-radius: 0;
-  background-color: hsl(83, 10%, 92%);
-  padding: 10px;
-}
-html.dark .message {
-  background-color: #444;
-}
-.message-header {
-  display: flex;
-  justify-content: space-between;
-}
-.reply {
-  display: none;
-  opacity: 0.4;
-  cursor: pointer;
-}
-.message:hover .reply {
-  display: inline;
-}
-.author {
-  font-weight: bold;
-}
-.quote {
-  margin: 5px 0;
-  border-left: 4px solid hsl(83, 35%, 50%);
-  border-radius: 5px;
-  background-color: hsl(83, 15%, 80%);
-  padding: 3px 6px;
-}
-html.dark .quote {
-  border-left: 4px solid #6e8a40;
-  background-color: #686c60;
-}
-.date-time {
-  opacity: 0.4;
-  text-align: right;
-}
 .form-row {
   display: flex;
   font-size: 18px;
@@ -476,27 +425,6 @@ html.dark .quote {
   width: 40px;
   height: 40px;
   font-size: 30px;
-}
-.attachments-wrapper {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3px;
-  margin: 5px 0;
-  max-width: 600px;
-}
-.attachment {
-  border-radius: 5px;
-  aspect-ratio: 1;
-  overflow: hidden;
-}
-.attachment img {
-  filter: brightness(0.75);
-  aspect-ratio: 1;
-  width: 100%;
-  object-fit: cover;
-}
-.attachment img:hover {
-  filter: brightness(1);
 }
 .versions-panel {
   display: flex;
