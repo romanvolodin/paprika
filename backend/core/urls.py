@@ -5,11 +5,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 from .drf.urls import urlpatterns as drf_urlpatterns
 
-
 router = routers.DefaultRouter()
 router.register("users", views.UserViewSet)
 router.register("groups", views.GroupViewSet)
-router.register("shots", views.ShotViewSet)
+
 router.register("projects", views.ProjectViewSet)
 router.register("shot-groups", views.ShotGroupViewSet)
 router.register("shot-tasks", views.ShotTaskViewSet)
@@ -19,11 +18,6 @@ router.register("versions", views.VersionViewSet)
 router.register("chats", views.ChatViewSet)
 
 urlpatterns = [
-    path(
-        "api/projects/<str:project_code>/shots/",
-        views.ShotViewSet.as_view({"get": "list"}),
-        name="shot-list",
-    ),
     path(
         "api/projects/<str:project_code>/shots/<str:shot_name>/",
         views.ShotViewSet.as_view({"get": "retrieve"}),
@@ -67,41 +61,10 @@ urlpatterns = [
     #
     path("dj/shots/from_xlsx/", views.read_xlsx),
     path(
-        "dj/<str:project_code>/groups/",
-        views.shot_group_list,
-        name="shot_groups_list",
-    ),
-    path(
-        "dj/<str:project_code>/groups/<int:shot_group_id>",
-        views.shot_group_details,
-        name="shot_group_details",
-    ),
-    path(
-        "dj/<str:project_code>/tasks/",
-        views.task_list,
-        name="task_list",
-    ),
-    path(
-        "dj/<str:project_code>/tasks/<int:task_id>",
-        views.task_details,
-        name="task_details",
-    ),
-    path(
-        "dj/",
-        views.project_list,
-        name="project_list",
-    ),
-    path(
-        "dj/<str:project_code>",
-        views.project_details,
-        name="project_details",
-    ),
-    path(
         "dj/versions/upload/",
         views.save_multiple_uploaded_versions,
         name="versions_upload",
     ),
-    path("api/", views.api),
 ]
 
 urlpatterns += drf_urlpatterns

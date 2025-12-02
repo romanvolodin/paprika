@@ -8,7 +8,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
-from django.http import JsonResponse
 from django.shortcuts import HttpResponse, get_object_or_404, render
 from django.utils import timezone
 from openpyxl import load_workbook
@@ -16,10 +15,9 @@ from rest_framework import permissions, viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from users.models import User
 
-from .forms import ReadXlsxForm, UploadMultiplePreviewsForm, UploadMultipleVersionsForm
+from .forms import ReadXlsxForm, UploadMultipleVersionsForm
 from .models import ChatMessage, Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from .serializers import (
     ChatMessageSerializer,
@@ -131,78 +129,6 @@ def read_xlsx(request):
 
 
 @login_required
-def shot_group_list(request, project_code):
-    project = Project.objects.get(code=project_code)
-    shot_groups = project.shot_groups.all().order_by("name")
-    context = {
-        "shot_groups": shot_groups,
-        "count": len(shot_groups),
-    }
-    return render(request, "core/shot_group_list.html", context)
-
-
-@login_required
-def shot_group_details(request, project_code, shot_group_id):
-    shot_group = ShotGroup.objects.get(pk=shot_group_id)
-    context = {
-        "shot_group": shot_group,
-    }
-    return render(request, "core/shot_group_details.html", context)
-
-
-@login_required
-def task_list(request, project_code):
-    project = Project.objects.get(code=project_code)
-    tasks = project.tasks.all().order_by("description")
-    context = {
-        "tasks": tasks,
-        "count": len(tasks),
-    }
-    return render(request, "core/task_list.html", context)
-
-
-@login_required
-def task_details(request, project_code, task_id):
-    task = Task.objects.get(pk=task_id)
-    shots = []
-    for shot in task.shots.all():
-        shot_task = [st for st in shot.shot_tasks.all() if st.task == task][0]
-        d = shot.__dict__
-        d["status"] = shot_task.status.title
-        d["status_color"] = shot_task.status.color
-
-        try:
-            version = shot.versions.latest()
-            d["versions"] = {"latest": {"preview": {"url": version.preview.url}}}
-        except ObjectDoesNotExist:
-            pass
-
-        shots.append(d)
-
-    context = {"task": task, "shots": shots}
-    return render(request, "core/task_details.html", context)
-
-
-@login_required
-def project_list(request):
-    projects = Project.objects.order_by("name")
-    context = {
-        "projects": projects,
-        "count": len(projects),
-    }
-    return render(request, "core/project_list.html", context)
-
-
-@login_required
-def project_details(request, project_code):
-    project = Project.objects.get(code=project_code)
-    context = {
-        "project": project,
-    }
-    return render(request, "core/project_details.html", context)
-
-
-@login_required
 def save_multiple_uploaded_versions(request):
     if request.method == "POST":
         form = UploadMultipleVersionsForm(request.POST, request.FILES)
@@ -264,10 +190,6 @@ def save_multiple_uploaded_versions(request):
     return render(request, "core/upload_multiple_versions.html", {"form": form})
 
 
-def api(request):
-    return JsonResponse({"message": "ok!"})
-
-
 class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -299,16 +221,6 @@ class CurrentUserView(APIView):
 class ShotViewSet(viewsets.ModelViewSet):
     queryset = Shot.objects.all()
     serializer_class = ShotSerializer
-
-    def list(self, request, project_code=None):
-        project = get_object_or_404(Project, code=project_code)
-        shot_group = get_object_or_404(ShotGroup, project=project, is_default=True)
-        serializer = ShotSerializer(
-            shot_group.shots.order_by("name"),
-            many=True,
-            context={"request": request},
-        )
-        return Response(serializer.data)
 
     def retrieve(self, request, project_code=None, shot_name=None):
         project = get_object_or_404(Project, code=project_code)
