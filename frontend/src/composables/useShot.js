@@ -15,7 +15,7 @@ export function useShot(projectCode, shotName) {
     error.value = null // сброс ошибки перед запросом
 
     try {
-      const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}`)
+      const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}/`)
       shot.value = response.data
     } catch (err) {
       error.value = err.response?.data?.detail || 'Ошибка загрузки шота'
