@@ -11,10 +11,11 @@ from django.db.models import Prefetch
 from django.shortcuts import HttpResponse, get_object_or_404, render
 from django.utils import timezone
 from openpyxl import load_workbook
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultipleVersionsForm
@@ -216,6 +217,19 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(serializer.data)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class ShotViewSet(viewsets.ModelViewSet):
