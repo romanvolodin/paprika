@@ -3,10 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useDark, useToggle } from '@vueuse/core'
-
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
+import ThemeToggler from '@/components/ThemeToggler.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -61,9 +58,7 @@ onMounted(() => {
     </nav>
 
     <div class="extra">
-      <div @click="toggleDark()" class="theme-toggler">
-        {{ isDark ? '🌙' : '☀️' }}
-      </div>
+      <ThemeToggler />
 
       <div class="user" v-if="_user">
         <p>{{ _user.first_name || _user.email }}</p>
@@ -92,21 +87,6 @@ nav {
   display: flex;
   align-items: center;
   gap: 40px;
-}
-.theme-toggler {
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  cursor: pointer;
-  border: 2px solid #d5d5d5;
-  border-radius: 50vh;
-  padding: 0 2px;
-  padding-bottom: 1px;
-  width: 48px;
-  height: 28px;
-}
-html.dark .theme-toggler {
-  justify-content: end;
 }
 .user {
   display: flex;
