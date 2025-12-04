@@ -10,19 +10,25 @@ const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
-const error_message = ref('')
+const errorMessage = ref('')
 
 const login = async () => {
-  const success = await authStore.login({
-    email: email.value,
-    password: password.value,
-  })
-  if (success) {
-    let url = route.query.next
-    if (!url) {
-      url = '/'
+  errorMessage.value = '' // Очищаем предыдущие ошибки
+
+  try {
+    const success = await authStore.login({
+      email: email.value,
+      password: password.value,
+    })
+    if (success) {
+      let url = route.query.next
+      if (!url) {
+        url = '/'
+      }
+      router.push(url)
     }
-    router.push(url)
+  } catch (error) {
+    errorMessage.value = error
   }
 }
 </script>
@@ -30,7 +36,9 @@ const login = async () => {
 <template>
   <main>
     <form @submit.prevent="login" method="post">
-      <p v-if="error_message">{{ error_message }}</p>
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
       <p>
         <input required v-model="email" type="email" name="email" placeholder="your@email.com" />
       </p>
@@ -53,5 +61,13 @@ main {
   align-items: center;
   width: 100%;
   min-height: 100vh;
+}
+.error-message {
+  margin-bottom: 10px;
+  border: 1px solid red;
+  border-radius: 4px;
+  background-color: #ffe6e6;
+  padding: 10px;
+  color: red;
 }
 </style>
