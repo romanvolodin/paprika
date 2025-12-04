@@ -211,6 +211,13 @@ function formatDateTime(datetime) {
   })
 
 }
+
+function replaceToMdash(e) {
+  const el = e.target
+  const processedMessage = el.value.replace(/--/g, '—')
+  if (processedMessage === _message.value) return
+  _message.value = processedMessage
+}
 </script>
 
 <template>
@@ -336,6 +343,7 @@ function formatDateTime(datetime) {
             v-model="_message"
             class="resize-none"
             placeholder="Сообщение..."
+            @input="replaceToMdash"
           ></textarea>
           <button type="submit">➜</button>
         </div>
