@@ -9,6 +9,14 @@ import { useTextareaAutosize } from '@vueuse/core'
 
 import MessageBubble from '@/components/chat/MessageBubble.vue'
 
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+})
+
 const route = useRoute()
 const projectCode = route.params.projectCode
 const shotName = route.params.shotName
@@ -288,7 +296,7 @@ function replaceToMdash(e) {
             v-for="message in _chat"
             :key="message.created_at"
             :author="formatAuthorName(message.created_by)"
-            :body="message.text"
+            :body="md.render(message.text)"
             :datetime="formatDateTime(message.created_at)"
             :attachments="message.attachments"
             :reply-to-author="formatAuthorName(message.reply_to_display?.created_by)"

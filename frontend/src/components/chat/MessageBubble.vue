@@ -31,7 +31,7 @@ defineProps({
       </div>
     </div>
 
-    <div class="text">{{ body }}</div>
+    <div class="markdown-body" v-html="body"></div>
     <p class="date-time">{{ datetime }}</p>
   </div>
 </template>
@@ -71,6 +71,15 @@ html.dark .message {
 html.dark .quote {
   border-left: 4px solid #6e8a40;
   background-color: #686c60;
+}
+.markdown-body :deep(p) {
+  word-wrap: break-word;
+}
+.markdown-body :deep(p:not(:last-child)) {
+  margin-bottom: 18px;
+}
+.markdown-body :deep(a) {
+  color: #6e8a40;
 }
 .date-time {
   opacity: 0.4;

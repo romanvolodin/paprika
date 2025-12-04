@@ -16,6 +16,7 @@
     "ag-grid-vue3": "^33.3.2",
     "axios": "^1.7.9",
     "handsontable": "^16.0.1",
+    "markdown-it": "^14.1.0",
     "pinia": "^2.3.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
