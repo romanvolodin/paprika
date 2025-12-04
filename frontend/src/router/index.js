@@ -19,11 +19,13 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: ProjectList,
+      meta: { requiresAuth: true },
     },
     {
       path: '/projects/create',
       name: 'create-project',
       component: ProjectCreate,
+      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -34,56 +36,79 @@ const router = createRouter({
       path: '/shots',
       name: 'shots',
       component: ShotsList,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shots',
       name: 'shots-by-project',
       component: ShotsList,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shots/create',
       name: 'create-shots',
       component: ShotCreate,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shots/:shotName',
       name: 'shot-details',
       component: ShotDetails,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/tasks',
       name: 'tasks-by-project',
       component: TaskList,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/tasks/:taskId',
       name: 'task-details-by-project',
       component: TaskDetails,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shot-groups',
       name: 'shot-groups-by-project',
       component: ShotGroupList,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shot-groups/create',
       name: 'create-shot-groups',
       component: ShotGroupCreate,
+      meta: { requiresAuth: true },
     },
     {
       path: '/:projectCode/shot-groups/:shotGroupId',
       name: 'shot-group-details-by-project',
       component: ShotGroupDetails,
+      meta: { requiresAuth: true },
     },
   ],
 })
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  if (!auth.isUserAuthenticated && to.name !== 'login') {
-    return {
-      name: 'login',
-      query: { next: to.fullPath },
+
+  if (to.meta.requiresAuth || to.name !== 'login') {
+    if (!auth.isUserAuthenticated) {
+      return {
+        name: 'login',
+        query: { next: to.fullPath },
+      }
+    }
+
+    // Дополнительно проверяем валидность токена
+    try {
+      await auth.fetchUser()
+    } catch (e) {
+      auth.logout()
+      return {
+        name: 'login',
+        query: { next: to.fullPath },
+      }
     }
   }
 })
