@@ -67,6 +67,7 @@ onMounted(async () => {
     _versions.value = shot.value.versions
     _selected_version.value = shot.value.versions.at(0)
     _chat.value = shot.value.chat_messages
+    localStorage.setItem('lastViewedShot', `${shotName}`)
     scrollToLastMessage()
   }
 })
