@@ -211,14 +211,12 @@ function formatAuthorName(authorId) {
 }
 
 function formatDateTime(datetime) {
-
   return new Date(datetime).toLocaleString('ru-ru', {
     month: 'short',
     day: '2-digit',
     hour: '2-digit',
     minute: 'numeric',
   })
-
 }
 
 function replaceToMdash(e) {
