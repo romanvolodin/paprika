@@ -2,7 +2,7 @@
 import ShotCard from '@/components/ShotCard.vue'
 import axios from '@/config/axiosConfig'
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -40,6 +40,17 @@ async function fetchShots() {
 
 onMounted(async () => {
   await fetchShots()
+
+  const savedScrollPosition = localStorage.getItem(`scrollPosition-${route.path}`)
+  if (savedScrollPosition) {
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(savedScrollPosition))
+    }, 0)
+  }
+})
+
+onBeforeRouteLeave(() => {
+  localStorage.setItem(`scrollPosition-${route.path}`, window.scrollY.toString())
 })
 
 const statuses = computed(() => {
