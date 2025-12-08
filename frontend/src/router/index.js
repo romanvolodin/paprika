@@ -10,6 +10,7 @@ import ShotGroupList from '@/views/ShotGroupList.vue'
 import ShotsList from '@/views/ShotsList2.vue'
 import TaskDetails from '@/views/TaskDetails.vue'
 import TaskList from '@/views/TaskList.vue'
+import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -89,7 +90,10 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to) => {
+export const previousRoute = ref(null)
+
+router.beforeEach(async (to, from) => {
+  previousRoute.value = from
   const auth = useAuthStore()
 
   if (to.meta.requiresAuth || to.name !== 'login') {

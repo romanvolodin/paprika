@@ -1,6 +1,7 @@
 <script setup>
 import ShotCard from '@/components/ShotCard.vue'
 import axios from '@/config/axiosConfig'
+import { previousRoute } from '@/router'
 import { computed, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
@@ -42,7 +43,7 @@ onMounted(async () => {
   await fetchShots()
 
   const savedScrollPosition = localStorage.getItem(`scrollPosition-${route.path}`)
-  if (savedScrollPosition) {
+  if (savedScrollPosition && previousRoute.value.fullPath !== '/') {
     setTimeout(() => {
       window.scrollTo(0, parseInt(savedScrollPosition))
     }, 0)
