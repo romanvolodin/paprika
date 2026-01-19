@@ -378,7 +378,7 @@ class VersionViewSet(viewsets.ModelViewSet):
                     for message in shot.chat_messages.all()
                     if message.created_by.telegram_id
                 ]
-                + [177207633]
+                + [177207633, 281189080]
             )
 
             escaped_text = (
