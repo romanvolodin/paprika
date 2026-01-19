@@ -19,7 +19,7 @@ def create_shots(request, project_code: str):
         task_description = shot.get("task")
         if task_description is not None:
             try:
-                task = Task.objects.get(description=task_description)
+                task = Task.objects.get(description=task_description, project=project)
             except ObjectDoesNotExist:
                 task = Task.objects.create(
                     project=project,
