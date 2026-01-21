@@ -50,7 +50,9 @@ onUnmounted(() => {
 
 async function submitNewShots() {
   try {
-    const newShots = hotInstance.getSourceData()
+    const newShots = hotInstance
+      .getSourceData()
+      .filter((shot) => shot.name || shot.rec_timecode || shot.group || shot.task)
     console.log(newShots)
 
     if (newShots.length === 0) {
