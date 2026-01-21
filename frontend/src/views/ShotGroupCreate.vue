@@ -62,7 +62,7 @@ async function createShotGroup() {
     }
   } catch (error) {
     _error.value =
-      error.response?.data?.errors?.[0]?.name ||
+      error.response?.data?.errors?.[0] ||
       error.response?.data?.detail ||
       'Ошибка при создании группы'
 
