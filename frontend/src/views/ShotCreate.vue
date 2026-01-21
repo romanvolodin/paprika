@@ -14,6 +14,7 @@ const projectCode = route.params.projectCode
 const tableContainer = ref(null)
 let hotInstance = null
 const shotGroups = ref([])
+const tasks = ref([])
 
 async function fetchShotGroups() {
   try {
@@ -21,6 +22,15 @@ async function fetchShotGroups() {
     shotGroups.value = response.data.map((group) => group.name)
   } catch (error) {
     console.error('Ошибка при загрузке групп шотов:', error)
+  }
+}
+
+async function fetchTasks() {
+  try {
+    const response = await axios.get(`/api/projects/${projectCode}/tasks/`)
+    tasks.value = response.data.map((task) => task.description)
+  } catch (error) {
+    console.error('Ошибка при загрузке задач:', error)
   }
 }
 
@@ -38,6 +48,7 @@ onMounted(async () => {
   if (!tableContainer.value) return
 
   await fetchShotGroups()
+  await fetchTasks()
 
   hotInstance = new Handsontable(tableContainer.value, {
     data,
@@ -60,7 +71,12 @@ onMounted(async () => {
         source: shotGroups.value,
         strict: false,
       },
-      { data: 'task', type: 'text' },
+      {
+        data: 'task',
+        type: 'dropdown',
+        source: tasks.value,
+        strict: false,
+      },
     ],
   })
 })
