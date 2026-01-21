@@ -35,15 +35,28 @@ onMounted(async () => {
     {{ _error }}
   </div>
 
-  <div v-else class="tasks-list">
+  <div v-else class="groups-list">
+    <div class="header">
+      <h1>Группы шотов</h1>
+      <router-link
+        :to="{ name: 'create-shot-groups', params: { projectCode } }"
+        class="btn btn-primary"
+      >
+        Создать группу
+      </router-link>
+    </div>
+
     <div v-if="_shotGroups.length === 0" class="empty">Групп шотов пока нет</div>
 
     <div v-else>
-      <div v-for="shotGroup in _shotGroups" :key="shotGroup.id">
+      <div v-for="shotGroup in _shotGroups" :key="shotGroup.id" class="group-item">
         <router-link
           :to="{ name: 'shot-group-details-by-project', params: { shotGroupId: shotGroup.id } }"
+          class="group-link"
         >
           {{ shotGroup.name }}
+          <span v-if="shotGroup.is_default" class="badge badge-default">По умолчанию</span>
+          <span v-if="shotGroup.is_root" class="badge badge-root">Корневая</span>
         </router-link>
       </div>
     </div>
@@ -82,5 +95,69 @@ onMounted(async () => {
   color: #666;
   font-size: 1.2rem;
   text-align: center;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn {
+  display: inline-block;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.group-item {
+  margin-bottom: 10px;
+}
+
+.group-link {
+  display: inline-block;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+  background-color: var(--card-bg);
+  padding: 10px 15px;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.group-link:hover {
+  background-color: #e9ecef;
+}
+
+.badge {
+  margin-left: 10px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.badge-default {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-root {
+  background-color: #17a2b8;
+  color: white;
 }
 </style>

@@ -28,5 +28,16 @@ export const useShotsStore = defineStore('shots', {
         this.isLoading = false
       }
     },
+
+    async createShotGroup(projectCode, groupData) {
+      try {
+        const response = await axios.post(`/api/projects/${projectCode}/shot-groups/create`, [
+          groupData,
+        ])
+        return response.data
+      } catch (error) {
+        throw error.response?.data || error
+      }
+    },
   },
 })

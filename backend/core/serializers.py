@@ -219,6 +219,23 @@ class ShotGroupDetailsSerializer(serializers.ModelSerializer):
         ]
 
 
+class ShotGroupCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShotGroup
+        fields = ["name", "project"]
+
+    def validate(self, data):
+        project = data.get("project")
+        if not project:
+            raise serializers.ValidationError("Укажите проект.")
+
+        name = data.get("name")
+        if ShotGroup.objects.filter(project=project, name=name).exists():
+            raise serializers.ValidationError("Группа с таким именем уже существует в проекте.")
+
+        return data
+
+
 class ShotTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShotTask

@@ -7,6 +7,12 @@ from rest_framework.response import Response
 from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from core.utils import calc_shot_status
 
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from core.serializers import ShotGroupCreateSerializer
+
 
 @api_view(["POST"])
 def create_shots(request, project_code: str):
@@ -118,16 +124,26 @@ def list_shots(request, project_code: str):
 @api_view(["POST"])
 def create_shot_groups(request, project_code: str):
     user = request.user
-    shot_groups = request.data
     project = get_object_or_404(Project, code=project_code)
-    new_shot_groups = []
-    for shot_group in shot_groups:
-        s = ShotGroup.objects.create(
-            name=shot_group["name"],
-            project=project,
-            created_by=user,
-            is_default=shot_group.get("is_default", False),
-            is_root=shot_group.get("is_root", False),
-        )
-        new_shot_groups.append(s)
-    return Response({"shot_groups": len(new_shot_groups)})
+
+    shot_groups_data = request.data
+    if isinstance(shot_groups_data, dict):
+        shot_groups_data = [shot_groups_data]
+
+    created_groups = []
+    errors = []
+
+    for group_data in shot_groups_data:
+        group_data["project"] = project.id
+
+        serializer = ShotGroupCreateSerializer(data=group_data)
+        if serializer.is_valid():
+            group = serializer.save(created_by=user)
+            created_groups.append(group)
+        else:
+            errors.append(serializer.errors)
+
+    if errors:
+        return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"shot_groups": len(created_groups)}, status=status.HTTP_201_CREATED)
