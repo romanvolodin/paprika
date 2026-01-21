@@ -278,6 +278,33 @@ class ShotGroupViewSet(viewsets.ModelViewSet):
         serializer = ShotGroupDetailsSerializer(shot_group, context={"request": request})
         return Response(serializer.data)
 
+    def destroy(self, request, project_code=None, shot_group_id=None):
+        project = get_object_or_404(Project, code=project_code)
+        shot_group = get_object_or_404(
+            ShotGroup,
+            project=project,
+            id=shot_group_id,
+        )
+
+        if shot_group.is_default:
+            return Response(
+                {"error": "Нельзя удалить группу по умолчанию"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if shot_group.is_root:
+            return Response(
+                {"error": "Нельзя удалить корневую группу"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if request.user != shot_group.created_by and not request.user.is_staff:
+            return Response(
+                {"error": "У вас нет прав для удаления этой группы"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        shot_group.delete()
+        return Response({"message": "Группа успешно удалена"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ShotTaskViewSet(viewsets.ModelViewSet):
     queryset = ShotTask.objects.all()

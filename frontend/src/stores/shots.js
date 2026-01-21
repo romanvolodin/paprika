@@ -39,5 +39,16 @@ export const useShotsStore = defineStore('shots', {
         throw error.response?.data || error
       }
     },
+
+    async deleteShotGroup(projectCode, shotGroupId) {
+      try {
+        const response = await axios.delete(
+          `/api/projects/${projectCode}/shot-groups/${shotGroupId}`,
+        )
+        return response.data
+      } catch (error) {
+        throw error.response?.data || error
+      }
+    },
   },
 })

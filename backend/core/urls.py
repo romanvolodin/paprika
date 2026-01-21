@@ -43,7 +43,7 @@ urlpatterns = [
     ),
     path(
         "api/projects/<str:project_code>/shot-groups/<int:shot_group_id>",
-        views.ShotGroupViewSet.as_view({"get": "retrieve"}),
+        views.ShotGroupViewSet.as_view({"get": "retrieve", "delete": "destroy"}),
         name="shot-group-details-by-project",
     ),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
