@@ -13,6 +13,16 @@ const projectCode = route.params.projectCode
 
 const tableContainer = ref(null)
 let hotInstance = null
+const shotGroups = ref([])
+
+async function fetchShotGroups() {
+  try {
+    const response = await axios.get(`/api/projects/${projectCode}/shot-groups/`)
+    shotGroups.value = response.data.map((group) => group.name)
+  } catch (error) {
+    console.error('Ошибка при загрузке групп шотов:', error)
+  }
+}
 
 const data = [
   { name: '', rec_timecode: '', group: '', task: '' },
@@ -24,8 +34,10 @@ const data = [
 
 const colHeaders = Object.keys(data[0])
 
-onMounted(() => {
+onMounted(async () => {
   if (!tableContainer.value) return
+
+  await fetchShotGroups()
 
   hotInstance = new Handsontable(tableContainer.value, {
     data,
@@ -39,6 +51,17 @@ onMounted(() => {
     contextMenu: true,
     stretchH: 'all',
     autoInsertRow: true,
+    columns: [
+      { data: 'name', type: 'text' },
+      { data: 'rec_timecode', type: 'text' },
+      {
+        data: 'group',
+        type: 'dropdown',
+        source: shotGroups.value,
+        strict: false,
+      },
+      { data: 'task', type: 'text' },
+    ],
   })
 })
 
