@@ -99,6 +99,15 @@ const filteredGroups = computed(() => {
     <div v-if="_groups.length === 0" class="empty">Шотов пока нет</div>
 
     <div v-else class="shots-area">
+      <div class="header">
+        <h1>Шоты</h1>
+        <router-link
+          :to="{ name: 'create-shots', params: { projectCode } }"
+          class="btn btn-primary"
+        >
+          Создать шоты
+        </router-link>
+      </div>
       <div v-for="grp in filteredGroups" :key="grp.url">
         <h2 class="group-header">
           {{ grp.name }}
@@ -181,5 +190,33 @@ const filteredGroups = computed(() => {
   flex-shrink: 1;
   padding: 20px;
   max-width: 300px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn {
+  display: inline-block;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 </style>
