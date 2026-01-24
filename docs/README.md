@@ -23,7 +23,7 @@ pip install -r requirements.txt
 Выполнить сервер командой:
 
 ```bash
-mkdocs serve
+mkdocs serve --livereload
 # или
-mkdocs serve --dev-addr 0.0.0.0:3000  # если порт 8000 уже занят
+mkdocs serve --livereload --dev-addr 0.0.0.0:3000  # если порт 8000 уже занят
 ```
