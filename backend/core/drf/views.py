@@ -1,17 +1,13 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
-from core.utils import calc_shot_status
-
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
 from core.serializers import ShotGroupCreateSerializer
+from core.utils import calc_shot_status
 
 
 @api_view(["POST"])
@@ -21,45 +17,62 @@ def create_shots(request, project_code: str):
     project = get_object_or_404(Project, code=project_code)
     status_not_started = Status.objects.get(title="Не начата")
     new_shots = []
+    errors = []
+
     for shot in shots:
-        task_description = shot.get("task")
-        if task_description is not None:
-            try:
-                task = Task.objects.get(description=task_description, project=project)
-            except ObjectDoesNotExist:
-                task = Task.objects.create(
-                    project=project,
-                    created_by=user,
-                    description=task_description,
-                    default_status=status_not_started,
+        try:
+            task_description = shot.get("task")
+            task = None
+            if task_description is not None:
+                try:
+                    task = Task.objects.get(description=task_description, project=project)
+                except ObjectDoesNotExist:
+                    task = Task.objects.create(
+                        project=project,
+                        created_by=user,
+                        description=task_description,
+                        default_status=status_not_started,
+                    )
+
+            group_description = shot.get("group")
+            group = None
+            if group_description is not None:
+                try:
+                    group = ShotGroup.objects.get(name=group_description, project=project)
+                except ObjectDoesNotExist:
+                    group = ShotGroup.objects.create(
+                        name=group_description,
+                        project=project,
+                        created_by=user,
+                    )
+
+            shot = Shot(
+                name=shot["name"],
+                project=project,
+                rec_timecode=shot.get("rec_timecode"),
+                created_by=user,
+            )
+            shot.full_clean()
+            shot.save()
+
+            if group:
+                shot.group.set([group])
+
+            if task:
+                ShotTask.objects.create(
+                    shot=shot,
+                    task=task,
+                    status=status_not_started,
                 )
+            new_shots.append(shot)
+        except ValidationError as e:
+            errors.append(e.message_dict)
+        except Exception as e:
+            errors.append(str(e))
 
-        group_description = shot.get("group")
-        if group_description is not None:
-            try:
-                group = ShotGroup.objects.get(name=group_description, project=project)
-            except ObjectDoesNotExist:
-                group = ShotGroup.objects.create(
-                    name=group_description,
-                    project=project,
-                    created_by=user,
-                )
+    if errors:
+        return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        s = Shot.objects.create(
-            name=shot["name"],
-            project=project,
-            rec_timecode=shot.get("rec_timecode"),
-            created_by=user,
-        )
-
-        s.group.set([group])
-
-        ShotTask.objects.create(
-            shot=s,
-            task=task,
-            status=status_not_started,
-        )
-        new_shots.append(s)
     return Response({"shots": len(new_shots)})
 
 
