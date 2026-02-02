@@ -37,7 +37,7 @@ def create_shots(request, project_code: str):
         group_description = shot.get("group")
         if group_description is not None:
             try:
-                group = ShotGroup.objects.get(name=group_description)
+                group = ShotGroup.objects.get(name=group_description, project=project)
             except ObjectDoesNotExist:
                 group = ShotGroup.objects.create(
                     name=group_description,
