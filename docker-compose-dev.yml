@@ -37,7 +37,10 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+      - /app/node_modules  # предотвращает перезапись node_modules из контейнера хостом
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # если проблемы с отслеживанием файлов (в WSL2, Docker Desktop)
+    tty: true
     depends_on:
       - paprika-app
 

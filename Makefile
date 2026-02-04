@@ -35,7 +35,7 @@ dev.init:
 	sed -i "s~allowed_cors~$(ALLOWED_CORS)~" .env.dev
 
 	echo "VITE_API_URL=http://localhost:8000/" > frontend/.env
-	npm install --prefix frontend/
+# 	npm install --prefix frontend/
 
 	docker compose --file docker-compose-dev.yml up --build --detach
 	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py collectstatic --no-input
