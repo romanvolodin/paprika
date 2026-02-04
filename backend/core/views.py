@@ -408,11 +408,15 @@ class VersionViewSet(viewsets.ModelViewSet):
                     except (ShotTask.DoesNotExist, Status.DoesNotExist):
                         pass
 
+        message_text = f"Загружена версия {version.name}"
+        if comment:
+            message_text = f"Загружена версия {version.name}\n\n{comment}"
+
         ChatMessage.objects.create(
             shot=shot,
             created_by=request.user,
             created_at=timezone.now(),
-            text=f"Загружена версия {version.name}\n\n{comment}",
+            text=message_text,
         )
 
         if settings.TELEGRAM_BOT_TOKEN:
