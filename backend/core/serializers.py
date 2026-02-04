@@ -236,16 +236,26 @@ class ShotGroupCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class ShotTaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShotTask
-        fields = "__all__"
-
-
 class TaskListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
+
+
+class StatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Status
+        fields = "__all__"
+
+
+class ShotTaskSerializer(serializers.ModelSerializer):
+    task = TaskListSerializer(read_only=True)
+    status = StatusSerializer(read_only=True)
+
+    class Meta:
+        model = ShotTask
+        fields = "__all__"
+        depth = 1
 
 
 class TaskDetailsSerializer(serializers.ModelSerializer):
@@ -262,9 +272,3 @@ class TaskDetailsSerializer(serializers.ModelSerializer):
             "default_status",
             "shots",
         ]
-
-
-class StatusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Status
-        fields = "__all__"

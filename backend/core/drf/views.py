@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
-from core.serializers import ShotGroupCreateSerializer
+from core.serializers import ShotGroupCreateSerializer, ShotTaskSerializer
 from core.utils import calc_shot_status
 
 
@@ -160,3 +160,12 @@ def create_shot_groups(request, project_code: str):
         return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({"shot_groups": len(created_groups)}, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+def list_shot_tasks(request, project_code: str, shot_name: str):
+    project = get_object_or_404(Project, code=project_code)
+    shot = get_object_or_404(Shot, project=project, name=shot_name)
+    tasks = shot.shot_tasks.all()
+    serializer = ShotTaskSerializer(tasks, many=True)
+    return Response(serializer.data)
