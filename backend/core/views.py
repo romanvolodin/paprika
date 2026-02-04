@@ -353,6 +353,7 @@ class VersionViewSet(viewsets.ModelViewSet):
         project = get_object_or_404(Project, code=project_code)
         shot = get_object_or_404(Shot, project=project, name=shot_name)
         uploaded_version = request.FILES.get("file")
+        comment = request.POST.get("comment")
         version = Version.objects.create(
             name=Path(uploaded_version.name).stem,
             shot=shot,
@@ -395,7 +396,7 @@ class VersionViewSet(viewsets.ModelViewSet):
             shot=shot,
             created_by=request.user,
             created_at=timezone.now(),
-            text=f"Загружена версия {version.name}",
+            text=f"Загружена версия {version.name}\n\n{comment}",
         )
 
         if settings.TELEGRAM_BOT_TOKEN:
