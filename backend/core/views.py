@@ -354,6 +354,7 @@ class VersionViewSet(viewsets.ModelViewSet):
         shot = get_object_or_404(Shot, project=project, name=shot_name)
         uploaded_version = request.FILES.get("file")
         comment = request.POST.get("comment")
+        task_updates = request.POST.get("task_updates")
         version = Version.objects.create(
             name=Path(uploaded_version.name).stem,
             shot=shot,
@@ -391,6 +392,21 @@ class VersionViewSet(viewsets.ModelViewSet):
         subprocess.run(cmd)
         version.preview = f"{version.video.name}.jpg"
         version.save()
+
+        if task_updates:
+            import json
+            task_updates_data = json.loads(task_updates)
+            for task_update in task_updates_data:
+                shot_task_id = task_update.get("task_id")
+                new_status_id = task_update.get("status_id")
+                if shot_task_id and new_status_id:
+                    try:
+                        shot_task = ShotTask.objects.get(id=shot_task_id, shot=shot)
+                        new_status = Status.objects.get(id=new_status_id)
+                        shot_task.status = new_status
+                        shot_task.save()
+                    except (ShotTask.DoesNotExist, Status.DoesNotExist):
+                        pass
 
         ChatMessage.objects.create(
             shot=shot,

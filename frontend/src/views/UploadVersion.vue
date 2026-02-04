@@ -20,23 +20,21 @@
       </div>
     </div>
 
-    <!-- <div class="tasks-section">
-      <h2>Задачи шота</h2>
+    <div class="tasks-section">
+      <h2>Задачи</h2>
 
       <div v-if="shotTasks.length === 0" class="no-tasks">Нет задач для отображения</div>
       <div v-else class="tasks-list">
-        <div v-for="task in shotTasks" :key="task.id" class="task-item">
-          {{ task }}
-          <div class="task-description">{{ task.task.description }}</div>
-          <select v-model="task.status" @change="onTaskStatusChange(task)" class="status-select">
-            <option v-for="status in statuses" :key="status.id" :value="status.id">
-              {{ status.title }}
-            </option>
-          </select>
-          <div class="status-color" :style="{ backgroundColor: getStatusColor(task.status) }"></div>
+        <div v-for="shotTask in shotTasks" :key="shotTask.id" class="task-item">
+          <div class="task-description">{{ shotTask.task.description }}</div>
+          <StatusDropdown
+            v-model="shotTask.status"
+            :statuses="statuses"
+            @update:modelValue="onTaskStatusChange(shotTask)"
+          />
         </div>
       </div>
-    </div> -->
+    </div>
 
     <div class="comment-section">
       <h2>Комментарий</h2>
@@ -57,6 +55,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '@/config/axiosConfig'
 import router from '@/router'
+import StatusDropdown from '@/components/StatusDropdown.vue'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -151,7 +150,7 @@ const fetchShotTasks = async () => {
 const fetchStatuses = async () => {
   try {
     const response = await axios.get('/api/statuses/')
-    statuses.value = response.data
+    statuses.value = response.data.results
   } catch (err) {
     error.value = 'Ошибка при загрузке статусов'
     console.error(err)
@@ -161,11 +160,6 @@ const fetchStatuses = async () => {
 const onTaskStatusChange = (task) => {
   // Локальное обновление статуса задачи
   // Отправка на сервер произойдет при сабмите формы
-}
-
-const getStatusColor = (statusId) => {
-  const status = statuses.value.find(s => s.id === statusId)
-  return status ? status.color : '#ccc'
 }
 
 const submitVersion = async () => {
@@ -186,12 +180,10 @@ const submitVersion = async () => {
       formData.append('comment', comment.value)
     }
 
-    // Добавляем обновленные статусы задач
     const taskUpdates = shotTasks.value
-      .filter(task => task.status !== task.status)
-      .map(task => ({
-        task_id: task.task.id,
-        status_id: task.status
+      .map(shotTask => ({
+        task_id: shotTask.id,
+        status_id: shotTask.status
       }))
 
     if (taskUpdates.length > 0) {
