@@ -12,6 +12,7 @@ import TaskDetails from '@/views/TaskDetails.vue'
 import TaskList from '@/views/TaskList.vue'
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import UploadVersion from '@/views/UploadVersion.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +86,12 @@ const router = createRouter({
       path: '/:projectCode/shot-groups/:shotGroupId',
       name: 'shot-group-details-by-project',
       component: ShotGroupDetails,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectCode/shots/:shotName/versions/upload',
+      name: 'upload-version',
+      component: UploadVersion,
       meta: { requiresAuth: true },
     },
   ],

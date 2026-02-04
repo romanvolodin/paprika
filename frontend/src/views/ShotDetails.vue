@@ -10,6 +10,7 @@ import { useTextareaAutosize } from '@vueuse/core'
 import MessageBubble from '@/components/chat/MessageBubble.vue'
 
 import MarkdownIt from 'markdown-it'
+import router from '@/router'
 
 const md = new MarkdownIt({
   html: false,
@@ -238,16 +239,11 @@ function replaceToMdash(e) {
     <div v-if="_versions.length === 0" class="empty">
       <p>Версий пока нет</p>
 
-      <form method="post" enctype="multipart/form-data">
-        <input type="file" id="uploading-version" hidden @change="handleVersionUpload" />
-        <label for="uploading-version" class="version version-upload">
-          <div v-if="_versionUploading" class="version-loader">
-            <div class="spinner"></div>
-            <p>Загружается...</p>
-          </div>
-          <p v-else>Загрузить версию</p>
-        </label>
-      </form>
+      <router-link :to="{name: 'upload-version', params: { projectCode, shotName }}">
+        <div class="version version-upload">
+          <p>Загрузить версию</p>
+        </div>
+      </router-link>
     </div>
 
     <div v-else class="player">
@@ -262,17 +258,11 @@ function replaceToMdash(e) {
       <img v-else :src="_selected_version.preview" alt="" />
 
       <div class="versions-panel">
-        <form method="post" enctype="multipart/form-data">
-          <input type="file" id="uploading-version" hidden @change="handleVersionUpload" />
-          <label for="uploading-version" class="version version-upload">
-            <div v-if="_versionUploading" class="version-loader">
-              <div class="spinner"></div>
-              <p>Загружается...</p>
-            </div>
-
-            <p v-else>Загрузить версию</p>
-          </label>
-        </form>
+        <router-link :to="{name: 'upload-version', params: { projectCode, shotName }}">
+        <div class="version version-upload">
+          <p>Загрузить версию</p>
+        </div>
+        </router-link>
 
         <div
           class="version"
