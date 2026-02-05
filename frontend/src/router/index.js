@@ -4,6 +4,7 @@ import ProjectCreate from '@/views/ProjectCreate.vue'
 import ProjectList from '@/views/ProjectList.vue'
 import ShotCreate from '@/views/ShotCreate.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
+import ShotDetails2 from '@/views/ShotDetails2.vue'
 import ShotGroupCreate from '@/views/ShotGroupCreate.vue'
 import ShotGroupDetails from '@/views/ShotGroupDetails.vue'
 import ShotGroupList from '@/views/ShotGroupList.vue'
@@ -56,6 +57,12 @@ const router = createRouter({
       path: '/:projectCode/shots/:shotName',
       name: 'shot-details',
       component: ShotDetails,
+      meta: { requiresAuth: true },
+    },
+        {
+      path: '/:projectCode/shots2/:shotName',
+      name: 'shot-details2',
+      component: ShotDetails2,
       meta: { requiresAuth: true },
     },
     {
