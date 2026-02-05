@@ -399,11 +399,14 @@ class VersionViewSet(viewsets.ModelViewSet):
             for task_update in task_updates_data:
                 shot_task_id = task_update.get("task_id")
                 new_status_id = task_update.get("status_id")
+                new_hours = task_update.get("hours")
                 if shot_task_id and new_status_id:
                     try:
                         shot_task = ShotTask.objects.get(id=shot_task_id, shot=shot)
                         new_status = Status.objects.get(id=new_status_id)
                         shot_task.status = new_status
+                        if new_hours:
+                            shot_task.hours = new_hours
                         shot_task.save()
                     except (ShotTask.DoesNotExist, Status.DoesNotExist):
                         pass

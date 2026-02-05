@@ -32,6 +32,7 @@
             :statuses="statuses"
             @update:modelValue="onTaskStatusChange(shotTask)"
           />
+          <label>Часы: <input class="hours-input" v-model="shotTask.hours" /></label>
         </div>
       </div>
     </div>
@@ -132,13 +133,14 @@ const formatFileSize = (bytes) => {
 const fetchShotTasks = async () => {
   try {
     const response = await axios.get(`/api/projects/${projectCode}/shots/${shotName}/tasks`)
-    shotTasks.value = response.data.map(task => ({
-      id: task.id,
+    shotTasks.value = response.data.map(shotTask => ({
+      id: shotTask.id,
       task: {
-        id: task.task.id,
-        description: task.task.description
+        id: shotTask.task.id,
+        description: shotTask.task.description
       },
-      status: task.status.id
+      status: shotTask.status.id,
+      hours: shotTask.hours
     }))
 
   } catch (err) {
@@ -183,7 +185,8 @@ const submitVersion = async () => {
     const taskUpdates = shotTasks.value
       .map(shotTask => ({
         task_id: shotTask.id,
-        status_id: shotTask.status
+        status_id: shotTask.status,
+        hours: shotTask.hours
       }))
 
     if (taskUpdates.length > 0) {
@@ -388,5 +391,13 @@ onMounted(async () => {
 .submit-error {
   color: #d32f2f;
   margin-top: 10px;
+}
+
+.hours-input {
+  width: 40px;
+  padding: 3px;
+  border-radius: 4px;
+  background-color: #666;
+  color: white;
 }
 </style>
