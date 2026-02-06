@@ -12,12 +12,16 @@ defineProps({
     required: true
   }
 });
+
+function sendMessage(message) {
+  console.log(message);
+}
 </script>
 
 <template>
   <div class="chat-area">
     <MessagesArea :messages="chatData" :all-users="allUsers" />
-    <MessageInput />
+    <MessageInput @send-message="sendMessage($event)" />
   </div>
 </template>
 
