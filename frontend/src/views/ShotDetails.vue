@@ -433,17 +433,16 @@ function replaceToMdash(e) {
   font-size: 30px;
 }
 .versions-panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 5px;
-  padding: 0 5px;
+  padding: 5px;
 }
 .version {
   position: relative;
   filter: brightness(0.75);
   cursor: pointer;
   border-radius: 7px;
-  width: 160px;
-  height: 90px;
   overflow: hidden;
 }
 .version:hover {
@@ -465,6 +464,7 @@ function replaceToMdash(e) {
   justify-content: center;
   align-items: center;
   border: 1px dashed gray;
+  height: 100%;
 }
 .version-upload:hover {
   background-color: #eee;
