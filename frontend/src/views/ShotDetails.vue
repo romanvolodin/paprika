@@ -266,6 +266,7 @@ function replaceToMdash(e) {
 
         <div
           class="version"
+          :class="{ selected: version.id === _selected_version.id }"
           v-for="version in _versions"
           :key="version.id"
           @click="setSelectedVersion(version)"
@@ -444,9 +445,13 @@ function replaceToMdash(e) {
   cursor: pointer;
   border-radius: 7px;
   overflow: hidden;
+  border: 2px solid transparent;
 }
 .version:hover {
   filter: brightness(1);
+}
+.version.selected {
+  border: 2px solid #ccc;
 }
 .version img {
   width: 100%;
