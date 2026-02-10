@@ -10,7 +10,6 @@ import { useTextareaAutosize } from '@vueuse/core'
 import MessageBubble from '@/components/chat/MessageBubble.vue'
 
 import MarkdownIt from 'markdown-it'
-import router from '@/router'
 
 const md = new MarkdownIt({
   html: false,
@@ -34,7 +33,6 @@ const _reply_to_id = ref(null)
 const _all_users = ref([])
 const _attachments = ref([])
 const _selected_version = ref(null)
-const _versionUploading = ref(false)
 const _chatArea = ref(null)
 
 function scrollToLastMessage() {
@@ -145,35 +143,6 @@ function setAttachments(event) {
 
 function setSelectedVersion(version) {
   _selected_version.value = version
-}
-
-const handleVersionUpload = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
-  _versionUploading.value = true
-
-  const formData = new FormData()
-  formData.append('shot', shot.value.id)
-  formData.append('file', file)
-
-  try {
-    await axios.post(`/api/projects/${projectCode}/shots/${shotName}/versions/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-
-    await fetchShot()
-    _selected_version.value = shot.value.versions.at(0)
-    _versions.value = shot.value.versions
-    _chat.value = shot.value.chat_messages
-    scrollToLastMessage()
-  } catch (error) {
-    console.error('Ошибка загрузки:', error)
-  } finally {
-    _versionUploading.value = false
-  }
 }
 
 const _attachmentPreviews = ref([])
