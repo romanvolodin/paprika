@@ -131,6 +131,7 @@ function replyToMessage(message) {
     text: message.text,
     created_by: message.created_by,
   }
+  userMessageTextarea.value.focus()
 }
 
 function exitReplyMode() {
