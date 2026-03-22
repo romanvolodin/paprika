@@ -312,7 +312,7 @@ function replaceToMdash(e) {
             class="resize-none"
             placeholder="Сообщение..."
             @input="replaceToMdash"
-            @keydown.enter.exact="sendMessage"
+            @keydown.enter.exact.prevent="sendMessage"
           ></textarea>
           <button type="submit">➜</button>
         </div>
