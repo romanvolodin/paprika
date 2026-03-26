@@ -1,11 +1,21 @@
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from core.models import Project, Shot, ShotGroup, ShotTask, Status, Task, Version
+from core.models import (
+    ChatMessage,
+    Project,
+    Shot,
+    ShotGroup,
+    ShotTask,
+    Status,
+    Task,
+    Version,
+)
 from core.serializers import ShotGroupCreateSerializer, ShotTaskSerializer
 from core.utils import calc_shot_status
 
@@ -63,6 +73,12 @@ def create_shots(request, project_code: str):
                     shot=shot,
                     task=task,
                     status=status_not_started,
+                )
+                ChatMessage.objects.create(
+                    shot=shot,
+                    created_by=user,
+                    created_at=timezone.now(),
+                    text=task.description,
                 )
             new_shots.append(shot)
         except ValidationError as e:
