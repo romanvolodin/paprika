@@ -95,6 +95,7 @@ def create_shots(request, project_code: str):
 @api_view(["GET"])
 def list_shots(request, project_code: str):
     project = get_object_or_404(Project, code=project_code)
+    assigned_to_id = request.query_params.get("assigned_to")
 
     shot_groups = project.shot_groups.filter(is_root=True).prefetch_related(
         Prefetch(
@@ -107,9 +108,9 @@ def list_shots(request, project_code: str):
                 ),
                 Prefetch(
                     "shot_tasks",
-                    queryset=ShotTask.objects.select_related("task", "status").exclude(
-                        task__description="Выдать материал"
-                    ),
+                    queryset=ShotTask.objects.select_related(
+                        "task", "status", "assigned_to"
+                    ).exclude(task__description="Выдать материал"),
                     to_attr="filtered_tasks",
                 ),
             ),
@@ -120,6 +121,30 @@ def list_shots(request, project_code: str):
     for shot_group in shot_groups:
         shots = []
         for shot in shot_group.shots.all():
+            # Собираем уникальных исполнителей
+            assignees = []
+            seen_ids = set()
+            for st in shot.filtered_tasks:
+                if st.assigned_to and st.assigned_to.id not in seen_ids:
+                    seen_ids.add(st.assigned_to.id)
+                    full_name = f"{st.assigned_to.first_name} {st.assigned_to.last_name}".strip()
+                    assignees.append(
+                        {
+                            "id": st.assigned_to.id,
+                            "name": full_name,
+                        }
+                    )
+
+            # Фильтрация по исполнителю, если задан
+            if assigned_to_id:
+                try:
+                    assigned_to_id_int = int(assigned_to_id)
+                except ValueError:
+                    pass
+                else:
+                    if not any(a["id"] == assigned_to_id_int for a in assignees):
+                        continue  # пропускаем шот
+
             thumb = None
             if hasattr(shot, "version_list") and shot.version_list:
                 thumb = request.build_absolute_uri(shot.version_list[0].preview.url)
@@ -133,6 +158,7 @@ def list_shots(request, project_code: str):
                     "created_at": shot.created_at,
                     "thumb": thumb,
                     "status": calc_shot_status(statuses),
+                    "assignees": assignees,  # добавляем список исполнителей
                 }
             )
 

@@ -13,6 +13,8 @@ const _loaded = ref(false)
 const _error = ref(null)
 const _selectedStatuses = ref([])
 const _isStatusFilterInverted = ref(false)
+const _selectedAssignees = ref([])
+const _isAssigneeFilterInverted = ref(false)
 
 document.title = `${projectCode}: Шоты`
 
@@ -58,18 +60,47 @@ const statuses = computed(() => {
   return [...new Set(_groups.value.flatMap((ep) => ep.shots.map((shot) => shot.status)))]
 })
 
+const assignees = computed(() => {
+  const allAssignees = _groups.value.flatMap((ep) =>
+    ep.shots.flatMap((shot) => shot.assignees || [])
+  )
+  const seen = new Map()
+  allAssignees.forEach((a) => {
+    if (!seen.has(a.id)) {
+      seen.set(a.id, a)
+    }
+  })
+  const list = Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name))
+  list.unshift({ id: -1, name: 'Не назначен' })
+  return list
+})
+
 const filteredGroups = computed(() => {
-  if (_selectedStatuses.value.length === 0) {
-    return [..._groups.value].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }),
-    )
+  // Фильтрация по статусу
+  const filterByStatus = (shot) => {
+    if (_selectedStatuses.value.length === 0) return true
+    const hasAllowedStatus = _selectedStatuses.value.includes(shot.status)
+    return _isStatusFilterInverted.value ? !hasAllowedStatus : hasAllowedStatus
+  }
+
+  // Фильтрация по исполнителю
+  const filterByAssignee = (shot) => {
+    if (_selectedAssignees.value.length === 0) return true
+    const shotAssignees = shot.assignees || []
+    const hasAllowedAssignee = _selectedAssignees.value.some((id) => {
+      if (id === -1) {
+        return shotAssignees.length === 0
+      } else {
+        return shotAssignees.some(a => a.id === id)
+      }
+    })
+    return _isAssigneeFilterInverted.value ? !hasAllowedAssignee : hasAllowedAssignee
   }
 
   const filteredData = _groups.value
     .map((group) => {
       const filteredShots = group.shots.filter((shot) => {
-        const hasAllowedStatus = _selectedStatuses.value.includes(shot.status)
-        return _isStatusFilterInverted.value ? !hasAllowedStatus : hasAllowedStatus
+        return filterByStatus(shot) && filterByAssignee(shot)
       })
 
       filteredShots.sort((a, b) =>
@@ -148,8 +179,24 @@ const filteredGroups = computed(() => {
             >
           </label>
         </p>
-      </div>
-    </aside>
+
+        <h3>Исполнитель</h3>
+
+        <p style="margin-bottom: 10px">
+          <label>
+            <input type="checkbox" v-model="_isAssigneeFilterInverted" />
+            Инвертировать фильтр
+          </label>
+        </p>
+
+        <p v-for="assignee in assignees" :key="assignee.id">
+          <label>
+            <input type="checkbox" :value="assignee.id" v-model="_selectedAssignees" />
+            <span class="shot-assignee-filter">{{ assignee.name }}</span>
+          </label>
+        </p>
+       </div>
+     </aside>
   </div>
 </template>
 
@@ -183,6 +230,12 @@ const filteredGroups = computed(() => {
   border-radius: 5px;
   padding: 2px 7px;
   color: #fff;
+  font-size: 12px;
+}
+
+.shot-assignee-filter {
+  margin: 5px;
+  padding: 2px 7px;
   font-size: 12px;
 }
 
