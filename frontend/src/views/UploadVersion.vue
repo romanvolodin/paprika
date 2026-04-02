@@ -9,6 +9,10 @@
         <p>или перетащите файл сюда</p>
       </div>
       <div v-else class="file-preview">
+      <div class="selected-file-header">
+        <h2 class="selected-file-name">{{ selectedFile.name }}</h2>
+        <button @click="removeFile" class="remove-file-button">𐄂</button>
+      </div>
         <img v-if="isImageFile(selectedFile)" :src="filePreviewUrl" alt="Предпросмотр" class="preview-image" />
         <video v-else-if="isVideoFile(selectedFile)" :src="filePreviewUrl" controls class="preview-video"></video>
         <div v-else class="file-info">
@@ -16,7 +20,6 @@
           <p>Размер: {{ formatFileSize(selectedFile.size) }}</p>
           <p>Тип: {{ selectedFile.type }}</p>
         </div>
-        <button @click="removeFile" class="remove-file-button">Удалить файл</button>
       </div>
     </div>
 
@@ -281,20 +284,38 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
+.selected-file-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.selected-file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: start;
+}
+
 .file-info {
   text-align: left;
   margin: 20px 0;
 }
 
 .remove-file-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   background-color: #f44336;
   color: white;
   border: none;
-  padding: 10px 20px;
-  font-size: 14px;
+  font-size: 24px;
   border-radius: 4px;
   cursor: pointer;
-  margin-top: 10px;
 }
 
 .remove-file-button:hover {
