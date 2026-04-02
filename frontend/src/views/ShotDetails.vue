@@ -2,7 +2,7 @@
 import { useShot } from '@/composables/useShot'
 import axios from '@/config/axiosConfig'
 import { useAuthStore } from '@/stores/auth'
-import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useTextareaAutosize } from '@vueuse/core'
@@ -34,6 +34,7 @@ const _all_users = ref([])
 const _attachments = ref([])
 const _selected_version = ref(null)
 const _chatArea = ref(null)
+const _videoRef = ref(null)
 
 function scrollToLastMessage() {
   if (_chatArea.value) {
@@ -69,6 +70,12 @@ onMounted(async () => {
     localStorage.setItem('lastViewedShot', `${shotName}`)
     scrollToLastMessage()
   }
+
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
 })
 
 async function fetchAllUsers() {
@@ -196,6 +203,41 @@ function replaceToMdash(e) {
   if (processedMessage === _message.value) return
   _message.value = processedMessage
 }
+
+function frameStep(direction) {
+  const video = _videoRef.value
+  if (!video || video.readyState < 2) return // HAVE_CURRENT_DATA или выше
+
+  if (!video.paused) {
+    video.pause()
+  }
+
+  const frameTime = 1 / 24
+  const currentTime = video.currentTime
+
+  if (direction === 'forward') {
+    video.currentTime = Math.min(currentTime + frameTime, video.duration)
+  } else if (direction === 'backward') {
+    video.currentTime = Math.max(currentTime - frameTime, 0)
+  }
+}
+
+function handleKeyDown(event) {
+  if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') {
+    return
+  }
+
+  switch (event.key) {
+    case 'ArrowRight':
+      event.preventDefault()
+      frameStep('forward')
+      break
+    case 'ArrowLeft':
+      event.preventDefault()
+      frameStep('backward')
+      break
+  }
+}
 </script>
 
 <template>
@@ -224,6 +266,7 @@ function replaceToMdash(e) {
         muted
         autoplay
         loop
+        ref="videoRef"
       ></video>
       <img v-else :src="_selected_version.preview" alt="" />
 
