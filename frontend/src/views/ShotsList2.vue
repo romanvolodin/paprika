@@ -129,74 +129,76 @@ const filteredGroups = computed(() => {
   <div v-else class="shots-list">
     <div v-if="_groups.length === 0" class="empty">Шотов пока нет</div>
 
-    <div v-else class="shots-area">
-      <div class="header">
-        <h1>Шоты</h1>
-        <router-link
-          :to="{ name: 'create-shots', params: { projectCode } }"
-          class="btn btn-primary"
-        >
-          Создать шоты
-        </router-link>
-      </div>
-      <div v-for="grp in filteredGroups" :key="grp.url">
-        <h2 class="group-header">
-          {{ grp.name }}
-          <sub>({{ grp.shots.length }})</sub>
-        </h2>
-        <div class="shots-grid">
-          <ShotCard
-            v-for="shot in grp.shots"
-            :key="shot.url"
-            :project-code="projectCode"
-            :name="shot.name"
-            :status="shot.status"
-            :status-color="shot_status_colors[shot.status]"
-            :thumb="shot.thumb"
-          />
+    <template v-else>
+      <div class="shots-area">
+        <div class="header">
+          <h1>Шоты</h1>
+          <router-link
+            :to="{ name: 'create-shots', params: { projectCode } }"
+            class="btn btn-primary"
+          >
+            Создать шоты
+          </router-link>
+        </div>
+        <div v-for="grp in filteredGroups" :key="grp.url">
+          <h2 class="group-header">
+            {{ grp.name }}
+            <sub>({{ grp.shots.length }})</sub>
+          </h2>
+          <div class="shots-grid">
+            <ShotCard
+              v-for="shot in grp.shots"
+              :key="shot.url"
+              :project-code="projectCode"
+              :name="shot.name"
+              :status="shot.status"
+              :status-color="shot_status_colors[shot.status]"
+              :thumb="shot.thumb"
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <aside class="filter-panel">
-      <div v-if="_loaded && !_error">
-        <h3>Статус</h3>
+      <aside class="filter-panel">
+        <div v-if="_loaded && !_error">
+          <h3>Статус</h3>
 
-        <p style="margin-bottom: 10px">
-          <label>
-            <input type="checkbox" v-model="_isStatusFilterInverted" />
-            Инвертировать фильтр
-          </label>
-        </p>
+          <p style="margin-bottom: 10px">
+            <label>
+              <input type="checkbox" v-model="_isStatusFilterInverted" />
+              Инвертировать фильтр
+            </label>
+          </p>
 
-        <p v-for="status in statuses" :key="status">
-          <label>
-            <input type="checkbox" :value="status" v-model="_selectedStatuses" />
-            <span
-              class="shot-status-filter"
-              :style="{ 'background-color': shot_status_colors[status] }"
-              >{{ status }}</span
-            >
-          </label>
-        </p>
+          <p v-for="status in statuses" :key="status">
+            <label>
+              <input type="checkbox" :value="status" v-model="_selectedStatuses" />
+              <span
+                class="shot-status-filter"
+                :style="{ 'background-color': shot_status_colors[status] }"
+                >{{ status }}</span
+              >
+            </label>
+          </p>
 
-        <h3>Исполнитель</h3>
+          <h3>Исполнитель</h3>
 
-        <p style="margin-bottom: 10px">
-          <label>
-            <input type="checkbox" v-model="_isAssigneeFilterInverted" />
-            Инвертировать фильтр
-          </label>
-        </p>
+          <p style="margin-bottom: 10px">
+            <label>
+              <input type="checkbox" v-model="_isAssigneeFilterInverted" />
+              Инвертировать фильтр
+            </label>
+          </p>
 
-        <p v-for="assignee in assignees" :key="assignee.id">
-          <label>
-            <input type="checkbox" :value="assignee.id" v-model="_selectedAssignees" />
-            <span class="shot-assignee-filter">{{ assignee.name }}</span>
-          </label>
-        </p>
-       </div>
-     </aside>
+          <p v-for="assignee in assignees" :key="assignee.id">
+            <label>
+              <input type="checkbox" :value="assignee.id" v-model="_selectedAssignees" />
+              <span class="shot-assignee-filter">{{ assignee.name }}</span>
+            </label>
+          </p>
+         </div>
+       </aside>
+    </template>
   </div>
 </template>
 

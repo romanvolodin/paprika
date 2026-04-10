@@ -149,79 +149,81 @@ onUnmounted(() => {
   <div v-else class="shots-list">
     <div v-if="_shots.length === 0" class="empty">Шотов пока нет</div>
 
-    <div v-else class="shots-area">
-      <div>
-        <button @click="_mode = 'list'">Список</button>
-        <button @click="_mode = 'grid'">Сетка</button>
-      </div>
-      <div v-if="_mode === 'grid'" class="shots-grid">
-        <div
-          v-for="shot in filteredShots"
-          :key="shot.url"
-          class="shot-card"
-          :class="{ 'shot-card-selected': shot.is_selected }"
-          @click.alt="toggleShotSelection(shot)"
-        >
-          <label class="shot-checkbox">
-            <input type="checkbox" v-model="shot.is_selected" />
-          </label>
-
-          <router-link
-            :to="{
-              name: 'shot-details',
-              params: { projectCode: projectCode, shotName: shot.name },
-            }"
+    <template v-else>
+      <div class="shots-area">
+        <div>
+          <button @click="_mode = 'list'">Список</button>
+          <button @click="_mode = 'grid'">Сетка</button>
+        </div>
+        <div v-if="_mode === 'grid'" class="shots-grid">
+          <div
+            v-for="shot in filteredShots"
+            :key="shot.url"
+            class="shot-card"
+            :class="{ 'shot-card-selected': shot.is_selected }"
+            @click.alt="toggleShotSelection(shot)"
           >
-            <span
-              class="shot-status"
-              :style="{ 'background-color': shot_status_colors[shot.status] }"
-              >{{ shot.status }}</span
-            >
+            <label class="shot-checkbox">
+              <input type="checkbox" v-model="shot.is_selected" />
+            </label>
 
-            <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
-            <div v-else class="shot-no-thumb">Нет превью</div>
-            <div class="shot-info">
-              {{ shot.name }}
-            </div>
-          </router-link>
+            <router-link
+              :to="{
+                name: 'shot-details',
+                params: { projectCode: projectCode, shotName: shot.name },
+              }"
+            >
+              <span
+                class="shot-status"
+                :style="{ 'background-color': shot_status_colors[shot.status] }"
+                >{{ shot.status }}</span
+              >
+
+              <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" class="shot-image" />
+              <div v-else class="shot-no-thumb">Нет превью</div>
+              <div class="shot-info">
+                {{ shot.name }}
+              </div>
+            </router-link>
+          </div>
+        </div>
+
+        <div v-else-if="_mode === 'list'">
+          <ag-grid-vue
+            :rowData="_shots"
+            :columnDefs="_ag_colDefs"
+            :localeText="AG_GRID_LOCALE_RU"
+            :rowHeight="150"
+            style="height: 800px"
+          >
+          </ag-grid-vue>
         </div>
       </div>
 
-      <div v-else-if="_mode === 'list'">
-        <ag-grid-vue
-          :rowData="_shots"
-          :columnDefs="_ag_colDefs"
-          :localeText="AG_GRID_LOCALE_RU"
-          :rowHeight="150"
-          style="height: 800px"
-        >
-        </ag-grid-vue>
-      </div>
-    </div>
+      <aside class="filter-panel">
+        <div>
+          <h3>Статус</h3>
 
-    <aside class="filter-panel">
-      <div>
-        <h3>Статус</h3>
+          <p style="margin-bottom: 10px">
+            <label>
+              <input type="checkbox" v-model="_isStatusFilterInverted" />
+              Инвертировать фильтр
+            </label>
+          </p>
 
-        <p style="margin-bottom: 10px">
-          <label>
-            <input type="checkbox" v-model="_isStatusFilterInverted" />
-            Инвертировать фильтр
-          </label>
-        </p>
-
-        <p v-for="status in statuses" :key="status">
-          <label>
-            <input type="checkbox" :value="status" v-model="_selectedStatuses" />
-            <span
-              class="shot-status-filter"
-              :style="{ 'background-color': shot_status_colors[status] }"
-              >{{ status }}</span
-            >
-          </label>
-        </p>
-      </div>
-    </aside>
+          <p v-for="status in statuses" :key="status">
+            <label>
+              <input type="checkbox" :value="status" v-model="_selectedStatuses" />
+              <span
+                class="shot-status-filter"
+                :style="{ 'background-color': shot_status_colors[status] }"
+                >{{ status }}</span
+              >
+            </label>
+          </p>
+        </div>
+      </aside>
+    </template>
   </div>
 
   <dialog ref="_addTaskPanel">
