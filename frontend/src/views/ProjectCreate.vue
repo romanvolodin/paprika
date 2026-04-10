@@ -185,13 +185,16 @@ const submitProject = async () => {
       formData.append('thumb', selectedFile.value)
     }
 
-    await axios.post('/api/projects/', formData, {
+    const response = await axios.post('/api/projects/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
 
-    projectsStore.fetchProjects()
+    // Добавляем проект в store и обновляем список
+    projectsStore.addProject(response.data)
+    await projectsStore.fetchProjects(true)
+
     router.push({ name: 'home' })
   } catch (err) {
     submitError.value = 'Ошибка при создании проекта: ' + (err.response?.data?.detail || err.message)

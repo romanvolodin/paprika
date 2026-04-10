@@ -9,8 +9,8 @@ export const useProjectsStore = defineStore('projects', {
     errors: {},
   }),
   actions: {
-    async fetchProjects() {
-      if (this.projects.length > 0 || this.isLoading) return
+    async fetchProjects(force = false) {
+      if ((this.projects.length > 0 && !force) || this.isLoading) return
 
       this.isLoading = true
       try {
@@ -21,6 +21,9 @@ export const useProjectsStore = defineStore('projects', {
       } finally {
         this.isLoading = false
       }
+    },
+    addProject(project) {
+      this.projects.push(project)
     },
   },
 })
