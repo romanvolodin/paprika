@@ -139,14 +139,14 @@ const filteredGroups = computed(() => {
         В этом проекте пока нет ни одного шота. Вы можете создать шоты несколькими способами:
       </p>
       <div class="empty-state-actions">
-        <router-link :to="{ name: 'create-shots', params: { projectCode } }" class="btn btn-primary">
-          Создать один шот
+        <router-link :to="{ name: 'create-shot', params: { projectCode } }" class="btn btn-primary">
+          Создать шот
         </router-link>
-        <router-link :to="{ name: 'create-shots', params: { projectCode } }" class="btn btn-secondary">
-          Создать список шотов
+        <router-link :to="{ name: 'create-shots-from-list', params: { projectCode } }" class="btn btn-secondary">
+          Создать шоты из списка
         </router-link>
-        <router-link :to="{ name: 'upload-version', params: { projectCode, shotName: 'dummy' } }" class="btn btn-outline">
-          Загрузить таблицу (XLSX, ODS)
+        <router-link :to="{ name: 'create-shots-from-table', params: { projectCode } }" class="btn btn-outline">
+          Загрузить из таблицы (XLSX, ODS)
         </router-link>
       </div>
     </div>
@@ -156,7 +156,7 @@ const filteredGroups = computed(() => {
         <div class="header">
           <h1>Шоты</h1>
           <router-link
-            :to="{ name: 'create-shots', params: { projectCode } }"
+            :to="{ name: 'create-shots-from-list', params: { projectCode } }"
             class="btn btn-primary"
           >
             Создать шоты

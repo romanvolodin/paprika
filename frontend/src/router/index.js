@@ -2,7 +2,7 @@ import { useAuthStore } from '@/stores/auth'
 import LoginView from '@/views/LoginView.vue'
 import ProjectCreate from '@/views/ProjectCreate.vue'
 import ProjectList from '@/views/ProjectList.vue'
-import ShotCreate from '@/views/ShotCreate.vue'
+import ShotBatchCreate from '@/views/ShotBatchCreate.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
 import ShotDetails2 from '@/views/ShotDetails2.vue'
 import ShotGroupCreate from '@/views/ShotGroupCreate.vue'
@@ -11,9 +11,9 @@ import ShotGroupList from '@/views/ShotGroupList.vue'
 import ShotsList from '@/views/ShotsList2.vue'
 import TaskDetails from '@/views/TaskDetails.vue'
 import TaskList from '@/views/TaskList.vue'
+import UploadVersion from '@/views/UploadVersion.vue'
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import UploadVersion from '@/views/UploadVersion.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,8 +49,20 @@ const router = createRouter({
     },
     {
       path: '/:projectCode/shots/create',
-      name: 'create-shots',
-      component: ShotCreate,
+      name: 'create-shot',
+      component: null,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectCode/shots/batch-create',
+      name: 'create-shots-from-list',
+      component: ShotBatchCreate,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectCode/shots/batch-create',
+      name: 'create-shots-from-table',
+      component: null,
       meta: { requiresAuth: true },
     },
     {
@@ -59,7 +71,7 @@ const router = createRouter({
       component: ShotDetails,
       meta: { requiresAuth: true },
     },
-        {
+    {
       path: '/:projectCode/shots2/:shotName',
       name: 'shot-details2',
       component: ShotDetails2,
