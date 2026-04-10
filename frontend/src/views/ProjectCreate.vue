@@ -195,7 +195,10 @@ const submitProject = async () => {
     projectsStore.addProject(response.data)
     await projectsStore.fetchProjects(true)
 
-    router.push({ name: 'home' })
+    router.push({
+      name: 'shots-by-project',
+      params: { projectCode: response.data.code }
+    })
   } catch (err) {
     submitError.value = 'Ошибка при создании проекта: ' + (err.response?.data?.detail || err.message)
     console.error(err)
