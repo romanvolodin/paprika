@@ -127,7 +127,29 @@ const filteredGroups = computed(() => {
   </div>
 
   <div v-else class="shots-list">
-    <div v-if="_groups.length === 0" class="empty">Шотов пока нет</div>
+    <div v-if="_groups.length === 0" class="empty-state">
+      <div class="empty-state-illustration">
+        <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <h2 class="empty-state-title">Здесь буду шоты</h2>
+      <p class="empty-state-description">
+        В этом проекте пока нет ни одного шота. Вы можете создать шоты несколькими способами:
+      </p>
+      <div class="empty-state-actions">
+        <router-link :to="{ name: 'create-shots', params: { projectCode } }" class="btn btn-primary">
+          Создать один шот
+        </router-link>
+        <router-link :to="{ name: 'create-shots', params: { projectCode } }" class="btn btn-secondary">
+          Создать список шотов
+        </router-link>
+        <router-link :to="{ name: 'upload-version', params: { projectCode, shotName: 'dummy' } }" class="btn btn-outline">
+          Загрузить таблицу (XLSX, ODS)
+        </router-link>
+      </div>
+    </div>
 
     <template v-else>
       <div class="shots-area">
@@ -273,5 +295,77 @@ const filteredGroups = computed(() => {
 
 .btn-primary:hover {
   background-color: #0056b3;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.empty-state-illustration {
+  margin-bottom: 1.5rem;
+  color: #6c757d;
+}
+.empty-state-illustration svg {
+  stroke: #adb5bd;
+}
+.empty-state-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #343a40;
+}
+.empty-state-description {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+.empty-state-actions .btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-block;
+}
+.empty-state-actions .btn-primary {
+  background-color: #0d6efd;
+  color: white;
+  border: 1px solid #0d6efd;
+}
+.empty-state-actions .btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+.empty-state-actions .btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+}
+.empty-state-actions .btn-secondary:hover {
+  background-color: #5c636a;
+  border-color: #565e64;
+}
+.empty-state-actions .btn-outline {
+  background-color: transparent;
+  color: #0d6efd;
+  border: 1px solid #0d6efd;
+}
+.empty-state-actions .btn-outline:hover {
+  background-color: #0d6efd;
+  color: white;
 }
 </style>
