@@ -19,7 +19,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User
 
 from .forms import ReadXlsxForm, UploadMultipleVersionsForm
-from .models import ChatMessage, Project, Shot, ShotGroup, ShotTask, Status, Task, Version
+from .models import (
+    ChatMessage,
+    Project,
+    Shot,
+    ShotGroup,
+    ShotTask,
+    Status,
+    Task,
+    Version,
+)
 from .serializers import (
     ChatMessageSerializer,
     GroupSerializer,
@@ -246,7 +255,11 @@ class ShotViewSet(viewsets.ModelViewSet):
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by("name")
     serializer_class = ProjectSerializer
+    parser_classes = [MultiPartParser, FormParser]
     # permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
 class ShotGroupViewSet(viewsets.ModelViewSet):
