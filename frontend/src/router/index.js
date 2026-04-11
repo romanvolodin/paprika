@@ -5,6 +5,7 @@ import ProjectList from '@/views/ProjectList.vue'
 import ShotBatchCreate from '@/views/ShotBatchCreate.vue'
 import ShotDetails from '@/views/ShotDetails.vue'
 import ShotDetails2 from '@/views/ShotDetails2.vue'
+import ShotGroupBatchCreate from '@/views/ShotGroupBatchCreate.vue'
 import ShotGroupCreate from '@/views/ShotGroupCreate.vue'
 import ShotGroupDetails from '@/views/ShotGroupDetails.vue'
 import ShotGroupList from '@/views/ShotGroupList.vue'
@@ -99,6 +100,12 @@ const router = createRouter({
       path: '/:projectCode/shot-groups/create',
       name: 'create-shot-groups',
       component: ShotGroupCreate,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectCode/shot-groups/batch-create',
+      name: 'create-shot-groups-from-list',
+      component: ShotGroupBatchCreate,
       meta: { requiresAuth: true },
     },
     {

@@ -38,12 +38,20 @@ onMounted(async () => {
   <div v-else class="groups-list">
     <div class="header">
       <h1>Группы шотов</h1>
-      <router-link
-        :to="{ name: 'create-shot-groups', params: { projectCode } }"
-        class="btn btn-primary"
-      >
-        Создать группу
-      </router-link>
+      <div class="header-buttons">
+        <router-link
+          :to="{ name: 'create-shot-groups', params: { projectCode } }"
+          class="btn btn-primary"
+        >
+          Создать группу
+        </router-link>
+        <router-link
+          :to="{ name: 'create-shot-groups-from-list', params: { projectCode } }"
+          class="btn btn-secondary"
+        >
+          Создать списком
+        </router-link>
+      </div>
     </div>
 
     <div v-if="_shotGroups.length === 0" class="empty">Групп шотов пока нет</div>
@@ -104,6 +112,11 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
 .btn {
   display: inline-block;
   transition: background-color 0.2s;
@@ -123,6 +136,15 @@ onMounted(async () => {
 
 .btn-primary:hover {
   background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
 }
 
 .group-item {

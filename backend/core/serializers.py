@@ -2,6 +2,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth.models import Group
 from rest_framework import serializers
+from users.models import User
 
 from core.models import (
     Attachment,
@@ -15,7 +16,6 @@ from core.models import (
     Version,
 )
 from core.utils import calc_shot_status
-from users.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -222,7 +222,7 @@ class ShotGroupDetailsSerializer(serializers.ModelSerializer):
 class ShotGroupCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShotGroup
-        fields = ["name", "project"]
+        fields = ["name", "project", "is_root", "is_default"]
 
     def validate(self, data):
         project = data.get("project")
