@@ -2,24 +2,22 @@
   <div v-if="isLoading" class="loading">Загрузка...</div>
   <div v-else-if="error" class="error">{{ error }}</div>
   <div v-else class="upload-version">
-    <div class="file-preview-section">
-      <div v-if="!selectedFile" class="file-upload-area" @dragover.prevent @drop.prevent="handleFileDrop">
-        <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none" />
-        <button @click="$refs.fileInput.click()" class="upload-button">Выбрать файл</button>
-        <p>или перетащите файл сюда</p>
-      </div>
-      <div v-else class="file-preview">
+    <div v-if="!selectedFile" class="file-upload-area" @dragover.prevent @drop.prevent="handleFileDrop">
+      <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none" />
+      <button @click="$refs.fileInput.click()" class="upload-button">Выбрать файл</button>
+      <p>или перетащите файл сюда</p>
+    </div>
+    <div v-else class="file-preview">
       <div class="selected-file-header">
         <h2 class="selected-file-name">{{ selectedFile.name }}</h2>
         <button @click="removeFile" class="remove-file-button">𐄂</button>
       </div>
-        <img v-if="isImageFile(selectedFile)" :src="filePreviewUrl" alt="Предпросмотр" class="preview-image" />
-        <video v-else-if="isVideoFile(selectedFile)" :src="filePreviewUrl" controls class="preview-video"></video>
-        <div v-else class="file-info">
-          <p>Имя файла: {{ selectedFile.name }}</p>
-          <p>Размер: {{ formatFileSize(selectedFile.size) }}</p>
-          <p>Тип: {{ selectedFile.type }}</p>
-        </div>
+      <img v-if="isImageFile(selectedFile)" :src="filePreviewUrl" alt="Предпросмотр" class="preview-image" />
+      <video v-else-if="isVideoFile(selectedFile)" :src="filePreviewUrl" controls class="preview-video"></video>
+      <div v-else class="file-info">
+        <p>Имя файла: {{ selectedFile.name }}</p>
+        <p>Размер: {{ formatFileSize(selectedFile.size) }}</p>
+        <p>Тип: {{ selectedFile.type }}</p>
       </div>
     </div>
 
@@ -55,11 +53,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import StatusDropdown from '@/components/StatusDropdown.vue'
 import axios from '@/config/axiosConfig'
 import router from '@/router'
-import StatusDropdown from '@/components/StatusDropdown.vue'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
@@ -246,16 +244,12 @@ onMounted(async () => {
   border-radius: 4px;
 }
 
-.file-preview-section {
-  margin-bottom: 30px;
-  padding: 20px;
+.file-upload-area {
+  padding: 60px 0;
   border: 1px dashed #ccc;
   border-radius: 4px;
   text-align: center;
-}
-
-.file-upload-area {
-  padding: 40px 20px;
+  margin-bottom: 30px;
 }
 
 .upload-button {
@@ -275,11 +269,12 @@ onMounted(async () => {
 
 .file-preview {
   position: relative;
+  margin-bottom: 30px;
 }
 
 .preview-image, .preview-video {
   max-width: 100%;
-  max-height: 400px;
+  max-height: 500px;
   display: block;
   margin: 0 auto;
 }
