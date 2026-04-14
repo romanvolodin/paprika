@@ -35,6 +35,7 @@ const _attachments = ref([])
 const _selected_version = ref(null)
 const _chatArea = ref(null)
 const _videoRef = ref(null)
+const _isSendingMessage = ref(false)
 
 function scrollToLastMessage() {
   if (_chatArea.value) {
@@ -88,7 +89,10 @@ async function fetchAllUsers() {
 }
 
 async function sendMessage() {
+  if (_isSendingMessage.value) return
   if (!_message.value && !_attachments.value.length) return
+
+  _isSendingMessage.value = true
 
   const formData = new FormData()
 
@@ -122,6 +126,8 @@ async function sendMessage() {
     _chat.value = shot.value.chat_messages
   } catch (error) {
     console.error('Ошибка при отправке сообщения:', error)
+  } finally {
+    _isSendingMessage.value = false
   }
 }
 
@@ -357,7 +363,9 @@ function handleKeyDown(event) {
             @input="replaceToMdash"
             @keydown.enter.exact.prevent="sendMessage"
           ></textarea>
-          <button type="submit">➜</button>
+          <button type="submit" :disabled="_isSendingMessage">
+            {{ _isSendingMessage ? '🕒' : '➜' }}
+          </button>
         </div>
       </form>
     </div>
@@ -421,6 +429,11 @@ function handleKeyDown(event) {
 .form-row > button {
   padding: 10px;
   font-size: inherit;
+}
+.form-row > button:disabled,
+.form-row > button:disabled:hover {
+  background-color: #1e1e1e;
+  color: #333;
 }
 .form-row > label:hover,
 .form-row > button:hover {
