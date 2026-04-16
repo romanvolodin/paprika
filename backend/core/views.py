@@ -2,7 +2,6 @@ import re
 import subprocess
 from pathlib import Path
 
-import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -43,6 +42,7 @@ from .serializers import (
     UserSerializer,
     VersionSerializer,
 )
+from .utils import send_telegram_notification_async
 
 
 @login_required
@@ -476,15 +476,11 @@ class VersionViewSet(viewsets.ModelViewSet):
                 )
             )
 
-            for tg_id in ids_to_notify:
-                requests.post(
-                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                    data={
-                        "chat_id": tg_id,
-                        "text": notification_message,
-                        "parse_mode": "MarkdownV2",
-                    },
-                )
+            send_telegram_notification_async(
+                chat_ids=list(ids_to_notify),
+                text=notification_message,
+                parse_mode="MarkdownV2",
+            )
 
         serializer = VersionSerializer(version, context={"request": request})
         return Response(serializer.data)

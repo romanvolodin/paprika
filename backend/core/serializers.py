@@ -1,4 +1,3 @@
-import requests
 from django.conf import settings
 from django.contrib.auth.models import Group
 from rest_framework import serializers
@@ -15,7 +14,7 @@ from core.models import (
     Task,
     Version,
 )
-from core.utils import calc_shot_status
+from core.utils import calc_shot_status, send_telegram_notification_async
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -133,15 +132,11 @@ class ChatMessageSerializer(serializers.ModelSerializer):
                 )
             )
 
-            for tg_id in ids_to_notify:
-                requests.post(
-                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                    data={
-                        "chat_id": tg_id,
-                        "text": notification_message,
-                        "parse_mode": "MarkdownV2",
-                    },
-                )
+            send_telegram_notification_async(
+                chat_ids=list(ids_to_notify),
+                text=notification_message,
+                parse_mode="MarkdownV2",
+            )
 
         return message
 
