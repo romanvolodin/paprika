@@ -1,7 +1,7 @@
 services:
 
   paprika-pg:
-    image: postgres:alpine
+    image: postgres:17.6-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
