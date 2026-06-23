@@ -1,5 +1,3 @@
-channels_redis==4.2.*
-channels[daphne]==4.2.*
 django-colorfield==0.14.*
 django-cors-headers==4.7.*
 django==5.2.*
