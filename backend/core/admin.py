@@ -14,6 +14,7 @@ from .forms import (
     AddShotsToGroupsForm,
     AddShotsToProjectForm,
     AddTasksToShotForm,
+    ExportShotsForm,
 )
 from .models import (
     Attachment,
@@ -431,99 +432,36 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.action(description="Скачать в виде Excel таблицы")
     def download_shots_as_xlsx(modeladmin, request, queryset):
-        from datetime import datetime
+        if "apply" in request.POST:
+            form = ExportShotsForm(request.POST)
+            if form.is_valid():
+                assigned_to = form.cleaned_data["assigned_to"]
 
-        from django.core.exceptions import ObjectDoesNotExist
-        from openpyxl import Workbook
-        from openpyxl.drawing.image import Image
-        from openpyxl.styles import Alignment
-        from openpyxl.utils import get_column_letter
+                # Если выбран пользователь — проверяем, есть ли у него задачи
+                if assigned_to:
+                    has_tasks = any(
+                        shot.shot_tasks.filter(assigned_to=assigned_to).exists()
+                        for shot in queryset
+                    )
+                    if not has_tasks:
+                        context = {
+                            "shots": queryset,
+                            "form": ExportShotsForm,
+                            "error": f"У пользователя «{assigned_to}» нет задач в выбранных шотах.",
+                        }
+                        return render(
+                            request, "admin/export_shots.html", context=context
+                        )
 
-        project_code = queryset[0].group.first().project.code
-        date = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"{project_code}_shots_{date}.xlsx"
+                return _generate_shots_xlsx(queryset, assigned_to)
 
-        response = HttpResponse(
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        response["Content-Disposition"] = f"attachment; filename={filename}"
+            return HttpResponseRedirect(request.get_full_path())
 
-        wb = Workbook()
-        ws = wb.active
-        ws.append(
-            (
-                "№",
-                "Превью",
-                "Название шота",
-                "Таймкод",
-                "Задачи",
-                "Часы",
-                "Исполнитель",
-            )
-        )
-        row_counter = 1
-        for counter, shot in enumerate(queryset, start=1):
-            counter_cell = ws.cell(row=counter + row_counter, column=1, value=counter)
-            counter_cell.alignment = Alignment(vertical="top", horizontal="left")
-
-            # Вставка превью последней версии
-            try:
-                version = shot.versions.latest()
-                if version and version.preview and version.preview.path:
-                    from PIL import Image as PILImage
-
-                    with PILImage.open(version.preview.path) as pil_img:
-                        orig_width, orig_height = pil_img.size
-                        aspect_ratio = orig_width / orig_height
-                        preview_width = int(100 * aspect_ratio)
-
-                    img = Image(version.preview.path)
-                    img.height = 100
-                    img.width = preview_width
-                    ws.add_image(img, f"B{counter + row_counter}")
-                    ws.row_dimensions[counter + row_counter].height = 100
-            except ObjectDoesNotExist:
-                pass
-
-            name_cell = ws.cell(row=counter + row_counter, column=3, value=shot.name)
-            name_cell.alignment = Alignment(vertical="top", horizontal="left")
-
-            name_cell = ws.cell(
-                row=counter + row_counter, column=4, value=shot.rec_timecode
-            )
-            name_cell.alignment = Alignment(vertical="top", horizontal="left")
-
-            for task_counter, shot_task in enumerate(shot.shot_tasks.all()):
-                row_counter += 1 if task_counter else 0
-                ws.cell(
-                    row=counter + row_counter,
-                    column=5,
-                    value=shot_task.task.description,
-                )
-                ws.cell(
-                    row=counter + row_counter,
-                    column=6,
-                    value=shot_task.hours if shot_task.hours else 0,
-                )
-                ws.cell(
-                    row=counter + row_counter,
-                    column=7,
-                    value=shot_task.assigned_to.first_name
-                    if shot_task.assigned_to
-                    else "—",
-                )
-
-        for i, column in enumerate(ws.columns, 1):
-            lengths = (
-                len(max(str(cell.value).split("\n"))) for cell in column if cell.value is not None
-            )
-            ws.column_dimensions[get_column_letter(i)].width = max(lengths) + 2
-
-        # Ширина колонки с превью (B) — пропорционально высоте 100px
-        ws.column_dimensions["B"].width = 18
-
-        wb.save(response)
-        return response
+        context = {
+            "shots": queryset,
+            "form": ExportShotsForm,
+        }
+        return render(request, "admin/export_shots.html", context=context)
 
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
@@ -593,6 +531,115 @@ class TaskAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+
+def _generate_shots_xlsx(queryset, assigned_to=None):
+    """Сгенерировать Excel-файл со шотами, отфильтрованными по исполнителю."""
+    from datetime import datetime
+
+    from django.core.exceptions import ObjectDoesNotExist
+    from django.http import HttpResponse
+    from openpyxl import Workbook
+    from openpyxl.drawing.image import Image
+    from openpyxl.styles import Alignment
+    from openpyxl.utils import get_column_letter
+
+    project_code = queryset[0].group.first().project.code
+    date = datetime.today().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"{project_code}_shots_{date}.xlsx"
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f"attachment; filename={filename}"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.append(
+        (
+            "№",
+            "Превью",
+            "Название шота",
+            "Таймкод",
+            "Задачи",
+            "Часы",
+            "Исполнитель",
+        )
+    )
+    row_counter = 1
+    real_counter = 0
+    for shot in queryset:
+        # Фильтрация задач по исполнителю, если указан
+        shot_tasks = shot.shot_tasks.all()
+        if assigned_to:
+            shot_tasks = shot_tasks.filter(assigned_to=assigned_to)
+
+        # Если выбран конкретный пользователь и у шота нет его задач — пропускаем шот
+        if assigned_to and not shot_tasks.exists():
+            continue
+
+        real_counter += 1
+        counter_cell = ws.cell(row=real_counter + row_counter, column=1, value=real_counter)
+        counter_cell.alignment = Alignment(vertical="top", horizontal="left")
+
+        # Вставка превью последней версии
+        try:
+            version = shot.versions.latest()
+            if version and version.preview and version.preview.path:
+                from PIL import Image as PILImage
+
+                with PILImage.open(version.preview.path) as pil_img:
+                    orig_width, orig_height = pil_img.size
+                    aspect_ratio = orig_width / orig_height
+                    preview_width = int(100 * aspect_ratio)
+
+                img = Image(version.preview.path)
+                img.height = 100
+                img.width = preview_width
+                ws.add_image(img, f"B{real_counter + row_counter}")
+                ws.row_dimensions[real_counter + row_counter].height = 100
+        except ObjectDoesNotExist:
+            pass
+
+        name_cell = ws.cell(row=real_counter + row_counter, column=3, value=shot.name)
+        name_cell.alignment = Alignment(vertical="top", horizontal="left")
+
+        name_cell = ws.cell(
+            row=real_counter + row_counter, column=4, value=shot.rec_timecode
+        )
+        name_cell.alignment = Alignment(vertical="top", horizontal="left")
+
+        for task_counter, shot_task in enumerate(shot_tasks):
+            row_counter += 1 if task_counter else 0
+            ws.cell(
+                row=real_counter + row_counter,
+                column=5,
+                value=shot_task.task.description,
+            )
+            ws.cell(
+                row=real_counter + row_counter,
+                column=6,
+                value=shot_task.hours if shot_task.hours else 0,
+            )
+            ws.cell(
+                row=real_counter + row_counter,
+                column=7,
+                value=shot_task.assigned_to.first_name
+                if shot_task.assigned_to
+                else "—",
+            )
+
+    for i, column in enumerate(ws.columns, 1):
+        lengths = (
+            len(max(str(cell.value).split("\n"))) for cell in column if cell.value is not None
+        )
+        ws.column_dimensions[get_column_letter(i)].width = max(lengths) + 2
+
+    # Ширина колонки с превью (B) — пропорционально высоте 100px
+    ws.column_dimensions["B"].width = 18
+
+    wb.save(response)
+    return response
 
 
 @admin.register(Status)

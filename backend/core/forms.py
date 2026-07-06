@@ -43,6 +43,17 @@ class AddShotsToProjectForm(forms.Form):
     project = forms.ModelChoiceField(Project.objects.all())
 
 
+class ExportShotsForm(forms.Form):
+    """Форма для выбора пользователя при экспорте шотов в Excel."""
+    _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+    assigned_to = forms.ModelChoiceField(
+        User.objects.all(),
+        required=False,
+        empty_label="Все исполнители",
+        label="Исполнитель",
+    )
+
+
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
