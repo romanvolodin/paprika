@@ -27,7 +27,6 @@ from .models import (
     Version,
 )
 
-
 admin.site.site_header = "Паприка"
 admin.site.site_title = "Паприка"
 admin.site.index_title = "Администрирование Паприки"
@@ -434,7 +433,9 @@ class ShotAdmin(admin.ModelAdmin):
     def download_shots_as_xlsx(modeladmin, request, queryset):
         from datetime import datetime
 
+        from django.core.exceptions import ObjectDoesNotExist
         from openpyxl import Workbook
+        from openpyxl.drawing.image import Image
         from openpyxl.styles import Alignment
         from openpyxl.utils import get_column_letter
 
@@ -452,6 +453,7 @@ class ShotAdmin(admin.ModelAdmin):
         ws.append(
             (
                 "№",
+                "Превью",
                 "Название шота",
                 "Таймкод",
                 "Задачи",
@@ -464,28 +466,51 @@ class ShotAdmin(admin.ModelAdmin):
             counter_cell = ws.cell(row=counter + row_counter, column=1, value=counter)
             counter_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-            name_cell = ws.cell(row=counter + row_counter, column=2, value=shot.name)
+            # Вставка превью последней версии
+            try:
+                version = shot.versions.latest()
+                if version and version.preview and version.preview.path:
+                    from PIL import Image as PILImage
+
+                    with PILImage.open(version.preview.path) as pil_img:
+                        orig_width, orig_height = pil_img.size
+                        aspect_ratio = orig_width / orig_height
+                        preview_width = int(100 * aspect_ratio)
+
+                    img = Image(version.preview.path)
+                    img.height = 100
+                    img.width = preview_width
+                    ws.add_image(img, f"B{counter + row_counter}")
+                    ws.row_dimensions[counter + row_counter].height = 100
+            except ObjectDoesNotExist:
+                pass
+
+            name_cell = ws.cell(row=counter + row_counter, column=3, value=shot.name)
             name_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-            name_cell = ws.cell(row=counter + row_counter, column=3, value=shot.rec_timecode)
+            name_cell = ws.cell(
+                row=counter + row_counter, column=4, value=shot.rec_timecode
+            )
             name_cell.alignment = Alignment(vertical="top", horizontal="left")
 
             for task_counter, shot_task in enumerate(shot.shot_tasks.all()):
                 row_counter += 1 if task_counter else 0
                 ws.cell(
                     row=counter + row_counter,
-                    column=4,
+                    column=5,
                     value=shot_task.task.description,
                 )
                 ws.cell(
                     row=counter + row_counter,
-                    column=5,
+                    column=6,
                     value=shot_task.hours if shot_task.hours else 0,
                 )
                 ws.cell(
                     row=counter + row_counter,
-                    column=6,
-                    value=shot_task.assigned_to.first_name if shot_task.assigned_to else "—",
+                    column=7,
+                    value=shot_task.assigned_to.first_name
+                    if shot_task.assigned_to
+                    else "—",
                 )
 
         for i, column in enumerate(ws.columns, 1):
@@ -493,6 +518,9 @@ class ShotAdmin(admin.ModelAdmin):
                 len(max(str(cell.value).split("\n"))) for cell in column if cell.value is not None
             )
             ws.column_dimensions[get_column_letter(i)].width = max(lengths) + 2
+
+        # Ширина колонки с превью (B) — пропорционально высоте 100px
+        ws.column_dimensions["B"].width = 18
 
         wb.save(response)
         return response
