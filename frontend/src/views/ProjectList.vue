@@ -11,7 +11,7 @@ const _projects = ref([])
 
 function goToShots(project) {
   projectsStore.currentProject = project
-  router.push({ name: 'shots-by-project', params: { projectCode: project.code } })
+  router.push({ name: 'project-feed', params: { projectCode: project.code } })
 }
 
 onMounted(async () => {
