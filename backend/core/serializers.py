@@ -267,3 +267,11 @@ class TaskDetailsSerializer(serializers.ModelSerializer):
             "default_status",
             "shots",
         ]
+
+
+class FeedItemSerializer(serializers.Serializer):
+    type = serializers.CharField()
+    id = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    created_by = UserSerializer(read_only=True)
+    data = serializers.DictField()

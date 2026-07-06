@@ -16,7 +16,12 @@ from core.models import (
     Task,
     Version,
 )
-from core.serializers import ShotGroupCreateSerializer, ShotTaskSerializer
+from core.serializers import (
+    FeedItemSerializer,
+    ShotGroupCreateSerializer,
+    ShotTaskSerializer,
+    UserSerializer,
+)
 from core.utils import calc_shot_status
 
 
@@ -210,4 +215,71 @@ def list_shot_tasks(request, project_code: str, shot_name: str):
     shot = get_object_or_404(Shot, project=project, name=shot_name)
     tasks = shot.shot_tasks.all()
     serializer = ShotTaskSerializer(tasks, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def project_feed(request, project_code: str):
+    project = get_object_or_404(Project, code=project_code)
+
+    LIMIT = 50
+
+    versions = Version.objects.filter(shot__project=project).select_related(
+        "created_by", "shot"
+    ).order_by("-created_at")[:LIMIT]
+
+    tasks = Task.objects.filter(project=project).select_related(
+        "created_by"
+    ).order_by("-created_at")[:LIMIT]
+
+    chat_messages = ChatMessage.objects.filter(
+        shot__project=project
+    ).select_related(
+        "created_by", "shot"
+    ).order_by("-created_at")[:LIMIT]
+
+    user_serializer = UserSerializer(context={"request": request})
+
+    feed_items = []
+
+    for v in versions:
+        feed_items.append({
+            "type": "version",
+            "id": v.id,
+            "created_at": v.created_at,
+            "created_by": user_serializer.to_representation(v.created_by) if v.created_by else None,
+            "data": {
+                "name": v.name,
+                "shot_name": v.shot.name,
+                "preview": request.build_absolute_uri(v.preview.url) if v.preview else None,
+                "video": request.build_absolute_uri(v.video.url) if v.video else None,
+            },
+        })
+
+    for t in tasks:
+        feed_items.append({
+            "type": "task",
+            "id": t.id,
+            "created_at": t.created_at,
+            "created_by": user_serializer.to_representation(t.created_by) if t.created_by else None,
+            "data": {
+                "description": t.description,
+            },
+        })
+
+    for cm in chat_messages:
+        feed_items.append({
+            "type": "chat_message",
+            "id": cm.id,
+            "created_at": cm.created_at,
+            "created_by": user_serializer.to_representation(cm.created_by) if cm.created_by else None,
+            "data": {
+                "shot_name": cm.shot.name,
+                "text": cm.text[:100],
+            },
+        })
+
+    feed_items.sort(key=lambda x: x["created_at"], reverse=True)
+
+    serializer = FeedItemSerializer(feed_items, many=True, context={"request": request})
     return Response(serializer.data)

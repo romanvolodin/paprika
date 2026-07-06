@@ -1,6 +1,12 @@
 from django.urls import path
 
-from .views import create_shot_groups, create_shots, list_shots, list_shot_tasks
+from .views import (
+    create_shot_groups,
+    create_shots,
+    list_shots,
+    list_shot_tasks,
+    project_feed,
+)
 
 
 urlpatterns = [
@@ -23,5 +29,10 @@ urlpatterns = [
         "api/projects/<str:project_code>/shots/<str:shot_name>/tasks/",
         list_shot_tasks,
         name="list-shot-tasks",
+    ),
+    path(
+        "api/projects/<str:project_code>/feed/",
+        project_feed,
+        name="project-feed",
     ),
 ]
