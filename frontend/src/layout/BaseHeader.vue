@@ -43,6 +43,9 @@ onMounted(() => {
       <div v-if="_projectCode" class="project-subnav">
         <b>{{ _projectCode }}</b>
         <b>🢒</b>
+        <router-link :to="{ name: 'project-feed', params: { projectCode: _projectCode } }">
+          Лента
+        </router-link>
         <router-link
           :to="{ name: 'shot-groups-by-project', params: { projectCode: _projectCode } }"
         >
@@ -53,9 +56,6 @@ onMounted(() => {
         </router-link>
         <router-link :to="{ name: 'tasks-by-project', params: { projectCode: _projectCode } }">
           Задачи
-        </router-link>
-        <router-link :to="{ name: 'project-feed', params: { projectCode: _projectCode } }">
-          Лента
         </router-link>
       </div>
     </nav>
