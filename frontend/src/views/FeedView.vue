@@ -129,7 +129,7 @@ const groupedByDate = computed(() => {
               class="item-shot-link"
               href="#"
               @click.prevent="goToShot(item.data.shot_name)"
-            >{{ item.data.shot_name }}_{{ item.data.name }}</a>
+            >{{ item.data.name }}</a>
           </template>
 
           <!-- Task created -->
@@ -148,7 +148,7 @@ const groupedByDate = computed(() => {
               href="#"
               @click.prevent="goToShot(item.data.shot_name)"
             >{{ item.data.shot_name }}</a>
-            <span class="item-message-text">: {{ item.data.text }}</span>
+            <span class="item-message-text">{{ item.data.text }}</span>
           </template>
 
           <!-- Unknown type -->
@@ -257,17 +257,21 @@ const groupedByDate = computed(() => {
   text-decoration: none;
 }
 
+.item-shot-link::after {
+  content: ":";
+  color: #6c757d;
+  text-decoration: none;
+}
+
 .item-shot-link:hover {
   text-decoration: underline;
 }
 
 .item-description {
-  /* color: #212529; */
   font-style: italic;
 }
 
 .item-message-text {
-  /* color: #212529; */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
