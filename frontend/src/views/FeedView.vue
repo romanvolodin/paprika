@@ -204,7 +204,7 @@ const groupedByDate = computed(() => {
   content: '';
   flex: 1;
   height: 1px;
-  background-color: #dee2e6;
+  background-color: #4a4a4a;
   margin-left: 0.75rem;
 }
 
@@ -219,7 +219,7 @@ const groupedByDate = computed(() => {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0;
   border-radius: 6px;
   transition: background-color 0.15s;
   font-size: 0.9rem;
