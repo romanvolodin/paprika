@@ -5,7 +5,7 @@ from pathlib import Path
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
@@ -436,8 +436,10 @@ class ShotAdmin(admin.ModelAdmin):
             form = ExportShotsForm(request.POST)
             if form.is_valid():
                 assigned_to = form.cleaned_data["assigned_to"]
+                resize_preview = form.cleaned_data["resize_preview"]
+                preview_dimension = form.cleaned_data["preview_dimension"]
+                preview_size = form.cleaned_data["preview_size"]
 
-                # Если выбран пользователь — проверяем, есть ли у него задачи
                 if assigned_to:
                     has_tasks = any(
                         shot.shot_tasks.filter(assigned_to=assigned_to).exists()
@@ -453,7 +455,9 @@ class ShotAdmin(admin.ModelAdmin):
                             request, "admin/export_shots.html", context=context
                         )
 
-                return _generate_shots_xlsx(queryset, assigned_to)
+                return _generate_shots_xlsx(
+                    queryset, assigned_to, resize_preview, preview_dimension, preview_size
+                )
 
             return HttpResponseRedirect(request.get_full_path())
 
@@ -533,9 +537,18 @@ class TaskAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-def _generate_shots_xlsx(queryset, assigned_to=None):
-    """Сгенерировать Excel-файл со шотами, отфильтрованными по исполнителю."""
+def _generate_shots_xlsx(
+    queryset, assigned_to=None, resize_preview=True, preview_dimension="width", preview_size=250
+):
+    """Сгенерировать Excel-файл со шотами, отфильтрованными по исполнителю.
+
+    resize_preview — если True, уменьшать превью до заданного размера.
+    preview_dimension — "width" или "height", какая сторона задана пользователем.
+    preview_size — значение заданной стороны в пикселях.
+    Вторая сторона высчитывается из пропорций каждого конкретного изображения.
+    """
     from datetime import datetime
+    from io import BytesIO
 
     from django.core.exceptions import ObjectDoesNotExist
     from django.http import HttpResponse
@@ -568,6 +581,8 @@ def _generate_shots_xlsx(queryset, assigned_to=None):
     )
     row_counter = 1
     real_counter = 0
+    # Максимальная ширина колонки B среди всех превью (в символах)
+    max_col_b_width = 0
     for shot in queryset:
         # Фильтрация задач по исполнителю, если указан
         shot_tasks = shot.shot_tasks.all()
@@ -589,15 +604,40 @@ def _generate_shots_xlsx(queryset, assigned_to=None):
                 from PIL import Image as PILImage
 
                 with PILImage.open(version.preview.path) as pil_img:
-                    orig_width, orig_height = pil_img.size
-                    aspect_ratio = orig_width / orig_height
-                    preview_width = int(100 * aspect_ratio)
+                    orig_w, orig_h = pil_img.size
 
-                img = Image(version.preview.path)
-                img.height = 100
-                img.width = preview_width
-                ws.add_image(img, f"B{real_counter + row_counter}")
-                ws.row_dimensions[real_counter + row_counter].height = 100
+                    if resize_preview:
+                        # Вычисляем вторую сторону из пропорций
+                        if preview_dimension == "width":
+                            new_w = preview_size
+                            new_h = int(orig_h * (preview_size / orig_w))
+                        else:  # "height"
+                            new_h = preview_size
+                            new_w = int(orig_w * (preview_size / orig_h))
+
+                        # Если новый размер больше исходного — не увеличиваем
+                        if new_w >= orig_w and new_h >= orig_h:
+                            new_w, new_h = orig_w, orig_h
+                        else:
+                            pil_img.thumbnail((new_w, new_h), PILImage.LANCZOS)
+                    else:
+                        new_w, new_h = orig_w, orig_h
+
+                    # Сохраняем в BytesIO, чтобы openpyxl мог вставить
+                    img_bytes = BytesIO()
+                    pil_img.save(img_bytes, format="JPEG")
+                    img_bytes.seek(0)
+
+                    img = Image(img_bytes)
+                    img.height = new_h
+                    img.width = new_w
+                    ws.add_image(img, f"B{real_counter + row_counter}")
+                    ws.row_dimensions[real_counter + row_counter].height = new_h
+
+                    # Пересчитываем ширину колонки в символах (приблизительно 1 символ = 7 пикселей)
+                    col_width = new_w / 7
+                    if col_width > max_col_b_width:
+                        max_col_b_width = col_width
         except ObjectDoesNotExist:
             pass
 
@@ -635,8 +675,9 @@ def _generate_shots_xlsx(queryset, assigned_to=None):
         )
         ws.column_dimensions[get_column_letter(i)].width = max(lengths) + 2
 
-    # Ширина колонки с превью (B) — пропорционально высоте 100px
-    ws.column_dimensions["B"].width = 18
+    # Ширина колонки с превью (B) — по самому широкому превью
+    if max_col_b_width:
+        ws.column_dimensions["B"].width = max_col_b_width
 
     wb.save(response)
     return response

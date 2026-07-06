@@ -52,6 +52,20 @@ class ExportShotsForm(forms.Form):
         empty_label="Все исполнители",
         label="Исполнитель",
     )
+    resize_preview = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Ресайз превью",
+    )
+    preview_dimension = forms.ChoiceField(
+        choices=[("width", "ширина"), ("height", "высота")],
+        initial="width",
+        label="Максимальная",
+    )
+    preview_size = forms.IntegerField(
+        initial=250,
+        label="пикс.",
+    )
 
 
 class MultipleFileInput(forms.ClearableFileInput):

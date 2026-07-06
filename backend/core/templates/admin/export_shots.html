@@ -18,7 +18,21 @@
 
   <p>Выбрано шотов: <strong>{{ shots|length }}</strong></p>
 
-  {{ form.as_p }}
+  <p>
+    <label for="{{ form.assigned_to.id_for_label }}">{{ form.assigned_to.label }}:</label>
+    {{ form.assigned_to }}
+  </p>
+
+  <p>
+    <label for="{{ form.resize_preview.id_for_label }}">{{ form.resize_preview }} {{ form.resize_preview.label }}</label>
+  </p>
+
+  <p>
+    <label>Максимальная</label>
+    {{ form.preview_dimension }}
+    {{ form.preview_size }}
+    <label for="{{ form.preview_size.id_for_label }}">пикс.</label>
+  </p>
 
   <input type="submit" name="apply" value="Скачать Excel" />
 </form>
