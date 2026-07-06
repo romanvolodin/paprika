@@ -54,6 +54,9 @@ onMounted(() => {
         <router-link :to="{ name: 'tasks-by-project', params: { projectCode: _projectCode } }">
           Задачи
         </router-link>
+        <router-link :to="{ name: 'project-feed', params: { projectCode: _projectCode } }">
+          Лента
+        </router-link>
       </div>
     </nav>
 

@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
+import FeedView from '@/views/FeedView.vue'
 import LoginView from '@/views/LoginView.vue'
 import ProjectCreate from '@/views/ProjectCreate.vue'
 import ProjectList from '@/views/ProjectList.vue'
@@ -112,6 +113,12 @@ const router = createRouter({
       path: '/:projectCode/shot-groups/:shotGroupId',
       name: 'shot-group-details-by-project',
       component: ShotGroupDetails,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectCode/feed',
+      name: 'project-feed',
+      component: FeedView,
       meta: { requiresAuth: true },
     },
     {
