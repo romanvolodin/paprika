@@ -3,6 +3,8 @@ import axios from '@/config/axiosConfig'
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import FeedUserBadge from '@/components/FeedUserBadge.vue'
+
 const route = useRoute()
 const router = useRouter()
 const projectCode = route.params.projectCode
@@ -35,11 +37,6 @@ function formatDate(isoString) {
     return `${day} ${month}`
   }
   return `${day} ${month} ${year}`
-}
-
-function getUserName(user) {
-  if (!user) return 'Неизвестно'
-  return user.first_name || user.email || 'Неизвестно'
 }
 
 function goToShot(shotName) {
@@ -123,7 +120,7 @@ const groupedByDate = computed(() => {
 
           <!-- Version uploaded -->
           <template v-if="item.type === 'version'">
-            <span class="item-user">{{ getUserName(item.created_by) }}</span>
+            <FeedUserBadge :user="item.created_by" />
             <span class="item-action">загрузил версию</span>
             <a
               class="item-shot-link"
@@ -134,14 +131,14 @@ const groupedByDate = computed(() => {
 
           <!-- Task created -->
           <template v-else-if="item.type === 'task'">
-            <span class="item-user">{{ getUserName(item.created_by) }}</span>
+            <FeedUserBadge :user="item.created_by" />
             <span class="item-action">создал задачу</span>
             <span class="item-description">{{ item.data.description }}</span>
           </template>
 
           <!-- Chat message -->
           <template v-else-if="item.type === 'chat_message'">
-            <span class="item-user">{{ getUserName(item.created_by) }}</span>
+            <FeedUserBadge :user="item.created_by" />
             <span class="item-action">написал в чате</span>
             <a
               class="item-shot-link"
@@ -217,7 +214,7 @@ const groupedByDate = computed(() => {
 /* Feed item */
 .feed-item {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0;
   border-radius: 6px;

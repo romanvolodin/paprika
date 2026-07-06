@@ -20,7 +20,6 @@ from core.serializers import (
     FeedItemSerializer,
     ShotGroupCreateSerializer,
     ShotTaskSerializer,
-    UserSerializer,
 )
 from core.utils import calc_shot_status
 
@@ -238,8 +237,6 @@ def project_feed(request, project_code: str):
         "created_by", "shot"
     ).order_by("-created_at")[:LIMIT]
 
-    user_serializer = UserSerializer(context={"request": request})
-
     feed_items = []
 
     for v in versions:
@@ -247,7 +244,7 @@ def project_feed(request, project_code: str):
             "type": "version",
             "id": v.id,
             "created_at": v.created_at,
-            "created_by": user_serializer.to_representation(v.created_by) if v.created_by else None,
+            "created_by": v.created_by,
             "data": {
                 "name": v.name,
                 "shot_name": v.shot.name,
@@ -261,7 +258,7 @@ def project_feed(request, project_code: str):
             "type": "task",
             "id": t.id,
             "created_at": t.created_at,
-            "created_by": user_serializer.to_representation(t.created_by) if t.created_by else None,
+            "created_by": t.created_by,
             "data": {
                 "description": t.description,
             },
@@ -272,7 +269,7 @@ def project_feed(request, project_code: str):
             "type": "chat_message",
             "id": cm.id,
             "created_at": cm.created_at,
-            "created_by": user_serializer.to_representation(cm.created_by) if cm.created_by else None,
+            "created_by": cm.created_by,
             "data": {
                 "shot_name": cm.shot.name,
                 "text": cm.text[:100],
