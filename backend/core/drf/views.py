@@ -225,7 +225,7 @@ def project_feed(request, project_code: str):
 
     versions = Version.objects.filter(shot__project=project).select_related(
         "created_by", "shot"
-    ).order_by("-created_at")[:LIMIT]
+    ).order_by("-created_at")[:LIMIT*2]
 
     tasks = Task.objects.filter(project=project).select_related(
         "created_by"
@@ -235,7 +235,7 @@ def project_feed(request, project_code: str):
         shot__project=project
     ).select_related(
         "created_by", "shot"
-    ).order_by("-created_at")[:LIMIT]
+    ).order_by("-created_at")[:LIMIT*2]
 
     feed_items = []
 
