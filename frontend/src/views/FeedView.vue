@@ -69,7 +69,32 @@ const groupedByDate = computed(() => {
   }
   // Сортируем дни по убыванию
   const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a))
-  return sortedKeys.map((key) => groups[key])
+  const result = sortedKeys.map((key) => groups[key])
+
+  // КОСТЫЛЬ: если перед загрузкой версии идёт сообщение с разницей не больше 2 сек,
+  // не выводим сообщение отдельно, а добавляем его текст к версии.
+  // Нужно потому, что в БД нет прямой связи между версией и сообщением к ней.
+  for (const day of result) {
+    const merged = []
+    for (let i = 0; i < day.items.length; i++) {
+      const current = day.items[i]
+      const next = day.items[i + 1]
+      if (
+        current.type === 'chat_message' &&
+        next &&
+        next.type === 'version' &&
+        new Date(next.created_at) - new Date(current.created_at) <= 2000
+      ) {
+        next.data.message_text = current.data.text
+        // сообщение не добавляем в merged, версию добавим на следующей итерации
+      } else {
+        merged.push(current)
+      }
+    }
+    day.items = merged
+  }
+
+  return result
 })
 </script>
 
@@ -118,6 +143,7 @@ const groupedByDate = computed(() => {
               class="item-shot-link"
               :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
             >{{ item.data.name }}</router-link>
+            <span v-if="item.data.message_text" class="item-message-text">{{ item.data.message_text }}</span>
           </template>
 
           <!-- Task created -->
