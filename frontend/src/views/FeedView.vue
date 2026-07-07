@@ -1,12 +1,11 @@
 <script setup>
 import axios from '@/config/axiosConfig'
 import { onMounted, ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
 
 const route = useRoute()
-const router = useRouter()
 const projectCode = route.params.projectCode
 
 const _items = ref([])
@@ -37,13 +36,6 @@ function formatDate(isoString) {
     return `${day} ${month}`
   }
   return `${day} ${month} ${year}`
-}
-
-function goToShot(shotName) {
-  router.push({
-    name: 'shot-details',
-    params: { projectCode, shotName },
-  })
 }
 
 async function fetchFeed() {
@@ -122,11 +114,10 @@ const groupedByDate = computed(() => {
           <template v-if="item.type === 'version'">
             <FeedUserBadge :user="item.created_by" />
             <span class="item-action">загрузил версию</span>
-            <a
+            <router-link
               class="item-shot-link"
-              href="#"
-              @click.prevent="goToShot(item.data.shot_name)"
-            >{{ item.data.name }}</a>
+              :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
+            >{{ item.data.name }}</router-link>
           </template>
 
           <!-- Task created -->
@@ -140,11 +131,10 @@ const groupedByDate = computed(() => {
           <template v-else-if="item.type === 'chat_message'">
             <FeedUserBadge :user="item.created_by" />
             <span class="item-action">написал в чате</span>
-            <a
+            <router-link
               class="item-shot-link"
-              href="#"
-              @click.prevent="goToShot(item.data.shot_name)"
-            >{{ item.data.shot_name }}</a>
+              :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
+            >{{ item.data.shot_name }}</router-link>
             <span class="item-message-text">{{ item.data.text }}</span>
           </template>
 
