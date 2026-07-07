@@ -4,9 +4,16 @@ import { onMounted, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.user)
+
+function isCurrentUser(item) {
+  return currentUser.value && item.created_by?.id === currentUser.value.id
+}
 
 const _items = ref([])
 const _loaded = ref(false)
@@ -146,8 +153,8 @@ const groupedByDate = computed(() => {
 
           <!-- Version uploaded -->
           <template v-if="item.type === 'version'">
-            <FeedUserBadge :user="item.created_by" />
-            <span class="item-action">загрузил версию</span>
+            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+            <span class="item-action">{{ isCurrentUser(item) ? 'Вы загрузили версию' : 'загрузил версию' }}</span>
             <router-link
               class="item-shot-link"
               :class="{ 'has-message': item.data.message_text }"
@@ -158,15 +165,15 @@ const groupedByDate = computed(() => {
 
           <!-- Task created -->
           <template v-else-if="item.type === 'task'">
-            <FeedUserBadge :user="item.created_by" />
-            <span class="item-action">создал задачу</span>
+            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+            <span class="item-action">{{ isCurrentUser(item) ? 'Вы создали задачу' : 'создал задачу' }}</span>
             <span class="item-description">{{ item.data.description }}</span>
           </template>
 
           <!-- Chat message -->
           <template v-else-if="item.type === 'chat_message'">
-            <FeedUserBadge :user="item.created_by" />
-            <span class="item-action">написал в чате</span>
+            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+            <span class="item-action">{{ isCurrentUser(item) ? 'Вы написали в чате' : 'написал в чате' }}</span>
             <router-link
               class="item-shot-link has-message"
               :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
