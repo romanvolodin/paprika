@@ -85,8 +85,17 @@ const groupedByDate = computed(() => {
         next.type === 'version' &&
         new Date(next.created_at) - new Date(current.created_at) <= 2000
       ) {
-        next.data.message_text = current.data.text
-        // сообщение не добавляем в merged, версию добавим на следующей итерации
+        // КОСТЫЛЬ: удаляем из сообщения автоматическую строку "Загружена версия {name}".
+        // Это строка была нужна для отметок в чате, т.к. в чате нет отдельного
+        // уведомления о загрузке версии.
+        const prefix = `Загружена версия ${next.data.name}`
+        let text = current.data.text
+        if (text.startsWith(prefix)) {
+          text = text.slice(prefix.length).trim()
+        }
+        if (text) {
+          next.data.message_text = text
+        }
       } else {
         merged.push(current)
       }
@@ -141,6 +150,7 @@ const groupedByDate = computed(() => {
             <span class="item-action">загрузил версию</span>
             <router-link
               class="item-shot-link"
+              :class="{ 'has-message': item.data.message_text }"
               :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
             >{{ item.data.name }}</router-link>
             <span v-if="item.data.message_text" class="item-message-text">{{ item.data.message_text }}</span>
@@ -158,7 +168,7 @@ const groupedByDate = computed(() => {
             <FeedUserBadge :user="item.created_by" />
             <span class="item-action">написал в чате</span>
             <router-link
-              class="item-shot-link"
+              class="item-shot-link has-message"
               :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
             >{{ item.data.shot_name }}</router-link>
             <span class="item-message-text">{{ item.data.text }}</span>
@@ -270,10 +280,9 @@ const groupedByDate = computed(() => {
   text-decoration: none;
 }
 
-.item-shot-link::after {
+.item-shot-link.has-message::after {
   content: ":";
   color: #6c757d;
-  text-decoration: none;
 }
 
 .item-shot-link:hover {
