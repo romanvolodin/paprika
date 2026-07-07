@@ -30,6 +30,7 @@ defineProps({
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .feed-user-avatar {
