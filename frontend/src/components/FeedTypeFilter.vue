@@ -36,7 +36,7 @@ const buttonLabel = computed(() => {
     const opt = options.find((o) => o.value === selected.value[0])
     return opt ? opt.label : selected.value[0]
   }
-  return `${selected.value.length} событий`
+  return `${selected.value.length} события`
 })
 
 function toggleOption(value) {
