@@ -4,8 +4,8 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import FeedMyFilter from '@/components/FeedMyFilter.vue'
-import FeedUserBadge from '@/components/FeedUserBadge.vue'
 import FeedTypeFilter from '@/components/FeedTypeFilter.vue'
+import FeedUserBadge from '@/components/FeedUserBadge.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -16,6 +16,15 @@ const currentUser = computed(() => authStore.user)
 
 function isCurrentUser(item) {
   return currentUser.value && item.created_by?.id === currentUser.value.id
+}
+
+function onAttachmentError(event) {
+  const img = event.target
+  img.style.display = 'none'
+  const icon = img.parentElement.querySelector('.item-attachment-file-icon')
+  if (icon) {
+    icon.style.display = 'flex'
+  }
 }
 
 const _items = ref([])
@@ -218,45 +227,78 @@ const groupedByDate = computed(() => {
         <div
           v-for="item in day.items"
           :key="`${item.type}-${item.id}`"
-          class="feed-item"
-          :class="`feed-item--${item.type}`"
+          class="feed-item-wrapper"
         >
-          <span class="item-time">{{ formatTime(item.created_at) }}</span>
+          <div
+            class="feed-item"
+            :class="`feed-item--${item.type}`"
+          >
+            <span class="item-time">{{ formatTime(item.created_at) }}</span>
 
-          <!-- Version uploaded -->
-          <template v-if="item.type === 'version'">
-            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
-            <span class="item-action">{{ isCurrentUser(item) ? 'Вы загрузили версию' : 'загрузил версию' }}</span>
-            <router-link
-              class="item-shot-link"
-              :class="{ 'has-message': item.data.message_text }"
-              :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
-            >{{ item.data.name }}</router-link>
-            <span v-if="item.data.message_text" class="item-message-text">{{ item.data.message_text }}</span>
-          </template>
+            <!-- Version uploaded -->
+            <template v-if="item.type === 'version'">
+              <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+              <span class="item-action">{{ isCurrentUser(item) ? 'Вы загрузили версию' : 'загрузил версию' }}</span>
+              <router-link
+                class="item-shot-link"
+                :class="{ 'has-message': item.data.message_text }"
+                :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
+              >{{ item.data.name }}</router-link>
+              <span v-if="item.data.message_text" class="item-message-text">{{ item.data.message_text }}</span>
+            </template>
 
-          <!-- Task created -->
-          <template v-else-if="item.type === 'task'">
-            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
-            <span class="item-action">{{ isCurrentUser(item) ? 'Вы создали задачу' : 'создал задачу' }}</span>
-            <span class="item-description">{{ item.data.description }}</span>
-          </template>
+            <!-- Task created -->
+            <template v-else-if="item.type === 'task'">
+              <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+              <span class="item-action">{{ isCurrentUser(item) ? 'Вы создали задачу' : 'создал задачу' }}</span>
+              <span class="item-description">{{ item.data.description }}</span>
+            </template>
 
-          <!-- Chat message -->
-          <template v-else-if="item.type === 'chat_message'">
-            <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
-            <span class="item-action">{{ isCurrentUser(item) ? 'Вы написали в чате' : 'написал в чате' }}</span>
-            <router-link
-              class="item-shot-link has-message"
-              :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
-            >{{ item.data.shot_name }}</router-link>
-            <span class="item-message-text">{{ item.data.text }}</span>
-          </template>
+            <!-- Chat message -->
+            <template v-else-if="item.type === 'chat_message'">
+              <FeedUserBadge v-if="!isCurrentUser(item)" :user="item.created_by" />
+              <span class="item-action">{{ isCurrentUser(item) ? 'Вы написали в чате' : 'написал в чате' }}</span>
+              <router-link
+                class="item-shot-link has-message"
+                :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
+              >{{ item.data.shot_name }}</router-link>
+              <span class="item-message-text">{{ item.data.text }}</span>
+            </template>
 
-          <!-- Unknown type -->
-          <template v-else>
-            <span class="item-unknown">Неизвестное событие ({{ item.type }})</span>
-          </template>
+            <!-- Unknown type -->
+            <template v-else>
+              <span class="item-unknown">Неизвестное событие ({{ item.type }})</span>
+            </template>
+          </div>
+
+          <!-- Attachments (under the item row, indented) -->
+          <div
+            v-if="item.data.attachments && item.data.attachments.length > 0"
+            class="item-attachments"
+          >
+            <a
+              v-for="att in item.data.attachments"
+              :key="att.id"
+              :href="att.file"
+              target="_blank"
+              class="item-attachment-link"
+            >
+              <img
+                :src="att.file"
+                class="item-attachment-thumb"
+                alt=""
+                @error="onAttachmentError($event)"
+              />
+              <span class="item-attachment-file-icon" style="display:none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -394,6 +436,46 @@ const groupedByDate = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Attachments wrapper — indented below the item row */
+.item-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.5rem 100px;
+}
+
+.item-attachment-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #4a4a4a;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.item-attachment-link:hover {
+  border-color: #007bff;
+}
+
+.item-attachment-thumb {
+  width: 150px;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.item-attachment-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: #6c757d;
 }
 
 .item-unknown {
