@@ -222,6 +222,7 @@ def project_feed(request, project_code: str):
     project = get_object_or_404(Project, code=project_code)
 
     LIMIT = 50
+    my_only = request.query_params.get("my") == "true"
 
     versions = Version.objects.filter(shot__project=project).select_related(
         "created_by", "shot"
@@ -237,9 +238,33 @@ def project_feed(request, project_code: str):
         "created_by", "shot"
     ).order_by("-created_at")[:LIMIT*2]
 
+    # Если фильтр "мои" — определяем шоты, где есть задачи, назначенные на текущего пользователя
+    if my_only and request.user.is_authenticated:
+        my_shot_ids = set(
+            ShotTask.objects.filter(
+                assigned_to=request.user,
+                shot__project=project,
+            )
+            .values_list("shot_id", flat=True)
+            .distinct()
+        )
+        my_task_ids = set(
+            ShotTask.objects.filter(
+                assigned_to=request.user,
+                shot__project=project,
+            )
+            .values_list("task_id", flat=True)
+            .distinct()
+        )
+    else:
+        my_shot_ids = None
+        my_task_ids = None
+
     feed_items = []
 
     for v in versions:
+        if my_shot_ids is not None and v.shot_id not in my_shot_ids:
+            continue
         feed_items.append({
             "type": "version",
             "id": v.id,
@@ -254,6 +279,8 @@ def project_feed(request, project_code: str):
         })
 
     for t in tasks:
+        if my_task_ids is not None and t.id not in my_task_ids:
+            continue
         feed_items.append({
             "type": "task",
             "id": t.id,
@@ -265,6 +292,8 @@ def project_feed(request, project_code: str):
         })
 
     for cm in chat_messages:
+        if my_shot_ids is not None and cm.shot_id not in my_shot_ids:
+            continue
         feed_items.append({
             "type": "chat_message",
             "id": cm.id,

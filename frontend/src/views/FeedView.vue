@@ -1,6 +1,6 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { onMounted, ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
@@ -18,6 +18,7 @@ function isCurrentUser(item) {
 const _items = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
+const myFilter = ref(false)
 
 const monthNames = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -47,7 +48,11 @@ function formatDate(isoString) {
 
 async function fetchFeed() {
   try {
-    const response = await axios.get(`/api/projects/${projectCode}/feed/`)
+    const params = {}
+    if (myFilter.value) {
+      params.my = 'true'
+    }
+    const response = await axios.get(`/api/projects/${projectCode}/feed/`, { params })
     _items.value = response.data
   } catch (error) {
     _error.value = `${error.status}: ${error.response?.data?.detail || error.message}`
@@ -125,6 +130,18 @@ const groupedByDate = computed(() => {
     <div class="feed-header">
       <h1>Лента событий</h1>
       <span class="project-badge">{{ projectCode }}</span>
+      <div class="feed-filter">
+        <button
+          class="filter-btn"
+          :class="{ active: !myFilter }"
+          @click="myFilter = false; fetchFeed()"
+        >Все</button>
+        <button
+          class="filter-btn"
+          :class="{ active: myFilter }"
+          @click="myFilter = true; fetchFeed()"
+        >Мои</button>
+      </div>
     </div>
 
     <div v-if="_items.length === 0" class="empty-state">
@@ -217,6 +234,36 @@ const groupedByDate = computed(() => {
   color: #fff;
   padding: 2px 8px;
   border-radius: 4px;
+}
+
+/* Filter toggle */
+.feed-filter {
+  display: flex;
+  gap: 0;
+  margin-left: auto;
+  border: 1px solid #6c757d;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.filter-btn {
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.filter-btn.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.filter-btn:not(.active):hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Day separator */
