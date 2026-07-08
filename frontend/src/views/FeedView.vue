@@ -1,8 +1,9 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
+import FeedMyFilter from '@/components/FeedMyFilter.vue'
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
 import FeedTypeFilter from '@/components/FeedTypeFilter.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -21,6 +22,10 @@ const _loaded = ref(false)
 const _error = ref(null)
 const myFilter = ref(false)
 const typeFilter = ref([])
+
+watch(myFilter, () => {
+  fetchFeed()
+})
 
 const monthNames = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -137,18 +142,7 @@ const groupedByDate = computed(() => {
     <div class="feed-header">
       <h1>Лента событий</h1>
       <span class="project-badge">{{ projectCode }}</span>
-      <div class="feed-filter">
-        <button
-          class="filter-btn"
-          :class="{ active: !myFilter }"
-          @click="myFilter = false; fetchFeed()"
-        >Все</button>
-        <button
-          class="filter-btn"
-          :class="{ active: myFilter }"
-          @click="myFilter = true; fetchFeed()"
-        >Мои</button>
-      </div>
+      <FeedMyFilter v-model="myFilter" />
       <FeedTypeFilter v-model="typeFilter" />
     </div>
 
@@ -257,36 +251,6 @@ const groupedByDate = computed(() => {
   color: #fff;
   padding: 2px 8px;
   border-radius: 4px;
-}
-
-/* Filter toggle */
-.feed-filter {
-  display: flex;
-  gap: 0;
-  margin-left: auto;
-  border: 1px solid #6c757d;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.filter-btn {
-  padding: 4px 14px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border: none;
-  background: transparent;
-  color: #6c757d;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.filter-btn.active {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.filter-btn:not(.active):hover {
-  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Day separator */
