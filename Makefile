@@ -63,9 +63,10 @@ dev.shell:
 	docker compose --file docker-compose-dev.yml exec paprika-app ./manage.py shell
 
 update:
-	docker compose down
 	git pull
-	docker compose up --detach --build
+	docker compose build
+	docker compose down
+	docker compose up --detach
 	docker compose exec paprika-app ./manage.py migrate
 	docker compose exec paprika-app ./manage.py collectstatic --no-input
 
