@@ -271,6 +271,23 @@ const groupedByDate = computed(() => {
             </template>
           </div>
 
+          <!-- Version preview (under the item row, indented) -->
+          <div
+            v-if="item.type === 'version' && item.data.preview"
+            class="item-attachments"
+          >
+            <router-link
+              :to="{ name: 'shot-details', params: { projectCode, shotName: item.data.shot_name } }"
+              class="item-attachment-link"
+            >
+              <img
+                :src="item.data.preview"
+                class="item-attachment-thumb"
+                alt=""
+              />
+            </router-link>
+          </div>
+
           <!-- Attachments (under the item row, indented) -->
           <div
             v-if="item.data.attachments && item.data.attachments.length > 0"
