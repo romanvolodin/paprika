@@ -1,7 +1,7 @@
 <script setup>
 import axios from '@/config/axiosConfig'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import FeedMyFilter from '@/components/FeedMyFilter.vue'
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
@@ -9,6 +9,7 @@ import FeedTypeFilter from '@/components/FeedTypeFilter.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
 const projectCode = route.params.projectCode
 const authStore = useAuthStore()
 const currentUser = computed(() => authStore.user)
@@ -23,9 +24,39 @@ const _error = ref(null)
 const myFilter = ref(false)
 const typeFilter = ref([])
 
-watch(myFilter, () => {
-  fetchFeed()
+// Пропуск первого срабатывания watch при инициализации
+const _initialized = ref(false)
+
+myFilter.value = route.query.my === 'true'
+if (route.query.type) {
+  typeFilter.value = route.query.type.split('|')
+}
+
+watch([myFilter, typeFilter], () => {
+  if (!_initialized.value) return
+  const query = { ...route.query }
+  if (myFilter.value) {
+    query.my = 'true'
+  } else {
+    delete query.my
+  }
+  if (typeFilter.value.length > 0) {
+    query.type = typeFilter.value.join('|')
+  } else {
+    delete query.type
+  }
+  router.replace({ query })
 })
+
+watch(
+  () => route.query,
+  () => {
+    fetchFeed()
+  },
+  { immediate: true },
+)
+
+_initialized.value = true
 
 const monthNames = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -67,10 +98,6 @@ async function fetchFeed() {
     _loaded.value = true
   }
 }
-
-onMounted(async () => {
-  await fetchFeed()
-})
 
 // Фильтрация по типу + группировка по дням
 const filteredItems = computed(() => {
