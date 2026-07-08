@@ -81,7 +81,6 @@ onUnmounted(() => {
 <style scoped>
 .my-filter {
   position: relative;
-  margin-left: auto;
   outline: none;
 }
 

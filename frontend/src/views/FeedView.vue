@@ -167,10 +167,21 @@ const groupedByDate = computed(() => {
 
   <div v-else class="feed-page">
     <div class="feed-header">
-      <h1>Лента событий</h1>
-      <span class="project-badge">{{ projectCode }}</span>
-      <FeedMyFilter v-model="myFilter" />
-      <FeedTypeFilter v-model="typeFilter" />
+      <div class="title">
+        <h1>Лента событий</h1>
+        <span class="project-badge">{{ projectCode }}</span>
+      </div>
+
+      <div class="filters">
+        <a
+          v-if="myFilter || typeFilter.length > 0"
+          class="reset-filters-link"
+          href="#"
+          @click.prevent="myFilter = false; typeFilter = []"
+        >Сбросить</a>
+        <FeedMyFilter v-model="myFilter" />
+        <FeedTypeFilter v-model="typeFilter" />
+      </div>
     </div>
 
     <!-- Фильтры активны, но ничего не найдено -->
@@ -262,13 +273,31 @@ const groupedByDate = computed(() => {
 .feed-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
 }
+.title,
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 
-.feed-header h1 {
+.title h1 {
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.reset-filters-link {
+  font-size: 0.75rem;
+  color: #676767;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reset-filters-link:hover {
+  text-decoration: underline;
 }
 
 .project-badge {
