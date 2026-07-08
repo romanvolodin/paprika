@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import FeedUserBadge from '@/components/FeedUserBadge.vue'
+import FeedTypeFilter from '@/components/FeedTypeFilter.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -19,6 +20,7 @@ const _items = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
 const myFilter = ref(false)
+const typeFilter = ref([])
 
 const monthNames = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -65,10 +67,15 @@ onMounted(async () => {
   await fetchFeed()
 })
 
-// Группировка по дням
+// Фильтрация по типу + группировка по дням
+const filteredItems = computed(() => {
+  if (typeFilter.value.length === 0) return _items.value
+  return _items.value.filter((item) => typeFilter.value.includes(item.type))
+})
+
 const groupedByDate = computed(() => {
   const groups = {}
-  for (const item of _items.value) {
+  for (const item of filteredItems.value) {
     const d = new Date(item.created_at)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     if (!groups[key]) {
@@ -142,10 +149,11 @@ const groupedByDate = computed(() => {
           @click="myFilter = true; fetchFeed()"
         >Мои</button>
       </div>
+      <FeedTypeFilter v-model="typeFilter" />
     </div>
 
     <!-- Фильтры активны, но ничего не найдено -->
-    <div v-if="_items.length === 0 && myFilter" class="empty-state">
+    <div v-if="_items.length > 0 && filteredItems.length === 0" class="empty-state">
       <div class="empty-state-illustration">
         <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -155,7 +163,7 @@ const groupedByDate = computed(() => {
       </div>
       <p class="empty-state-text">Нет подходящих событий</p>
       <p class="empty-state-hint">Поменяйте настройки фильтрации или<br>попробуйте сбросить фильтры</p>
-      <button class="reset-filter-btn" @click="myFilter = false; fetchFeed()">Сбросить фильтры</button>
+      <button class="reset-filter-btn" @click="myFilter = false; typeFilter = []; fetchFeed()">Сбросить фильтры</button>
     </div>
 
     <!-- В проекте вообще нет событий -->
