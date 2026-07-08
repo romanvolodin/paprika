@@ -144,7 +144,22 @@ const groupedByDate = computed(() => {
       </div>
     </div>
 
-    <div v-if="_items.length === 0" class="empty-state">
+    <!-- Фильтры активны, но ничего не найдено -->
+    <div v-if="_items.length === 0 && myFilter" class="empty-state">
+      <div class="empty-state-illustration">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <p class="empty-state-text">Нет подходящих событий</p>
+      <p class="empty-state-hint">Поменяйте настройки фильтрации или<br>попробуйте сбросить фильтры</p>
+      <button class="reset-filter-btn" @click="myFilter = false; fetchFeed()">Сбросить фильтры</button>
+    </div>
+
+    <!-- В проекте вообще нет событий -->
+    <div v-else-if="_items.length === 0" class="empty-state">
       <div class="empty-state-illustration">
         <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -394,5 +409,29 @@ const groupedByDate = computed(() => {
 .empty-state-text {
   font-size: 1.1rem;
   color: #6c757d;
+}
+
+.empty-state-hint {
+  font-size: 0.9rem;
+  color: #adb5bd;
+  margin-top: 0.25rem;
+}
+
+.reset-filter-btn {
+  margin-top: 1rem;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  background: transparent;
+  color: #007bff;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.reset-filter-btn:hover {
+  background-color: #007bff;
+  color: #fff;
 }
 </style>
