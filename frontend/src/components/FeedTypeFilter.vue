@@ -26,6 +26,7 @@ const selected = computed({
 
 const noneSelected = computed(() => selected.value.length === 0)
 const allSelected = computed(() => options.every((o) => selected.value.includes(o.value)))
+const isActive = computed(() => !noneSelected.value && !allSelected.value)
 
 const buttonLabel = computed(() => {
   if (noneSelected.value || allSelected.value) {
@@ -64,7 +65,7 @@ onUnmounted(() => {
 
 <template>
   <div ref="containerRef" class="type-filter">
-    <button class="type-filter-btn" @click="open = !open" type="button">
+    <button class="type-filter-btn" :class="{ active: isActive }" @click="open = !open" type="button">
       {{ buttonLabel }}
       <svg
         class="type-filter-chevron"
@@ -119,6 +120,12 @@ onUnmounted(() => {
 
 .type-filter-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.type-filter-btn.active {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: rgba(0, 123, 255, 0.06);
 }
 
 .type-filter-chevron {

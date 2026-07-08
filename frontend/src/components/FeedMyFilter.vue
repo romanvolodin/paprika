@@ -35,7 +35,7 @@ onUnmounted(() => {
 
 <template>
   <div ref="containerRef" class="my-filter">
-    <button class="my-filter-btn" @click="open = !open" type="button">
+    <button class="my-filter-btn" :class="{ active: modelValue }" @click="open = !open" type="button">
       {{ modelValue ? 'По моим кадрам' : 'По всему проекту' }}
       <svg
         class="my-filter-chevron"
@@ -103,6 +103,12 @@ onUnmounted(() => {
 
 .my-filter-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.my-filter-btn.active {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: rgba(0, 123, 255, 0.06);
 }
 
 .my-filter-chevron {
