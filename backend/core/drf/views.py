@@ -232,11 +232,12 @@ def project_feed(request, project_code: str):
         "created_by"
     ).order_by("-created_at")[:LIMIT]
 
-    chat_messages = ChatMessage.objects.filter(
-        shot__project=project
-    ).select_related(
-        "created_by", "shot"
-    ).order_by("-created_at")[:LIMIT*2]
+    chat_messages = (
+        ChatMessage.objects.filter(shot__project=project)
+        .select_related("created_by", "shot")
+        .prefetch_related("attachments")
+        .order_by("-created_at")[: LIMIT * 2]
+    )
 
     # Если фильтр "мои" — определяем шоты, где есть задачи, назначенные на текущего пользователя
     if my_only and request.user.is_authenticated:
@@ -294,16 +295,30 @@ def project_feed(request, project_code: str):
     for cm in chat_messages:
         if my_shot_ids is not None and cm.shot_id not in my_shot_ids:
             continue
-        feed_items.append({
-            "type": "chat_message",
-            "id": cm.id,
-            "created_at": cm.created_at,
-            "created_by": cm.created_by,
-            "data": {
-                "shot_name": cm.shot.name,
-                "text": cm.text[:100],
-            },
-        })
+
+        attachments_data = []
+        for att in cm.attachments.all():
+            attachment = {
+                "id": att.id,
+                "file": request.build_absolute_uri(att.file.url) if att.file else None,
+            }
+            if att.preview:
+                attachment["preview"] = request.build_absolute_uri(att.preview.url)
+            attachments_data.append(attachment)
+
+        feed_items.append(
+            {
+                "type": "chat_message",
+                "id": cm.id,
+                "created_at": cm.created_at,
+                "created_by": cm.created_by,
+                "data": {
+                    "shot_name": cm.shot.name,
+                    "text": cm.text[:100],
+                    "attachments": attachments_data,
+                },
+            }
+        )
 
     feed_items.sort(key=lambda x: x["created_at"], reverse=True)
 
