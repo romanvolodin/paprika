@@ -436,6 +436,7 @@ class ShotAdmin(admin.ModelAdmin):
             form = ExportShotsForm(request.POST)
             if form.is_valid():
                 assigned_to = form.cleaned_data["assigned_to"]
+                include_preview = form.cleaned_data["include_preview"]
                 resize_preview = form.cleaned_data["resize_preview"]
                 preview_dimension = form.cleaned_data["preview_dimension"]
                 preview_size = form.cleaned_data["preview_size"]
@@ -456,7 +457,12 @@ class ShotAdmin(admin.ModelAdmin):
                         )
 
                 return _generate_shots_xlsx(
-                    queryset, assigned_to, resize_preview, preview_dimension, preview_size
+                    queryset,
+                    assigned_to,
+                    include_preview,
+                    resize_preview,
+                    preview_dimension,
+                    preview_size,
                 )
 
             return HttpResponseRedirect(request.get_full_path())
@@ -538,10 +544,16 @@ class TaskAdmin(admin.ModelAdmin):
 
 
 def _generate_shots_xlsx(
-    queryset, assigned_to=None, resize_preview=True, preview_dimension="width", preview_size=250
+    queryset,
+    assigned_to=None,
+    include_preview=True,
+    resize_preview=True,
+    preview_dimension="width",
+    preview_size=250,
 ):
     """Сгенерировать Excel-файл со шотами, отфильтрованными по исполнителю.
 
+    include_preview — если False, превью не вставляются в таблицу.
     resize_preview — если True, уменьшать превью до заданного размера.
     preview_dimension — "width" или "height", какая сторона задана пользователем.
     preview_size — значение заданной стороны в пикселях.
@@ -597,49 +609,50 @@ def _generate_shots_xlsx(
         counter_cell = ws.cell(row=real_counter + row_counter, column=1, value=real_counter)
         counter_cell.alignment = Alignment(vertical="top", horizontal="left")
 
-        # Вставка превью последней версии
-        try:
-            version = shot.versions.latest()
-            if version and version.preview and version.preview.path:
-                from PIL import Image as PILImage
+        # Вставка превью последней версии (только если отмечена галка «Вставить превью»)
+        if include_preview:
+            try:
+                version = shot.versions.latest()
+                if version and version.preview and version.preview.path:
+                    from PIL import Image as PILImage
 
-                with PILImage.open(version.preview.path) as pil_img:
-                    orig_w, orig_h = pil_img.size
+                    with PILImage.open(version.preview.path) as pil_img:
+                        orig_w, orig_h = pil_img.size
 
-                    if resize_preview:
-                        # Вычисляем вторую сторону из пропорций
-                        if preview_dimension == "width":
-                            new_w = preview_size
-                            new_h = int(orig_h * (preview_size / orig_w))
-                        else:  # "height"
-                            new_h = preview_size
-                            new_w = int(orig_w * (preview_size / orig_h))
+                        if resize_preview:
+                            # Вычисляем вторую сторону из пропорций
+                            if preview_dimension == "width":
+                                new_w = preview_size
+                                new_h = int(orig_h * (preview_size / orig_w))
+                            else:  # "height"
+                                new_h = preview_size
+                                new_w = int(orig_w * (preview_size / orig_h))
 
-                        # Если новый размер больше исходного — не увеличиваем
-                        if new_w >= orig_w and new_h >= orig_h:
-                            new_w, new_h = orig_w, orig_h
+                            # Если новый размер больше исходного — не увеличиваем
+                            if new_w >= orig_w and new_h >= orig_h:
+                                new_w, new_h = orig_w, orig_h
+                            else:
+                                pil_img.thumbnail((new_w, new_h), PILImage.LANCZOS)
                         else:
-                            pil_img.thumbnail((new_w, new_h), PILImage.LANCZOS)
-                    else:
-                        new_w, new_h = orig_w, orig_h
+                            new_w, new_h = orig_w, orig_h
 
-                    # Сохраняем в BytesIO, чтобы openpyxl мог вставить
-                    img_bytes = BytesIO()
-                    pil_img.save(img_bytes, format="JPEG")
-                    img_bytes.seek(0)
+                        # Сохраняем в BytesIO, чтобы openpyxl мог вставить
+                        img_bytes = BytesIO()
+                        pil_img.save(img_bytes, format="JPEG")
+                        img_bytes.seek(0)
 
-                    img = Image(img_bytes)
-                    img.height = new_h
-                    img.width = new_w
-                    ws.add_image(img, f"B{real_counter + row_counter}")
-                    ws.row_dimensions[real_counter + row_counter].height = new_h
+                        img = Image(img_bytes)
+                        img.height = new_h
+                        img.width = new_w
+                        ws.add_image(img, f"B{real_counter + row_counter}")
+                        ws.row_dimensions[real_counter + row_counter].height = new_h
 
-                    # Пересчитываем ширину колонки в символах (приблизительно 1 символ = 7 пикселей)
-                    col_width = new_w / 7
-                    if col_width > max_col_b_width:
-                        max_col_b_width = col_width
-        except ObjectDoesNotExist:
-            pass
+                        # Пересчитываем ширину колонки в символах (приблизительно 1 символ = 7 пикселей)
+                        col_width = new_w / 7
+                        if col_width > max_col_b_width:
+                            max_col_b_width = col_width
+            except ObjectDoesNotExist:
+                pass
 
         name_cell = ws.cell(row=real_counter + row_counter, column=3, value=shot.name)
         name_cell.alignment = Alignment(vertical="top", horizontal="left")

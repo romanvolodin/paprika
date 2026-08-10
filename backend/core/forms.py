@@ -1,5 +1,4 @@
 from django import forms
-
 from users.models import User
 
 from .models import Project, ShotGroup, Task
@@ -51,6 +50,11 @@ class ExportShotsForm(forms.Form):
         required=False,
         empty_label="Все исполнители",
         label="Исполнитель",
+    )
+    include_preview = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Вставить превью",
     )
     resize_preview = forms.BooleanField(
         required=False,
