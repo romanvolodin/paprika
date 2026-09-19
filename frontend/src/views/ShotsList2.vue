@@ -273,6 +273,10 @@ const filteredGroups = computed(() => {
   max-width: 300px;
 }
 
+.filter-panel h3:not(:first-child) {
+  margin-top: 30px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
