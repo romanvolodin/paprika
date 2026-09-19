@@ -2,19 +2,51 @@
 import ShotCard from '@/components/ShotCard.vue'
 import axios from '@/config/axiosConfig'
 import { previousRoute } from '@/router'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
 const route = useRoute()
 const projectCode = route.params.projectCode
 
+const FILTERS_STORAGE_KEY = `shotsFilters-${route.path}`
+
+function readSavedFilters() {
+  try {
+    return JSON.parse(localStorage.getItem(FILTERS_STORAGE_KEY)) || {}
+  } catch {
+    return {}
+  }
+}
+
+const savedFilters = readSavedFilters()
+
 const _groups = ref([])
 const _loaded = ref(false)
 const _error = ref(null)
-const _selectedStatuses = ref([])
-const _isStatusFilterInverted = ref(false)
-const _selectedAssignees = ref([])
-const _isAssigneeFilterInverted = ref(false)
+const _selectedStatuses = ref(
+  Array.isArray(savedFilters.selectedStatuses) ? savedFilters.selectedStatuses : []
+)
+const _isStatusFilterInverted = ref(!!savedFilters.isStatusFilterInverted)
+const _selectedAssignees = ref(
+  Array.isArray(savedFilters.selectedAssignees) ? savedFilters.selectedAssignees : []
+)
+const _isAssigneeFilterInverted = ref(!!savedFilters.isAssigneeFilterInverted)
+
+watch(
+  [_selectedStatuses, _isStatusFilterInverted, _selectedAssignees, _isAssigneeFilterInverted],
+  () => {
+    localStorage.setItem(
+      FILTERS_STORAGE_KEY,
+      JSON.stringify({
+        selectedStatuses: _selectedStatuses.value,
+        isStatusFilterInverted: _isStatusFilterInverted.value,
+        selectedAssignees: _selectedAssignees.value,
+        isAssigneeFilterInverted: _isAssigneeFilterInverted.value,
+      })
+    )
+  },
+  { deep: true }
+)
 
 const isStatusFilterActive = computed(() => {
   return _selectedStatuses.value.length > 0 || _isStatusFilterInverted.value
