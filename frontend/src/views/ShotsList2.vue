@@ -16,6 +16,24 @@ const _isStatusFilterInverted = ref(false)
 const _selectedAssignees = ref([])
 const _isAssigneeFilterInverted = ref(false)
 
+const isStatusFilterActive = computed(() => {
+  return _selectedStatuses.value.length > 0 || _isStatusFilterInverted.value
+})
+
+const isAssigneeFilterActive = computed(() => {
+  return _selectedAssignees.value.length > 0 || _isAssigneeFilterInverted.value
+})
+
+function resetStatusFilter() {
+  _selectedStatuses.value = []
+  _isStatusFilterInverted.value = false
+}
+
+function resetAssigneeFilter() {
+  _selectedAssignees.value = []
+  _isAssigneeFilterInverted.value = false
+}
+
 document.title = `${projectCode}: Шоты`
 
 const shot_status_colors = {
@@ -187,7 +205,10 @@ const filteredGroups = computed(() => {
 
       <aside class="filter-panel">
         <div v-if="_loaded && !_error">
-          <h3>Статус</h3>
+          <h3>
+            Статус
+            <button v-if="isStatusFilterActive" @click="resetStatusFilter">Сброс</button>
+          </h3>
 
           <p style="margin-bottom: 10px">
             <label>
@@ -207,7 +228,10 @@ const filteredGroups = computed(() => {
             </label>
           </p>
 
-          <h3>Исполнитель</h3>
+          <h3>
+            Исполнитель
+            <button v-if="isAssigneeFilterActive" @click="resetAssigneeFilter">Сброс</button>
+          </h3>
 
           <p style="margin-bottom: 10px">
             <label>
@@ -275,6 +299,19 @@ const filteredGroups = computed(() => {
 
 .filter-panel h3:not(:first-child) {
   margin-top: 30px;
+}
+
+.filter-panel h3 button {
+  font-size: 12px;
+  margin-left: 20px;
+  border: 1px solid gray;
+  border-radius: 5px;
+  padding: 0 5px;
+}
+
+.filter-panel h3 button:hover {
+  background-color: #0056b3;
+  cursor: pointer;
 }
 
 .header {
