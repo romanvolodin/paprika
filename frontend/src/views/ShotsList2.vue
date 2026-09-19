@@ -327,6 +327,11 @@ const filteredGroups = computed(() => {
   flex-shrink: 1;
   padding: 20px;
   max-width: 300px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .filter-panel h3:not(:first-child) {
