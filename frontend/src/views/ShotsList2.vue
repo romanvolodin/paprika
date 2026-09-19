@@ -314,6 +314,14 @@ const filteredGroups = computed(() => {
   cursor: pointer;
 }
 
+.filter-panel p label {
+  cursor: pointer;
+}
+
+.filter-panel p label:hover {
+  filter: brightness(1.2);
+}
+
 .header {
   display: flex;
   justify-content: space-between;
