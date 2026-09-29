@@ -225,7 +225,15 @@ class ShotAdmin(admin.ModelAdmin):
 
     @admin.display(description="задачи")
     def get_shot_tasks(self, obj):
-        return mark_safe("<br>".join([task.description for task in obj.task.all()]))
+        return mark_safe(
+            "<br>".join(
+                [
+                    f"{st.task.description} ("
+                    f"{int(st.hours) if st.hours is not None else 'часы не указаны'})"
+                    for st in obj.shot_tasks.select_related("task").all()
+                ]
+            )
+        )
 
     @admin.display(description="превью")
     def get_version_preview(self, shot):
