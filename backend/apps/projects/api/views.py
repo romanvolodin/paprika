@@ -219,6 +219,9 @@ class ProjectListController(Controller[PydanticSerializer]):
         if parsed_query.search:
             queryset = queryset.filter(name__icontains=parsed_query.search)
 
+        if parsed_query.code:
+            queryset = queryset.filter(code=parsed_query.code)
+
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)
 

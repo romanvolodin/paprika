@@ -86,6 +86,10 @@ class ProjectListQuery(pydantic.BaseModel):
         default=None,
         description="Case-insensitive match against the project name.",
     )
+    code: str | None = pydantic.Field(
+        default=None,
+        description="Exact (case-sensitive) match against the project code.",
+    )
 
 
 class ProjectListOut(pydantic.BaseModel):

@@ -82,6 +82,45 @@ class TestListProjects:
         assert body["total"] == 1
         assert body["items"][0]["name"] == "Findable Feature"
 
+    def test_code_filters_by_exact_code_not_by_name_or_substring(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        project_factory,
+        project_membership_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        for code, name in [
+            ("VRG", "Feature"),
+            ("VRG2", "VRG Sequel"),
+            ("vrg", "Lower"),
+        ]:
+            project = project_factory(company=company, code=code, name=name)
+            project_membership_factory(user=auth_user, project=project)
+
+        response = auth_client.get(f"/api/v1/companies/{company.id}/projects/?code=VRG")
+
+        body = response.json()
+        assert body["total"] == 1
+        assert body["items"][0]["code"] == "VRG"
+
+    def test_code_filter_only_returns_projects_the_user_is_a_member_of(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        project_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        project_factory(company=company, code="VRG")  # no membership for the user
+
+        response = auth_client.get(f"/api/v1/companies/{company.id}/projects/?code=VRG")
+
+        assert response.json()["total"] == 0
+
     def test_non_member_of_company_gets_404(
         self, auth_client, company_factory, company_membership_factory
     ):
