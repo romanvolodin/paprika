@@ -64,7 +64,7 @@ class ShotFactory(DjangoModelFactory):
             or ShotStatusFactory(company=o.project.company)
         )
     )
-    name = factory.Sequence(lambda n: f"Shot {n}")
+    name = factory.Sequence(lambda n: f"Shot{n}")
 
     @factory.post_generation
     def groups(self, create, extracted, **kwargs):

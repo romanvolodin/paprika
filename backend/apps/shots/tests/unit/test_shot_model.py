@@ -7,6 +7,8 @@ from apps.shots.models import Shot
 
 pytestmark = pytest.mark.django_db
 
+FULL_CLEAN_EXCLUDE = ["project", "status", "created_by", "updated_by"]
+
 
 class TestShotModel:
     def test_str_contains_project_and_name(self, shot_factory, project_factory):
@@ -40,6 +42,19 @@ class TestShotModel:
 
         # Should not raise.
         shot_factory(project=project_b, name="0010")
+
+    @pytest.mark.parametrize("name", ["PRJ 0010", "PRJ/0010", "PRJ0010\n", ""])
+    def test_full_clean_rejects_slash_whitespace_and_blank_name(self, name):
+        shot = Shot(name=name)
+
+        with pytest.raises(ValidationError) as exc_info:
+            shot.full_clean(exclude=FULL_CLEAN_EXCLUDE)
+
+        assert "name" in exc_info.value.message_dict
+
+    @pytest.mark.parametrize("name", ["0010", "ZS_0010", "ep01-0020", "Кадр_30"])
+    def test_full_clean_accepts_plain_names(self, name):
+        Shot(name=name).full_clean(exclude=FULL_CLEAN_EXCLUDE)
 
     def test_has_no_groups_by_default(self, shot_factory):
         shot = shot_factory()

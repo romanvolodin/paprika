@@ -1,8 +1,12 @@
 import datetime as dt
+import re
 
 import pydantic
 
 from apps.users.api.schemas import UserOut
+
+
+SHOT_NAME_PATTERN = re.compile(r"\A[^/\s]+\Z")
 
 
 class ShotGroupOut(pydantic.BaseModel):
@@ -272,6 +276,13 @@ class ShotCreateIn(pydantic.BaseModel):
         ge=1,
         description="Length of the shot, in frames.",
     )
+
+    @pydantic.field_validator("name")
+    @classmethod
+    def validate_name_charset(cls, value: str) -> str:
+        if not SHOT_NAME_PATTERN.match(value):
+            raise ValueError("Shot name may not contain slashes or whitespace.")
+        return value
 
 
 class ShotUpdateIn(pydantic.BaseModel):

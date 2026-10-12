@@ -12,6 +12,11 @@ color_validator = RegexValidator(
     message=_("Color must be a 6-digit hex code, e.g. #FF5733."),
 )
 
+shot_name_validator = RegexValidator(
+    regex=r"\A[^/\s]+\Z",
+    message=_("Shot name may not contain slashes or whitespace."),
+)
+
 
 class ShotGroup(BaseModel):
     """
@@ -161,7 +166,7 @@ class Shot(BaseModel):
         on_delete=models.PROTECT,
         related_name="shots",
     )
-    name = models.CharField(_("name"), max_length=255)
+    name = models.CharField(_("name"), max_length=255, validators=[shot_name_validator])
     rec_timecode = models.IntegerField(
         _("record timecode"),
         null=True,

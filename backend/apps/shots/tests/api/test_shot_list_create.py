@@ -341,6 +341,33 @@ class TestCreateShot:
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
+    @pytest.mark.parametrize(
+        "name", ["PRJ 0010", "PRJ/0010", " PRJ0010", "PRJ0010\t", "PRJ\u00a00010"]
+    )
+    def test_rejects_name_with_slash_or_whitespace(
+        self, auth_client, auth_user, project, project_membership_factory, name
+    ):
+        project_membership_factory(user=auth_user, project=project)
+
+        response = _post_json(
+            auth_client, f"/api/v1/projects/{project.id}/shots/", {"name": name}
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert not Shot.objects.filter(project=project).exists()
+
+    def test_accepts_name_with_underscores_hyphens_and_non_latin_letters(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+
+        for name in ["ZS_0010", "ep01-0020", "Кадр_30"]:
+            response = _post_json(
+                auth_client, f"/api/v1/projects/{project.id}/shots/", {"name": name}
+            )
+
+            assert response.status_code == HTTPStatus.CREATED
+
     def test_rejects_negative_rec_timecode(
         self, auth_client, auth_user, project, project_membership_factory
     ):
