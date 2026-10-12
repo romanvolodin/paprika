@@ -22,6 +22,7 @@ import {
 } from 'naive-ui'
 import { AddOutline, ArrowBackOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import { useProjectDetailStore } from '@/stores/projectDetail'
+import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import type { CompanyMemberOut, ProjectMemberOut, ProjectMembershipRole } from '@/types/api'
@@ -32,12 +33,27 @@ const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 const store = useProjectDetailStore()
+const currentCompany = useCurrentCompanyStore()
 const { canEditProject, canManageMembers, canRemoveMember, canChangeMemberRole } =
   useProjectPermissions(computed(() => store.members))
 
 onMounted(() => {
   store.fetch(props.projectId)
 })
+
+const companySlug = computed(
+  () =>
+    currentCompany.companies.find((company) => company.id === store.project?.company_id)?.slug ??
+    null,
+)
+
+function openShots() {
+  if (!store.project || !companySlug.value) return
+  router.push({
+    name: 'shot-list',
+    params: { companySlug: companySlug.value, projectCode: store.project.code },
+  })
+}
 
 // --- Project settings ---------------------------------------------------
 
@@ -294,6 +310,9 @@ async function handleAddMember() {
     <div class="project-detail__heading-row">
       <h1 class="project-detail__title">{{ store.project.name }}</h1>
       <span class="mono project-detail__code">{{ store.project.code }}</span>
+      <n-button v-if="companySlug" size="small" class="project-detail__shots" @click="openShots">
+        Кадры
+      </n-button>
     </div>
 
     <section class="project-detail__section">
@@ -449,6 +468,9 @@ async function handleAddMember() {
   margin: 0;
 }
 
+.project-detail__shots {
+  margin-left: auto;
+}
 .project-detail__code {
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);

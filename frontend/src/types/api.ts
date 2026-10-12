@@ -56,3 +56,18 @@ export type ProjectMemberListOut = components['schemas']['ProjectMemberListOut']
 export type ProjectMemberCreateIn = components['schemas']['ProjectMemberCreateIn']
 export type ProjectMemberUpdateIn = components['schemas']['ProjectMemberUpdateIn']
 export type ProjectMembershipRole = MembershipRole
+
+export type ShotOut = components['schemas']['ShotOut']
+export type ShotListOut = components['schemas']['ShotListOut']
+export type ShotListQuery = NonNullable<
+  operations['getShotlistcontrollerApiV1ProjectsProjectIdShots']['parameters']['query']
+>
+
+export type ShotGroupOut = components['schemas']['ShotGroupOut']
+export type ShotGroupListOut = components['schemas']['ShotGroupListOut']
+export type ShotGroupListQuery = NonNullable<
+  operations['getShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups']['parameters']['query']
+>
+
+export type ShotStatusOut = components['schemas']['ShotStatusOut']
+export type ShotStatusListOut = components['schemas']['ShotStatusListOut']

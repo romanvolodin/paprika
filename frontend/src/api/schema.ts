@@ -3944,6 +3944,8 @@ export interface operations {
                 page_size?: number;
                 /** @description Case-insensitive match against the project name. */
                 search?: string | null;
+                /** @description Exact (case-sensitive) match against the project code. */
+                code?: string | null;
             };
             header?: never;
             path: {
