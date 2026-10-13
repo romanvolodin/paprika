@@ -3,7 +3,15 @@ import { defineStore } from 'pinia'
 import { isAxiosError } from 'axios'
 import * as projectsApi from '@/api/projects'
 import * as shotsApi from '@/api/shots'
-import type { CompanyOut, ProjectOut, ShotGroupOut, ShotOut, ShotStatusOut } from '@/types/api'
+import type {
+  CompanyOut,
+  ProjectMemberOut,
+  ProjectOut,
+  ShotCreateIn,
+  ShotGroupOut,
+  ShotOut,
+  ShotStatusOut,
+} from '@/types/api'
 
 export type ShotListState = 'loading' | 'ready' | 'not-found' | 'error'
 
@@ -12,6 +20,7 @@ const MAX_PAGE_SIZE = 100
 export const useShotsStore = defineStore('shots', () => {
   const state = ref<ShotListState>('loading')
   const project = ref<ProjectOut | null>(null)
+  const members = ref<ProjectMemberOut[]>([])
   const statuses = ref<ShotStatusOut[]>([])
   const groups = ref<ShotGroupOut[]>([])
   const items = ref<ShotOut[]>([])
@@ -71,14 +80,16 @@ export const useShotsStore = defineStore('shots', () => {
         return
       }
 
-      const [statusList, groupList] = await Promise.all([
+      const [statusList, groupList, memberList] = await Promise.all([
         shotsApi.listShotStatuses(company.id),
         shotsApi.listShotGroups(found.id, { page_size: MAX_PAGE_SIZE }),
+        projectsApi.listProjectMembers(found.id),
       ])
       if (token !== openToken) return
       project.value = found
       statuses.value = statusList.items
       groups.value = groupList.items
+      members.value = memberList.items
 
       await fetchShots()
       if (token !== openToken) return
@@ -100,9 +111,17 @@ export const useShotsStore = defineStore('shots', () => {
     await fetchShots()
   }
 
+  async function createShot(input: ShotCreateIn) {
+    if (!project.value) return
+    const created = await shotsApi.createShot(project.value.id, input)
+    await fetchShots()
+    return created
+  }
+
   return {
     state,
     project,
+    members,
     statuses,
     groups,
     items,
@@ -114,5 +133,6 @@ export const useShotsStore = defineStore('shots', () => {
     open,
     setSearch,
     setPage,
+    createShot,
   }
 })

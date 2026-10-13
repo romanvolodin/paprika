@@ -63,6 +63,7 @@ function mockProjectLookup(items: ProjectOut[]) {
 }
 
 function mockShotData() {
+  vi.mocked(projectsApi.listProjectMembers).mockResolvedValue({ items: [] })
   vi.mocked(shotsApi.listShotStatuses).mockResolvedValue({ items: [] })
   vi.mocked(shotsApi.listShotGroups).mockResolvedValue({
     items: [],
@@ -168,6 +169,43 @@ describe('useShotsStore', () => {
       1,
       { page: 1, page_size: 20, search: '00' },
     ])
+  })
+
+  it('createShot posts to the open project and refetches the list', async () => {
+    mockProjectLookup([buildProject()])
+    mockShotData()
+    vi.mocked(shotsApi.createShot).mockResolvedValue(buildShot({ id: 99, name: '0099' }))
+
+    const store = useShotsStore()
+    await store.open(company, 'PRJ')
+    vi.mocked(shotsApi.listShots).mockClear()
+    const input = { name: '0099', status_id: 3, group_ids: [], rec_timecode: null, duration: null }
+    const created = await store.createShot(input)
+
+    expect(shotsApi.createShot).toHaveBeenCalledWith(1, input)
+    expect(created?.id).toBe(99)
+    expect(shotsApi.listShots).toHaveBeenCalledTimes(1)
+  })
+
+  it('createShot keeps the error and does not refetch when the API rejects', async () => {
+    mockProjectLookup([buildProject()])
+    mockShotData()
+    vi.mocked(shotsApi.createShot).mockRejectedValue(new Error('duplicate'))
+
+    const store = useShotsStore()
+    await store.open(company, 'PRJ')
+    vi.mocked(shotsApi.listShots).mockClear()
+
+    await expect(
+      store.createShot({
+        name: '0010',
+        status_id: 3,
+        group_ids: [],
+        rec_timecode: null,
+        duration: null,
+      }),
+    ).rejects.toThrow('duplicate')
+    expect(shotsApi.listShots).not.toHaveBeenCalled()
   })
 
   it('a stale open does not overwrite the result of a newer one', async () => {

@@ -5560,6 +5560,8 @@ export interface operations {
                 page_size?: number;
                 /** @description Case-insensitive match against the shot name. */
                 search?: string | null;
+                /** @description Exact (case-sensitive) match against the shot name. */
+                name?: string | null;
                 /** @description Only shots that have at least one task of the task type with this id. */
                 task_type?: number | null;
             };
@@ -5691,13 +5693,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5740,6 +5744,8 @@ export interface operations {
                 page_size?: number;
                 /** @description Case-insensitive match against the shot name. */
                 search?: string | null;
+                /** @description Exact (case-sensitive) match against the shot name. */
+                name?: string | null;
                 /** @description Only shots that have at least one task of the task type with this id. */
                 task_type?: number | null;
             };
@@ -5937,13 +5943,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -6030,13 +6038,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */

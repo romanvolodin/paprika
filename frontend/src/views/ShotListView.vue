@@ -1,9 +1,22 @@
 <script setup lang="ts">
 import { computed, h, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import { NDataTable, NIcon, NInput, NPagination, NTag, type DataTableColumns } from 'naive-ui'
+import {
+  NButton,
+  NDataTable,
+  NIcon,
+  NInput,
+  NPagination,
+  NTag,
+  useMessage,
+  type DataTableColumns,
+} from 'naive-ui'
 import { ArrowBackOutline, SearchOutline } from '@vicons/ionicons5'
+import { storeToRefs } from 'pinia'
+import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
+import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { firstValidationMessage } from '@/utils/apiError'
 import { useShotsStore } from '@/stores/shots'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import type { ShotOut } from '@/types/api'
@@ -14,7 +27,31 @@ const router = useRouter()
 const shots = useShotsStore()
 const currentCompany = useCurrentCompanyStore()
 
+const message = useMessage()
+const { members } = storeToRefs(shots)
+const { canWrite } = useProjectPermissions(members)
+
 const searchInput = ref('')
+const isFormOpen = ref(false)
+const isSaving = ref(false)
+
+async function handleCreate(values: ShotFormValues) {
+  isSaving.value = true
+  try {
+    await shots.createShot(values)
+    isFormOpen.value = false
+    message.success('Кадр создан.')
+  } catch (error) {
+    const isDuplicate = firstValidationMessage(error)?.includes('already exists')
+    message.error(
+      isDuplicate
+        ? 'Кадр с таким именем уже есть в проекте.'
+        : 'Не удалось создать кадр. Проверьте введённые данные.',
+    )
+  } finally {
+    isSaving.value = false
+  }
+}
 
 const debouncedSearch = useDebounceFn((value: string) => {
   shots.setSearch(value)
@@ -32,7 +69,22 @@ const columns = computed<DataTableColumns<ShotOut>>(() => [
   {
     title: 'Кадр',
     key: 'name',
-    render: (shot) => h('span', { class: 'mono' }, shot.name),
+    render: (shot) =>
+      h(
+        RouterLink,
+        {
+          class: 'mono',
+          to: {
+            name: 'shot-detail',
+            params: {
+              companySlug: props.companySlug,
+              projectCode: props.projectCode,
+              shotName: shot.name,
+            },
+          },
+        },
+        { default: () => shot.name },
+      ),
   },
   {
     title: 'Группы',
@@ -117,6 +169,15 @@ watch(
       <div class="shots-page__heading-row">
         <h1 class="shots-page__title">Кадры</h1>
         <span class="mono shots-page__code">{{ shots.project.code }}</span>
+        <n-button
+          v-if="canWrite"
+          type="primary"
+          size="small"
+          class="shots-page__new"
+          @click="isFormOpen = true"
+        >
+          Новый кадр
+        </n-button>
       </div>
 
       <n-input
@@ -135,6 +196,15 @@ watch(
         :loading="shots.isLoading"
         :bordered="false"
         :row-key="(row: ShotOut) => row.id"
+      />
+
+      <shot-form-modal
+        v-model:show="isFormOpen"
+        mode="create"
+        :statuses="shots.statuses"
+        :groups="shots.groups"
+        :is-submitting="isSaving"
+        @submit="handleCreate"
       />
 
       <div class="shots-page__pagination">
@@ -188,6 +258,10 @@ watch(
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+}
+
+.shots-page__new {
+  margin-left: auto;
 }
 
 .shots-page__code {

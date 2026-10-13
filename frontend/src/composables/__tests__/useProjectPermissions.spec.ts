@@ -59,4 +59,31 @@ describe('useProjectPermissions', () => {
 
     expect(canEditProject.value).toBe(false)
   })
+
+  it.each([
+    ['admin', true],
+    ['producer', true],
+    ['coordinator', true],
+    ['executor', true],
+    ['freelancer', true],
+    ['client', false],
+  ] as const)('canWrite for role %s is %s', (role, expected) => {
+    const auth = useAuthStore()
+    auth.currentUser = buildUser({ id: 1 })
+    const members = ref<ProjectMemberOut[]>([buildMember({ user_id: 1, role })])
+
+    const { canWrite } = useProjectPermissions(members)
+
+    expect(canWrite.value).toBe(expected)
+  })
+
+  it('canWrite is false when the user is not among the members', () => {
+    const auth = useAuthStore()
+    auth.currentUser = buildUser({ id: 1 })
+    const members = ref<ProjectMemberOut[]>([buildMember({ user_id: 2, role: 'admin' })])
+
+    const { canWrite } = useProjectPermissions(members)
+
+    expect(canWrite.value).toBe(false)
+  })
 })

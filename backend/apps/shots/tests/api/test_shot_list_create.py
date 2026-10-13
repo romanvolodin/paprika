@@ -56,6 +56,25 @@ class TestListShotsByProject:
         assert body["total"] == 1
         assert body["items"][0]["name"] == "Findable"
 
+    def test_name_filters_by_exact_name_not_by_substring(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot_factory(project=project, name="0010")
+        shot_factory(project=project, name="00100")
+        shot_factory(project=project, name="A0010")
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shots/?name=0010")
+
+        body = response.json()
+        assert body["total"] == 1
+        assert body["items"][0]["name"] == "0010"
+
     def test_non_member_of_project_gets_404(
         self, auth_client, project_factory, project_membership_factory
     ):
@@ -367,6 +386,18 @@ class TestCreateShot:
             )
 
             assert response.status_code == HTTPStatus.CREATED
+
+    def test_client_role_cannot_create_shots(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="client")
+
+        response = _post_json(
+            auth_client, f"/api/v1/projects/{project.id}/shots/", {"name": "0010"}
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert not Shot.objects.filter(project=project).exists()
 
     def test_rejects_negative_rec_timecode(
         self, auth_client, auth_user, project, project_membership_factory

@@ -11,6 +11,7 @@ from apps.auth.api.views import access_token_auth
 from apps.companies.models import Company
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project
+from apps.projects.permissions import require_can_write
 from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -609,6 +610,8 @@ def _filter_shots(queryset, query: ShotListQuery):
     """Apply the filters shared by both shot list endpoints."""
     if query.search:
         queryset = queryset.filter(name__icontains=query.search)
+    if query.name:
+        queryset = queryset.filter(name=query.name)
     if query.task_type is not None:
         # `tasks` is the reverse side of `Task.shots` from `apps.tasks`;
         # looked up by name so `apps.shots` doesn't import the tasks app.
@@ -676,6 +679,7 @@ class ShotListController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shots"],
     )
@@ -685,6 +689,7 @@ class ShotListController(Controller[PydanticSerializer]):
         parsed_body: Body[ShotCreateIn],
     ) -> ShotOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_can_write(self.request.user, project)
 
         if Shot.objects.filter(project=project, name=parsed_body.name).exists():
             raise APIError(
@@ -791,6 +796,7 @@ class ShotDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shots"],
     )
@@ -800,6 +806,7 @@ class ShotDetailController(Controller[PydanticSerializer]):
         parsed_body: Body[ShotUpdateIn],
     ) -> ShotOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
+        require_can_write(self.request.user, shot.project)
 
         if (
             "status_id" in parsed_body.model_fields_set
@@ -842,10 +849,12 @@ class ShotDetailController(Controller[PydanticSerializer]):
         description="Permanently delete a shot.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shots"],
     )
     def delete(self, parsed_path: Path[ShotPath]) -> None:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
+        require_can_write(self.request.user, shot.project)
         shot.delete()
         return None

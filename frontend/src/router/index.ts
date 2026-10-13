@@ -90,6 +90,17 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/:companySlug/:projectCode/shots/:shotName',
+      name: 'shot-detail',
+      component: () => import('@/views/ShotDetailView.vue'),
+      props: (route) => ({
+        companySlug: String(route.params.companySlug),
+        projectCode: String(route.params.projectCode),
+        shotName: String(route.params.shotName),
+      }),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

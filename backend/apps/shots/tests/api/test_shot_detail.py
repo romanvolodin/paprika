@@ -309,3 +309,21 @@ class TestDeleteShot:
 
         assert response.status_code == 401
         assert Shot.objects.filter(id=shot.id).exists()
+
+
+class TestClientRoleIsReadOnly:
+    def test_client_can_read_but_not_update_or_delete(
+        self, auth_client, auth_user, shot, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=shot.project, role="client")
+
+        read = auth_client.get(f"/api/v1/shots/{shot.id}/")
+        update = _patch_json(auth_client, f"/api/v1/shots/{shot.id}/", {"duration": 24})
+        delete = auth_client.delete(f"/api/v1/shots/{shot.id}/")
+
+        assert read.status_code == HTTPStatus.OK
+        assert update.status_code == HTTPStatus.FORBIDDEN
+        assert delete.status_code == HTTPStatus.FORBIDDEN
+        shot.refresh_from_db()
+        assert shot.duration != 24
+        assert Shot.objects.filter(id=shot.id).exists()

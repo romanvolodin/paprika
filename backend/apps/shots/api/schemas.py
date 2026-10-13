@@ -207,6 +207,10 @@ class ShotListQuery(pydantic.BaseModel):
         default=None,
         description="Case-insensitive match against the shot name.",
     )
+    name: str | None = pydantic.Field(
+        default=None,
+        description="Exact (case-sensitive) match against the shot name.",
+    )
     task_type: int | None = pydantic.Field(
         default=None,
         description="Only shots that have at least one task of the task "
