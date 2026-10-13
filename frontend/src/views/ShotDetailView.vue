@@ -5,6 +5,7 @@ import { NButton, NIcon, NTag, useDialog, useMessage } from 'naive-ui'
 import { ArrowBackOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
+import ShotVersionsSection from '@/components/shots/ShotVersionsSection.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
@@ -160,11 +161,12 @@ watch(
         @submit="handleUpdate"
       />
 
-      <section
-        v-for="title in ['Версии', 'Задачи', 'Чат']"
-        :key="title"
-        class="shot-detail__section"
-      >
+      <section class="shot-detail__section">
+        <h2 class="shot-detail__heading">Версии</h2>
+        <shot-versions-section :shot-id="store.shot.id" :can-write="canWrite" />
+      </section>
+
+      <section v-for="title in ['Задачи', 'Чат']" :key="title" class="shot-detail__section">
         <h2 class="shot-detail__heading">{{ title }}</h2>
         <p class="shot-detail__message">Пока не реализовано.</p>
       </section>
@@ -177,7 +179,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: 720px;
+  max-width: 960px;
 }
 
 .shot-detail__message {

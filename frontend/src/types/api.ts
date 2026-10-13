@@ -77,3 +77,9 @@ export type ShotStatusOut = components['schemas']['ShotStatusOut']
 export type ShotStatusListOut = components['schemas']['ShotStatusListOut']
 export type ShotStatusCreateIn = components['schemas']['ShotStatusCreateIn']
 export type ShotStatusUpdateIn = components['schemas']['ShotStatusUpdateIn']
+
+export type VersionOut = components['schemas']['VersionOut']
+export type VersionListOut = components['schemas']['VersionListOut']
+export type VersionListQuery = NonNullable<
+  operations['getVersionlistcontrollerApiV1ShotsShotIdVersions']['parameters']['query']
+>
