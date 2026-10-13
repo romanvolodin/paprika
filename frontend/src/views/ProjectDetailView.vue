@@ -23,6 +23,7 @@ import {
 import { AddOutline, ArrowBackOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import { useProjectDetailStore } from '@/stores/projectDetail'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
+import ShotGroupsSection from '@/components/shots/ShotGroupsSection.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import type { CompanyMemberOut, ProjectMemberOut, ProjectMembershipRole } from '@/types/api'
@@ -34,7 +35,7 @@ const message = useMessage()
 const dialog = useDialog()
 const store = useProjectDetailStore()
 const currentCompany = useCurrentCompanyStore()
-const { canEditProject, canManageMembers, canRemoveMember, canChangeMemberRole } =
+const { canEditProject, canWrite, canManageMembers, canRemoveMember, canChangeMemberRole } =
   useProjectPermissions(computed(() => store.members))
 
 onMounted(() => {
@@ -426,6 +427,11 @@ async function handleAddMember() {
           Добавить
         </n-button>
       </div>
+    </section>
+
+    <section class="project-detail__section">
+      <h2 class="project-detail__heading">Группы кадров</h2>
+      <shot-groups-section :project-id="props.projectId" :can-write="canWrite" />
     </section>
   </div>
   <p v-else-if="store.isLoading" class="project-detail__loading">Загрузка…</p>

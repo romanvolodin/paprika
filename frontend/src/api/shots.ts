@@ -1,8 +1,11 @@
 import { apiClient } from './client'
 import type {
   ShotCreateIn,
+  ShotGroupCreateIn,
   ShotGroupListOut,
   ShotGroupListQuery,
+  ShotGroupOut,
+  ShotGroupUpdateIn,
   ShotListOut,
   ShotListQuery,
   ShotOut,
@@ -41,6 +44,20 @@ export function updateShot(shotId: number, input: ShotUpdateIn) {
 
 export function deleteShot(shotId: number) {
   return apiClient.delete<void>(`/shots/${shotId}/`)
+}
+
+export function createShotGroup(projectId: number, input: ShotGroupCreateIn) {
+  return apiClient
+    .post<ShotGroupOut>(`/projects/${projectId}/shot-groups/`, input)
+    .then((res) => res.data)
+}
+
+export function renameShotGroup(groupId: number, input: ShotGroupUpdateIn) {
+  return apiClient.patch<ShotGroupOut>(`/shot-groups/${groupId}/`, input).then((res) => res.data)
+}
+
+export function deleteShotGroup(groupId: number) {
+  return apiClient.delete<void>(`/shot-groups/${groupId}/`)
 }
 
 export function createShotStatus(companyId: number, input: ShotStatusCreateIn) {

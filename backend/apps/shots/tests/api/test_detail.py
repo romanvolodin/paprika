@@ -156,3 +156,23 @@ class TestDeleteShotGroup:
 
         assert response.status_code == 401
         assert ShotGroup.objects.filter(id=shot_group.id).exists()
+
+
+class TestClientRoleCannotChangeShotGroups:
+    def test_client_cannot_rename_or_delete(
+        self, auth_client, auth_user, shot_group, project_membership_factory
+    ):
+        project_membership_factory(
+            user=auth_user, project=shot_group.project, role="client"
+        )
+        original_name = shot_group.name
+
+        rename = _patch_json(
+            auth_client, f"/api/v1/shot-groups/{shot_group.id}/", {"name": "Renamed"}
+        )
+        delete = auth_client.delete(f"/api/v1/shot-groups/{shot_group.id}/")
+
+        assert rename.status_code == HTTPStatus.FORBIDDEN
+        assert delete.status_code == HTTPStatus.FORBIDDEN
+        shot_group.refresh_from_db()
+        assert shot_group.name == original_name

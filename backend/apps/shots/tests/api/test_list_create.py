@@ -178,3 +178,19 @@ class TestCreateShotGroup:
         )
 
         assert response.status_code == 401
+
+
+class TestClientRoleCannotCreateShotGroups:
+    def test_client_can_list_but_not_create(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="client")
+
+        listed = auth_client.get(f"/api/v1/projects/{project.id}/shot-groups/")
+        created = _post_json(
+            auth_client, f"/api/v1/projects/{project.id}/shot-groups/", {"name": "Int"}
+        )
+
+        assert listed.status_code == HTTPStatus.OK
+        assert created.status_code == HTTPStatus.FORBIDDEN
+        assert not ShotGroup.objects.filter(project=project).exists()

@@ -67,6 +67,8 @@ export type ShotListQuery = NonNullable<
 
 export type ShotGroupOut = components['schemas']['ShotGroupOut']
 export type ShotGroupListOut = components['schemas']['ShotGroupListOut']
+export type ShotGroupCreateIn = components['schemas']['ShotGroupCreateIn']
+export type ShotGroupUpdateIn = components['schemas']['ShotGroupUpdateIn']
 export type ShotGroupListQuery = NonNullable<
   operations['getShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups']['parameters']['query']
 >

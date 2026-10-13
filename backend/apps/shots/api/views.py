@@ -132,6 +132,7 @@ class ShotGroupListController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot groups"],
     )
@@ -141,6 +142,7 @@ class ShotGroupListController(Controller[PydanticSerializer]):
         parsed_body: Body[ShotGroupCreateIn],
     ) -> ShotGroupOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_can_write(self.request.user, project)
 
         if ShotGroup.objects.filter(project=project, name=parsed_body.name).exists():
             raise APIError(
@@ -191,6 +193,7 @@ class ShotGroupDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot groups"],
     )
@@ -202,6 +205,7 @@ class ShotGroupDetailController(Controller[PydanticSerializer]):
         shot_group = _get_shot_group_or_404(
             self.request.user, parsed_path.shot_group_id
         )
+        require_can_write(self.request.user, shot_group.project)
 
         name_taken = (
             ShotGroup.objects.filter(project=shot_group.project, name=parsed_body.name)
@@ -230,6 +234,7 @@ class ShotGroupDetailController(Controller[PydanticSerializer]):
         description="Permanently delete a shot group.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot groups"],
     )
@@ -237,6 +242,7 @@ class ShotGroupDetailController(Controller[PydanticSerializer]):
         shot_group = _get_shot_group_or_404(
             self.request.user, parsed_path.shot_group_id
         )
+        require_can_write(self.request.user, shot_group.project)
         shot_group.delete()
         return None
 
