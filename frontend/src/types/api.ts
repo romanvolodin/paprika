@@ -83,3 +83,20 @@ export type VersionListOut = components['schemas']['VersionListOut']
 export type VersionListQuery = NonNullable<
   operations['getVersionlistcontrollerApiV1ShotsShotIdVersions']['parameters']['query']
 >
+
+export type TaskOut = components['schemas']['TaskOut']
+export type TaskListOut = components['schemas']['TaskListOut']
+export type TaskListQuery = NonNullable<
+  operations['getTasklistcontrollerApiV1ProjectsProjectIdTasks']['parameters']['query']
+>
+export type TaskCreateIn = components['schemas']['TaskCreateIn']
+
+export type TaskTypeOut = components['schemas']['TaskTypeOut']
+export type TaskTypeListOut = components['schemas']['TaskTypeListOut']
+export type TaskStatusOut = components['schemas']['TaskStatusOut']
+export type TaskStatusListOut = components['schemas']['TaskStatusListOut']
+
+export type ShotTaskOut = components['schemas']['ShotTaskOut']
+export type ShotTaskListOut = components['schemas']['ShotTaskListOut']
+export type ShotTaskCreateIn = components['schemas']['ShotTaskCreateIn']
+export type ShotTaskUpdateIn = components['schemas']['ShotTaskUpdateIn']

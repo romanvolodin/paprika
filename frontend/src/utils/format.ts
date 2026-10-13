@@ -18,3 +18,10 @@ export function formatVideoTiming(duration: number | null, fps: number | null): 
   const rate = fps === null ? '' : ` · ${Number(fps.toFixed(3))} fps`
   return `${duration} к.${rate}`
 }
+
+/** "8 / 6,5" - estimated / actual hours, "—" for an unset value. */
+export function formatHours(estimated: number | null, actual: number | null): string {
+  const format = (value: number | null) =>
+    value === null ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })
+  return `${format(estimated)} / ${format(actual)}`
+}

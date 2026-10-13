@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { AxiosError } from 'axios'
-import { describeVersionUploadError, firstValidationMessage } from '@/utils/apiError'
+import {
+  describeShotTaskError,
+  describeVersionUploadError,
+  firstValidationMessage,
+} from '@/utils/apiError'
 
 function axiosError(status: number, data: unknown) {
   return new AxiosError('failed', 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -52,5 +56,31 @@ describe('describeVersionUploadError', () => {
   it('falls back to a generic message', () => {
     expect(describeVersionUploadError(axiosError(500, {}))).toBe('Не удалось загрузить версию.')
     expect(describeVersionUploadError(new Error('network'))).toBe('Не удалось загрузить версию.')
+  })
+})
+
+describe('describeShotTaskError', () => {
+  it('explains a task that is already on the shot', () => {
+    expect(describeShotTaskError(axiosError(409, {}), 'fallback')).toMatch(/уже стоит/)
+  })
+
+  it('explains a company without a default task status', () => {
+    const error = axiosError(400, {
+      detail: [
+        {
+          msg: 'This company has no default task status - specify status_id explicitly.',
+        },
+      ],
+    })
+
+    expect(describeShotTaskError(error, 'fallback')).toMatch(/по умолчанию/)
+  })
+
+  it('uses the fallback for anything else', () => {
+    expect(describeShotTaskError(axiosError(400, { detail: [{ msg: 'other' }] }), 'fallback')).toBe(
+      'fallback',
+    )
+    expect(describeShotTaskError(axiosError(500, {}), 'fallback')).toBe('fallback')
+    expect(describeShotTaskError(new Error('x'), 'fallback')).toBe('fallback')
   })
 })

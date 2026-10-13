@@ -39,3 +39,19 @@ export function describeVersionUploadError(error: unknown): string {
       return 'Не удалось загрузить версию.'
   }
 }
+
+/**
+ * A Russian message for a failed attempt to put a task on a shot or to
+ * change it there; `fallback` covers everything not worth a special
+ * explanation.
+ */
+export function describeShotTaskError(error: unknown, fallback: string): string {
+  if (!isAxiosError(error)) return fallback
+  if (error.response?.status === 409) return 'Эта задача уже стоит на кадре.'
+  if (error.response?.status === 400) {
+    if (firstDetailMessage(error)?.includes('no default task status')) {
+      return 'У компании не задан статус задач по умолчанию.'
+    }
+  }
+  return fallback
+}

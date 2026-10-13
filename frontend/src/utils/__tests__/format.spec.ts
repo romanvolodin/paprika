@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatFileSize, formatVideoTiming } from '@/utils/format'
+import { formatFileSize, formatHours, formatVideoTiming } from '@/utils/format'
 
 describe('formatFileSize', () => {
   it.each([
@@ -25,5 +25,16 @@ describe('formatVideoTiming', () => {
 
   it('shows a dash for an image', () => {
     expect(formatVideoTiming(null, null)).toBe('—')
+  })
+})
+
+describe('formatHours', () => {
+  it('shows estimated and actual hours', () => {
+    expect(formatHours(8, 6.5).replace(/\s/g, ' ')).toBe('8 / 6,5')
+  })
+
+  it('shows a dash for an unset value', () => {
+    expect(formatHours(null, null)).toBe('— / —')
+    expect(formatHours(8, null)).toBe('8 / —')
   })
 })
