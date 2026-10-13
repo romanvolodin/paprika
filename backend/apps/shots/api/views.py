@@ -9,6 +9,7 @@ from dmr.security import AuthenticatedHttpRequest
 
 from apps.auth.api.views import access_token_auth
 from apps.companies.models import Company
+from apps.companies.permissions import require_company_admin
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project
 from apps.projects.permissions import require_can_write
@@ -339,6 +340,7 @@ class ShotStatusListController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot statuses"],
     )
@@ -348,6 +350,7 @@ class ShotStatusListController(Controller[PydanticSerializer]):
         parsed_body: Body[ShotStatusCreateIn],
     ) -> ShotStatusOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_admin(self.request.user, company)
 
         if ShotStatus.objects.filter(company=company, name=parsed_body.name).exists():
             raise APIError(
@@ -407,6 +410,7 @@ class ShotStatusDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot statuses"],
     )
@@ -418,6 +422,7 @@ class ShotStatusDetailController(Controller[PydanticSerializer]):
         shot_status = _get_shot_status_or_404(
             self.request.user, parsed_path.shot_status_id
         )
+        require_company_admin(self.request.user, shot_status.company)
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
 
@@ -463,6 +468,7 @@ class ShotStatusDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Shot statuses"],
     )
@@ -470,6 +476,7 @@ class ShotStatusDetailController(Controller[PydanticSerializer]):
         shot_status = _get_shot_status_or_404(
             self.request.user, parsed_path.shot_status_id
         )
+        require_company_admin(self.request.user, shot_status.company)
         try:
             shot_status.delete()
         except ProtectedError as exc:

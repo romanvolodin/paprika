@@ -20,6 +20,7 @@ import {
 } from 'naive-ui'
 import { AddOutline, ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
+import ShotStatusesSection from '@/components/shots/ShotStatusesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
@@ -320,6 +321,11 @@ async function handleAddMember() {
           Добавить
         </n-button>
       </div>
+    </section>
+
+    <section class="company-detail__section">
+      <h2 class="company-detail__heading">Статусы кадров</h2>
+      <shot-statuses-section :company-id="props.companyId" :can-edit="canEditCompany" />
     </section>
   </div>
   <p v-else-if="store.isLoading" class="company-detail__loading">Загрузка…</p>

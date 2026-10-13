@@ -6,7 +6,10 @@ import type {
   ShotListOut,
   ShotListQuery,
   ShotOut,
+  ShotStatusCreateIn,
   ShotStatusListOut,
+  ShotStatusOut,
+  ShotStatusUpdateIn,
   ShotUpdateIn,
 } from '@/types/api'
 
@@ -38,4 +41,20 @@ export function updateShot(shotId: number, input: ShotUpdateIn) {
 
 export function deleteShot(shotId: number) {
   return apiClient.delete<void>(`/shots/${shotId}/`)
+}
+
+export function createShotStatus(companyId: number, input: ShotStatusCreateIn) {
+  return apiClient
+    .post<ShotStatusOut>(`/companies/${companyId}/shot-statuses/`, input)
+    .then((res) => res.data)
+}
+
+export function updateShotStatus(statusId: number, input: ShotStatusUpdateIn) {
+  return apiClient
+    .patch<ShotStatusOut>(`/shot-statuses/${statusId}/`, input)
+    .then((res) => res.data)
+}
+
+export function deleteShotStatus(statusId: number) {
+  return apiClient.delete<void>(`/shot-statuses/${statusId}/`)
 }

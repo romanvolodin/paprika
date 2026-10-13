@@ -18,7 +18,7 @@ class TestGetShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory(name="Blocked")
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = auth_client.get(f"/api/v1/shot-statuses/{status.id}/")
 
@@ -46,7 +46,7 @@ class TestUpdateShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory(name="Old", color="#000000")
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = _patch_json(
             auth_client,
@@ -63,7 +63,7 @@ class TestUpdateShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory(order=3)
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = _patch_json(
             auth_client, f"/api/v1/shot-statuses/{status.id}/", {"order": None}
@@ -80,7 +80,7 @@ class TestUpdateShotStatus:
         shot_status_factory,
         company_membership_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
         old_default = company.shot_statuses.get(is_default=True)
         other = shot_status_factory(company=company, name="Other", is_default=False)
 
@@ -103,7 +103,7 @@ class TestUpdateShotStatus:
         shot_status_factory,
         company_membership_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
         shot_status_factory(company=company, name="Taken")
         status = shot_status_factory(company=company, name="Mine")
 
@@ -117,7 +117,7 @@ class TestUpdateShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory(name="Same Name")
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = _patch_json(
             auth_client,
@@ -131,7 +131,7 @@ class TestUpdateShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory()
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = _patch_json(
             auth_client,
@@ -166,7 +166,7 @@ class TestDeleteShotStatus:
         self, auth_client, auth_user, shot_status_factory, company_membership_factory
     ):
         status = shot_status_factory()
-        company_membership_factory(user=auth_user, company=status.company)
+        company_membership_factory(user=auth_user, company=status.company, role="admin")
 
         response = auth_client.delete(f"/api/v1/shot-statuses/{status.id}/")
 
@@ -180,7 +180,7 @@ class TestDeleteShotStatus:
         company,
         company_membership_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
         default_status = company.shot_statuses.get(is_default=True)
 
         response = auth_client.delete(f"/api/v1/shot-statuses/{default_status.id}/")
@@ -198,7 +198,7 @@ class TestDeleteShotStatus:
         shot_factory,
         company_membership_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
         project = project_factory(company=company)
         project_membership_factory(user=auth_user, project=project)
         status = company.shot_statuses.get(is_default=True)
@@ -225,3 +225,23 @@ class TestDeleteShotStatus:
 
         assert response.status_code == 401
         assert ShotStatus.objects.filter(id=shot_status.id).exists()
+
+
+class TestShotStatusEditAndDeleteAreCompanyAdminOnly:
+    def test_non_admin_member_cannot_update_or_delete(
+        self, auth_client, auth_user, shot_status, company_membership_factory
+    ):
+        company_membership_factory(
+            user=auth_user, company=shot_status.company, role="producer"
+        )
+        original_name = shot_status.name
+
+        update = _patch_json(
+            auth_client, f"/api/v1/shot-statuses/{shot_status.id}/", {"name": "Renamed"}
+        )
+        delete = auth_client.delete(f"/api/v1/shot-statuses/{shot_status.id}/")
+
+        assert update.status_code == HTTPStatus.FORBIDDEN
+        assert delete.status_code == HTTPStatus.FORBIDDEN
+        shot_status.refresh_from_db()
+        assert shot_status.name == original_name

@@ -18,7 +18,7 @@ class TestListShotStatuses:
     def test_returns_the_seeded_defaults_for_a_member(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = auth_client.get(f"/api/v1/companies/{company.id}/shot-statuses/")
 
@@ -29,7 +29,7 @@ class TestListShotStatuses:
     def test_search_filters_by_name(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = auth_client.get(
             f"/api/v1/companies/{company.id}/shot-statuses/?search=паузе"
@@ -42,7 +42,7 @@ class TestListShotStatuses:
     def test_response_is_not_paginated(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = auth_client.get(f"/api/v1/companies/{company.id}/shot-statuses/")
 
@@ -71,7 +71,7 @@ class TestCreateShotStatus:
     def test_creates_a_shot_status(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = _post_json(
             auth_client,
@@ -89,7 +89,7 @@ class TestCreateShotStatus:
     def test_creates_with_an_explicit_order(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = _post_json(
             auth_client,
@@ -102,7 +102,7 @@ class TestCreateShotStatus:
     def test_setting_is_default_unsets_the_previous_default(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
         old_default_name = DEFAULT_SHOT_STATUSES[0][0]
 
         response = _post_json(
@@ -119,7 +119,7 @@ class TestCreateShotStatus:
     def test_rejects_duplicate_name_within_company(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = _post_json(
             auth_client,
@@ -132,7 +132,7 @@ class TestCreateShotStatus:
     def test_rejects_an_invalid_color(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = _post_json(
             auth_client,
@@ -145,7 +145,7 @@ class TestCreateShotStatus:
     def test_rejects_blank_name(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="admin")
 
         response = _post_json(
             auth_client,
@@ -177,3 +177,21 @@ class TestCreateShotStatus:
         )
 
         assert response.status_code == 401
+
+
+class TestShotStatusWritesAreCompanyAdminOnly:
+    def test_non_admin_member_can_list_but_not_create(
+        self, auth_client, auth_user, company, company_membership_factory
+    ):
+        company_membership_factory(user=auth_user, company=company, role="producer")
+
+        listed = auth_client.get(f"/api/v1/companies/{company.id}/shot-statuses/")
+        created = auth_client.post(
+            f"/api/v1/companies/{company.id}/shot-statuses/",
+            data=json.dumps({"name": "Review", "color": "#aabbcc"}),
+            content_type="application/json",
+        )
+
+        assert listed.status_code == HTTPStatus.OK
+        assert created.status_code == HTTPStatus.FORBIDDEN
+        assert not ShotStatus.objects.filter(company=company, name="Review").exists()

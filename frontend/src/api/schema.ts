@@ -5265,13 +5265,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5425,13 +5427,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5511,13 +5515,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */

@@ -73,3 +73,5 @@ export type ShotGroupListQuery = NonNullable<
 
 export type ShotStatusOut = components['schemas']['ShotStatusOut']
 export type ShotStatusListOut = components['schemas']['ShotStatusListOut']
+export type ShotStatusCreateIn = components['schemas']['ShotStatusCreateIn']
+export type ShotStatusUpdateIn = components['schemas']['ShotStatusUpdateIn']
