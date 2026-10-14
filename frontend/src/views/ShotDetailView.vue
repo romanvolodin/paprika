@@ -5,6 +5,7 @@ import { NButton, NIcon, NTag, useDialog, useMessage } from 'naive-ui'
 import { ArrowBackOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
+import ShotChatSection from '@/components/shots/ShotChatSection.vue'
 import ShotTasksSection from '@/components/shots/ShotTasksSection.vue'
 import ShotVersionsSection from '@/components/shots/ShotVersionsSection.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
@@ -178,9 +179,9 @@ watch(
         />
       </section>
 
-      <section v-for="title in ['Чат']" :key="title" class="shot-detail__section">
-        <h2 class="shot-detail__heading">{{ title }}</h2>
-        <p class="shot-detail__message">Пока не реализовано.</p>
+      <section class="shot-detail__section">
+        <h2 class="shot-detail__heading">Чат</h2>
+        <shot-chat-section :shot-id="store.shot.id" :can-write="canWrite" />
       </section>
     </template>
   </div>

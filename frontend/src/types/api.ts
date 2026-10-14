@@ -100,3 +100,11 @@ export type ShotTaskOut = components['schemas']['ShotTaskOut']
 export type ShotTaskListOut = components['schemas']['ShotTaskListOut']
 export type ShotTaskCreateIn = components['schemas']['ShotTaskCreateIn']
 export type ShotTaskUpdateIn = components['schemas']['ShotTaskUpdateIn']
+
+export type MessageOut = components['schemas']['MessageOut']
+export type ChatListOut = components['schemas']['ChatListOut']
+export type ChatListQuery = NonNullable<
+  operations['getChatlistcontrollerApiV1ShotsShotIdChat']['parameters']['query']
+>
+export type MessageCreateIn = components['schemas']['MessageCreateIn']
+export type MessageUpdateIn = components['schemas']['MessageUpdateIn']
