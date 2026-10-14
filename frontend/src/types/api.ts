@@ -108,3 +108,6 @@ export type ChatListQuery = NonNullable<
 >
 export type MessageCreateIn = components['schemas']['MessageCreateIn']
 export type MessageUpdateIn = components['schemas']['MessageUpdateIn']
+export type ReactionSummaryOut = components['schemas']['ReactionSummaryOut']
+export type ReactionsOut = components['schemas']['ReactionsOut']
+export type ReplyToOut = components['schemas']['ReplyToOut']

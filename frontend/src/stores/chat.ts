@@ -70,13 +70,26 @@ export const useChatStore = defineStore('chat', () => {
       : [...items.value, message].sort((a, b) => a.id - b.id)
   }
 
-  async function send(text: string) {
+  async function send(text: string, replyToId: number | null = null) {
     if (shotId === null) return
-    upsert(await chatApi.sendMessage(shotId, { text }))
+    upsert(
+      await chatApi.sendMessage(shotId, {
+        text,
+        ...(replyToId === null ? {} : { reply_to_id: replyToId }),
+      }),
+    )
   }
 
   async function edit(messageId: number, text: string) {
     upsert(await chatApi.editMessage(messageId, { text }))
+  }
+
+  /** Puts (`on`) or removes the current user's emoji on a message. */
+  async function react(messageId: number, emoji: string, on: boolean) {
+    const { reactions } = on
+      ? await chatApi.putReaction(messageId, emoji)
+      : await chatApi.removeReaction(messageId, emoji)
+    items.value = items.value.map((item) => (item.id === messageId ? { ...item, reactions } : item))
   }
 
   async function remove(messageId: number) {
@@ -94,6 +107,7 @@ export const useChatStore = defineStore('chat', () => {
     loadOlder,
     send,
     edit,
+    react,
     remove,
   }
 })

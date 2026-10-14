@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { NButton, NInput, useDialog, useMessage } from 'naive-ui'
+import ChatReactions from '@/components/shots/ChatReactions.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { describeSystemMessage, userName } from '@/utils/chat'
@@ -26,9 +27,11 @@ const draft = ref('')
 const isSending = ref(false)
 const editingId = ref<number | null>(null)
 const editDraft = ref('')
+const replyingTo = ref<MessageOut | null>(null)
 const isSavingEdit = ref(false)
 
 const visibility = useDocumentVisibility()
+const currentUserId = computed(() => auth.currentUser?.id ?? null)
 let followBottom = true
 
 function scrollToBottom() {
@@ -55,6 +58,7 @@ watch(
   async (shotId) => {
     followBottom = true
     editingId.value = null
+    replyingTo.value = null
     draft.value = ''
     try {
       await store.open(shotId)
@@ -100,9 +104,14 @@ async function showOlder() {
 }
 
 function describeSendError(error: unknown, fallback: string): string {
-  return firstValidationMessage(error)?.includes('too long')
-    ? 'Сообщение слишком длинное.'
-    : fallback
+  const detail = firstValidationMessage(error)
+  if (detail?.includes('too long')) return 'Сообщение слишком длинное.'
+  if (detail?.includes("can't be replied to")) {
+    // The quoted message is gone (deleted meanwhile): drop the reply, keep the text.
+    replyingTo.value = null
+    return 'Сообщение, на которое вы отвечаете, больше недоступно.'
+  }
+  return fallback
 }
 
 async function handleSend() {
@@ -110,8 +119,9 @@ async function handleSend() {
   if (!text || isSending.value) return
   isSending.value = true
   try {
-    await store.send(text)
+    await store.send(text, replyingTo.value?.id ?? null)
     draft.value = ''
+    replyingTo.value = null
     followBottom = true
   } catch (error) {
     message.error(describeSendError(error, 'Не удалось отправить сообщение.'))
@@ -126,6 +136,30 @@ function handleDraftKeydown(event: KeyboardEvent) {
     event.preventDefault()
     handleSend()
   }
+}
+
+function iReacted(target: MessageOut, emoji: string): boolean {
+  const reaction = target.reactions.find((item) => item.emoji === emoji)
+  return (
+    !!reaction && currentUserId.value !== null && reaction.user_ids.includes(currentUserId.value)
+  )
+}
+
+async function toggleReaction(target: MessageOut, emoji: string) {
+  try {
+    await store.react(target.id, emoji, !iReacted(target, emoji))
+  } catch {
+    message.error('Не удалось изменить реакцию.')
+  }
+}
+
+function startReply(target: MessageOut) {
+  replyingTo.value = target
+}
+
+function quoteText(target: MessageOut): string {
+  const quote = target.text.replace(/\s+/g, ' ')
+  return quote.length > 100 ? `${quote.slice(0, 100)}…` : quote
 }
 
 function startEdit(target: MessageOut) {
@@ -164,8 +198,6 @@ function confirmDelete(target: MessageOut) {
   })
 }
 
-const currentUserId = computed(() => auth.currentUser?.id ?? null)
-
 function isOwn(target: MessageOut): boolean {
   return target.type === 'user' && target.created_by?.id === currentUserId.value
 }
@@ -189,25 +221,39 @@ function formatTime(value: string): string {
       </p>
 
       <template v-for="item in store.items" :key="item.id">
-        <p v-if="item.type === 'system'" class="shot-chat__system">
-          {{ describeSystemMessage(item) }}
-          <span class="shot-chat__time">{{ formatTime(item.created_at) }}</span>
-        </p>
+        <div v-if="item.type === 'system'" class="shot-chat__system-block">
+          <p class="shot-chat__system">
+            {{ describeSystemMessage(item) }}
+            <span class="shot-chat__time">{{ formatTime(item.created_at) }}</span>
+          </p>
+          <chat-reactions
+            :reactions="item.reactions"
+            :current-user-id="currentUserId"
+            :can-react="canWrite"
+            @toggle="toggleReaction(item, $event)"
+          />
+        </div>
 
         <div v-else class="shot-chat__message">
           <div class="shot-chat__meta">
             <strong>{{ userName(item.created_by) }}</strong>
             <span class="shot-chat__time">{{ formatTime(item.created_at) }}</span>
             <span v-if="item.edited_at" class="shot-chat__time">(изменено)</span>
-            <span
-              v-if="canWrite && isOwn(item) && editingId !== item.id"
-              class="shot-chat__actions"
-            >
-              <n-button size="tiny" quaternary @click="startEdit(item)">Изменить</n-button>
-              <n-button size="tiny" quaternary type="error" @click="confirmDelete(item)">
-                Удалить
-              </n-button>
+            <span v-if="canWrite && editingId !== item.id" class="shot-chat__actions">
+              <n-button size="tiny" quaternary @click="startReply(item)">Ответить</n-button>
+              <template v-if="isOwn(item)">
+                <n-button size="tiny" quaternary @click="startEdit(item)">Изменить</n-button>
+                <n-button size="tiny" quaternary type="error" @click="confirmDelete(item)">
+                  Удалить
+                </n-button>
+              </template>
             </span>
+          </div>
+
+          <div v-if="item.reply_to" class="shot-chat__quote">
+            <strong>{{ userName(item.reply_to.author) }}</strong>
+            <span v-if="item.reply_to.deleted" class="shot-chat__deleted">Сообщение удалено</span>
+            <span v-else>{{ item.reply_to.text }}</span>
           </div>
 
           <div v-if="editingId === item.id" class="shot-chat__edit">
@@ -232,21 +278,38 @@ function formatTime(value: string): string {
             </div>
           </div>
           <p v-else class="shot-chat__text">{{ item.text }}</p>
+          <chat-reactions
+            :reactions="item.reactions"
+            :current-user-id="currentUserId"
+            :can-react="canWrite"
+            @toggle="toggleReaction(item, $event)"
+          />
         </div>
       </template>
     </div>
 
-    <div v-if="canWrite" class="shot-chat__composer">
-      <n-input
-        v-model:value="draft"
-        type="textarea"
-        placeholder="Сообщение (Enter — отправить, Shift+Enter — новая строка)"
-        :autosize="{ minRows: 1, maxRows: 6 }"
-        @keydown="handleDraftKeydown"
-      />
-      <n-button type="primary" :disabled="!draft.trim()" :loading="isSending" @click="handleSend">
-        Отправить
-      </n-button>
+    <div v-if="canWrite" class="shot-chat__composer-block">
+      <div v-if="replyingTo" class="shot-chat__reply-bar">
+        <span class="shot-chat__reply-text">
+          Ответ для <strong>{{ userName(replyingTo.created_by) }}</strong
+          >: {{ quoteText(replyingTo) }}
+        </span>
+        <n-button size="tiny" quaternary aria-label="Отменить ответ" @click="replyingTo = null">
+          ✕
+        </n-button>
+      </div>
+      <div class="shot-chat__composer">
+        <n-input
+          v-model:value="draft"
+          type="textarea"
+          placeholder="Сообщение (Enter — отправить, Shift+Enter — новая строка)"
+          :autosize="{ minRows: 1, maxRows: 6 }"
+          @keydown="handleDraftKeydown"
+        />
+        <n-button type="primary" :disabled="!draft.trim()" :loading="isSending" @click="handleSend">
+          Отправить
+        </n-button>
+      </div>
     </div>
   </div>
 </template>
@@ -320,6 +383,50 @@ function formatTime(value: string): string {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
+}
+
+.shot-chat__system-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.shot-chat__quote {
+  display: flex;
+  flex-direction: column;
+  padding: 2px var(--space-2);
+  border-left: 3px solid var(--color-border, rgba(128, 128, 128, 0.5));
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm, 13px);
+  overflow-wrap: anywhere;
+}
+
+.shot-chat__deleted {
+  font-style: italic;
+}
+
+.shot-chat__composer-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shot-chat__reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border-left: 3px solid var(--color-accent, #3366ff);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm, 13px);
+}
+
+.shot-chat__reply-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shot-chat__composer {

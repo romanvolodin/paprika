@@ -260,4 +260,69 @@ describe('useChatStore', () => {
     await expect(store.remove(1)).rejects.toThrow('forbidden')
     expect(store.items.map((m) => m.id)).toEqual([1, 2])
   })
+
+  it('send passes the id of the message being replied to', async () => {
+    vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1]))
+    vi.mocked(chatApi.sendMessage).mockResolvedValue(buildMessage(2, { text: 'Re' }))
+    const store = useChatStore()
+    await store.open(10)
+
+    await store.send('Re', 1)
+
+    expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: 'Re', reply_to_id: 1 })
+  })
+
+  it('send without a reply does not send reply_to_id at all', async () => {
+    vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1]))
+    vi.mocked(chatApi.sendMessage).mockResolvedValue(buildMessage(2))
+    const store = useChatStore()
+    await store.open(10)
+
+    await store.send('Hi')
+
+    expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: 'Hi' })
+  })
+
+  describe('react', () => {
+    it('puts the emoji and takes the reactions from the server response', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1, 2]))
+      vi.mocked(chatApi.putReaction).mockResolvedValue({
+        reactions: [{ emoji: '👍', user_ids: [1, 5] }],
+      })
+      const store = useChatStore()
+      await store.open(10)
+
+      await store.react(2, '👍', true)
+
+      expect(chatApi.putReaction).toHaveBeenCalledWith(2, '👍')
+      expect(store.items[1]?.reactions).toEqual([{ emoji: '👍', user_ids: [1, 5] }])
+      expect(store.items[0]?.reactions).toEqual([])
+    })
+
+    it('removes the emoji and takes the reactions from the server response', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1]))
+      vi.mocked(chatApi.removeReaction).mockResolvedValue({ reactions: [] })
+      const store = useChatStore()
+      await store.open(10)
+
+      await store.react(1, '👍', false)
+
+      expect(chatApi.removeReaction).toHaveBeenCalledWith(1, '👍')
+      expect(store.items[0]?.reactions).toEqual([])
+    })
+
+    it('leaves the reactions as they were when the request fails', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue({
+        items: [buildMessage(1, { reactions: [{ emoji: '🔥', user_ids: [1] }] })],
+        has_older: false,
+        has_newer: false,
+      })
+      vi.mocked(chatApi.putReaction).mockRejectedValue(new Error('forbidden'))
+      const store = useChatStore()
+      await store.open(10)
+
+      await expect(store.react(1, '👍', true)).rejects.toThrow('forbidden')
+      expect(store.items[0]?.reactions).toEqual([{ emoji: '🔥', user_ids: [1] }])
+    })
+  })
 })
