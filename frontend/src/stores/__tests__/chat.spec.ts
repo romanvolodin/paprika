@@ -267,7 +267,7 @@ describe('useChatStore', () => {
     const store = useChatStore()
     await store.open(10)
 
-    await store.send('Re', 1)
+    await store.send('Re', { replyToId: 1 })
 
     expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: 'Re', reply_to_id: 1 })
   })
@@ -281,6 +281,32 @@ describe('useChatStore', () => {
     await store.send('Hi')
 
     expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: 'Hi' })
+  })
+
+  it('send passes linked versions and uploaded attachments by id', async () => {
+    vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1]))
+    vi.mocked(chatApi.sendMessage).mockResolvedValue(buildMessage(2))
+    const store = useChatStore()
+    await store.open(10)
+
+    await store.send('Look', { versionIds: [3, 4], attachmentIds: [7] })
+
+    expect(chatApi.sendMessage).toHaveBeenCalledWith(10, {
+      text: 'Look',
+      version_ids: [3, 4],
+      attachment_ids: [7],
+    })
+  })
+
+  it('send allows an empty text when there is something attached', async () => {
+    vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([1]))
+    vi.mocked(chatApi.sendMessage).mockResolvedValue(buildMessage(2, { text: '' }))
+    const store = useChatStore()
+    await store.open(10)
+
+    await store.send('', { attachmentIds: [7] })
+
+    expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: '', attachment_ids: [7] })
   })
 
   describe('react', () => {

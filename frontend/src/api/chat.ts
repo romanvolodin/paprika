@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type {
+  AttachmentOut,
   ChatListOut,
   ChatListQuery,
   MessageCreateIn,
@@ -36,4 +37,28 @@ export function removeReaction(messageId: number, emoji: string) {
   return apiClient
     .delete<ReactionsOut>(`/chat/${messageId}/reactions/`, { params: { emoji } })
     .then((res) => res.data)
+}
+
+/**
+ * Uploads a file to the shot's chat without sending it: the returned
+ * attachment is later sent by its id together with a message.
+ */
+export function uploadChatAttachment(
+  shotId: number,
+  file: File,
+  onProgress?: (loaded: number, total: number) => void,
+) {
+  const form = new FormData()
+  form.append('file', file)
+  return apiClient
+    .post<AttachmentOut>(`/shots/${shotId}/chat/attachments/`, form, {
+      onUploadProgress: (event) => {
+        if (event.total) onProgress?.(event.loaded, event.total)
+      },
+    })
+    .then((res) => res.data)
+}
+
+export function deleteChatAttachment(attachmentId: number) {
+  return apiClient.delete<void>(`/chat/attachments/${attachmentId}/`)
 }

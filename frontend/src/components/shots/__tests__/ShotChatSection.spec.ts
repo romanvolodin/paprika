@@ -3,14 +3,16 @@ import { defineComponent, h } from 'vue'
 import { AxiosError } from 'axios'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { NDialogProvider, NMessageProvider } from 'naive-ui'
+import { NDialogProvider, NMessageProvider, NSelect } from 'naive-ui'
 import ShotChatSection from '@/components/shots/ShotChatSection.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import * as chatApi from '@/api/chat'
-import type { MessageOut, UserOut } from '@/types/api'
+import * as versionsApi from '@/api/versions'
+import type { AttachmentOut, MessageOut, UserOut, VersionOut } from '@/types/api'
 
 vi.mock('@/api/chat')
+vi.mock('@/api/versions')
 
 const me = { id: 1, email: 'me@example.com', first_name: 'Иван', last_name: 'Петров' } as UserOut
 const other = {
@@ -429,6 +431,300 @@ describe('ShotChatSection', () => {
       await flushPromises()
 
       expect(wrapper.find('.shot-chat__system-block .chat-reactions__add').exists()).toBe(true)
+    })
+  })
+
+  describe('files and versions', () => {
+    function buildAttachment(id: number, filename = `file${id}.png`): AttachmentOut {
+      return {
+        id,
+        url: `http://localhost/media/${filename}`,
+        filename,
+        size: 2048,
+        content_type: 'image/png',
+      }
+    }
+
+    function buildVersion(id: number, name: string): VersionOut {
+      return {
+        id,
+        project_id: 1,
+        shot_id: 10,
+        name,
+        type: 'video',
+        source: `http://localhost/media/${name}.mp4`,
+        converted: null,
+        thumb: null,
+        width: 1920,
+        height: 1080,
+        duration: 240,
+        fps: 24,
+        codec: 'h264',
+        file_size: 1024,
+        created_by: null,
+        updated_by: null,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      }
+    }
+
+    function chooseFiles(wrapper: ReturnType<typeof mount>, files: File[]) {
+      const input = wrapper.find('input[type="file"]')
+      Object.defineProperty(input.element, 'files', { value: files, configurable: true })
+      return input.trigger('change')
+    }
+
+    function buttonByLabel(wrapper: ReturnType<typeof mount>, label: string) {
+      return wrapper.find(`button[aria-label="${label}"]`)
+    }
+
+    beforeEach(() => {
+      let nextId = 1
+      vi.mocked(chatApi.uploadChatAttachment).mockImplementation(async (_shot, upload) =>
+        buildAttachment(nextId++, upload.name),
+      )
+      vi.mocked(chatApi.deleteChatAttachment).mockResolvedValue(undefined as never)
+      vi.mocked(versionsApi.listVersions).mockResolvedValue({
+        items: [buildVersion(3, 'PRJ_0010_v02'), buildVersion(4, 'PRJ_0010_v01')],
+        total: 2,
+        page: 1,
+        page_size: 100,
+      })
+    })
+
+    it('uploads the chosen files at once and lists them as chips', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      await chooseFiles(wrapper, [new File(['x'], 'a.png'), new File(['y'], 'b.mov')])
+      await flushPromises()
+
+      expect(chatApi.uploadChatAttachment).toHaveBeenCalledTimes(2)
+      expect(vi.mocked(chatApi.uploadChatAttachment).mock.calls[0]?.[0]).toBe(10)
+      const chips = wrapper.findAll('.shot-chat__chip')
+      expect(chips.map((chip) => chip.text())).toEqual([
+        expect.stringContaining('a.png'),
+        expect.stringContaining('b.mov'),
+      ])
+    })
+
+    it('sends the uploaded files by id and allows an empty text', async () => {
+      vi.mocked(chatApi.sendMessage).mockResolvedValue(
+        buildMessage(9, { created_by: me, text: '', attachments: [buildAttachment(1)] }),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await chooseFiles(wrapper, [new File(['x'], 'a.png')])
+      await flushPromises()
+
+      const send = wrapper.findAll('button').find((b) => b.text().includes('Отправить'))
+      expect(send?.attributes('disabled')).toBeUndefined()
+      await send?.trigger('click')
+      await flushPromises()
+
+      expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: '', attachment_ids: [1] })
+      expect(wrapper.findAll('.shot-chat__chip')).toHaveLength(0)
+      expect(chatApi.deleteChatAttachment).not.toHaveBeenCalled()
+    })
+
+    it('cannot send an empty message with nothing attached', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      const send = wrapper.findAll('button').find((b) => b.text().includes('Отправить'))
+
+      expect(send?.attributes('disabled')).toBeDefined()
+    })
+
+    it('does not send while a file is still uploading', async () => {
+      vi.mocked(chatApi.uploadChatAttachment).mockImplementationOnce(() => new Promise(() => {}))
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await chooseFiles(wrapper, [new File(['x'], 'slow.mov')])
+      await flushPromises()
+
+      const input = wrapper.find('textarea')
+      await input.setValue('Hello')
+      await input.trigger('keydown', { key: 'Enter' })
+      await flushPromises()
+
+      expect(chatApi.sendMessage).not.toHaveBeenCalled()
+      expect(wrapper.find('.shot-chat__chip').text()).toContain('0%')
+    })
+
+    it('deletes an unsent file from the server when its chip is removed', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await chooseFiles(wrapper, [new File(['x'], 'a.png')])
+      await flushPromises()
+
+      await wrapper.find('.shot-chat__chip-remove').trigger('click')
+      await flushPromises()
+
+      expect(chatApi.deleteChatAttachment).toHaveBeenCalledWith(1)
+      expect(wrapper.findAll('.shot-chat__chip')).toHaveLength(0)
+    })
+
+    it('warns and drops the files beyond ten in one message', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      await chooseFiles(
+        wrapper,
+        Array.from({ length: 11 }, (_, i) => new File(['x'], `f${i}.png`)),
+      )
+      await flushPromises()
+
+      expect(chatApi.uploadChatAttachment).toHaveBeenCalledTimes(10)
+      expect(wrapper.findAll('.shot-chat__chip')).toHaveLength(10)
+    })
+
+    it('shows the reason on a chip whose upload failed', async () => {
+      vi.mocked(chatApi.uploadChatAttachment).mockRejectedValueOnce(new Error('network'))
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      await chooseFiles(wrapper, [new File(['x'], 'a.png')])
+      await flushPromises()
+
+      const chip = wrapper.find('.shot-chat__chip')
+      expect(chip.classes()).toContain('shot-chat__chip--failed')
+      expect(chip.text()).toContain('Не удалось загрузить файл.')
+    })
+
+    it('deletes the unsent files when the reader moves to another shot', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await chooseFiles(wrapper, [new File(['x'], 'a.png')])
+      await flushPromises()
+
+      await wrapper.setProps({ shotId: 11 })
+      await flushPromises()
+
+      expect(chatApi.deleteChatAttachment).toHaveBeenCalledWith(1)
+      expect(wrapper.findAll('.shot-chat__chip')).toHaveLength(0)
+    })
+
+    it('loads the versions of the shot only when the picker is opened, and only once', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      expect(versionsApi.listVersions).not.toHaveBeenCalled()
+
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await flushPromises()
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await flushPromises()
+
+      expect(versionsApi.listVersions).toHaveBeenCalledTimes(1)
+      expect(versionsApi.listVersions).toHaveBeenCalledWith(10, { page_size: 100 })
+    })
+
+    it('sends the picked versions with the message, even without text', async () => {
+      vi.mocked(chatApi.sendMessage).mockResolvedValue(
+        buildMessage(9, { created_by: me, text: '', versions: [buildVersion(3, 'PRJ_0010_v02')] }),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await flushPromises()
+
+      wrapper.findComponent(NSelect).vm.$emit('update:value', [3, 4])
+      await flushPromises()
+      const send = wrapper.findAll('button').find((b) => b.text().includes('Отправить'))
+      await send?.trigger('click')
+      await flushPromises()
+
+      expect(chatApi.sendMessage).toHaveBeenCalledWith(10, { text: '', version_ids: [3, 4] })
+      expect(wrapper.findComponent(NSelect).exists()).toBe(false)
+    })
+
+    it('forgets the picked versions and the loaded list when the shot changes', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await flushPromises()
+
+      await wrapper.setProps({ shotId: 11 })
+      await flushPromises()
+      expect(wrapper.findComponent(NSelect).exists()).toBe(false)
+      await buttonByLabel(wrapper, 'Приложить версию').trigger('click')
+      await flushPromises()
+
+      expect(versionsApi.listVersions).toHaveBeenLastCalledWith(11, { page_size: 100 })
+      expect(versionsApi.listVersions).toHaveBeenCalledTimes(2)
+    })
+
+    it('shows the files and versions of a message in the feed, with no empty text line', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(
+        chatList([
+          buildMessage(1, {
+            text: '',
+            attachments: [buildAttachment(1, 'sky.png')],
+            versions: [buildVersion(3, 'PRJ_0010_v02')],
+          }),
+        ]),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      expect(wrapper.find('.chat-files__image img').attributes('src')).toBe(
+        'http://localhost/media/sky.png',
+      )
+      expect(wrapper.find('.chat-files__version').text()).toContain('PRJ_0010_v02')
+      expect(wrapper.find('.shot-chat__text').exists()).toBe(false)
+    })
+
+    it('lets the author empty the text of a message that has files', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(
+        chatList([
+          buildMessage(1, { created_by: me, text: 'Caption', attachments: [buildAttachment(1)] }),
+        ]),
+      )
+      vi.mocked(chatApi.editMessage).mockResolvedValue(
+        buildMessage(1, { created_by: me, text: '', attachments: [buildAttachment(1)] }),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Изменить'))
+        ?.trigger('click')
+      await flushPromises()
+      await wrapper.find('.shot-chat__edit textarea').setValue('')
+      const save = wrapper.findAll('button').find((b) => b.text().includes('Сохранить'))
+      expect(save?.attributes('disabled')).toBeUndefined()
+      await save?.trigger('click')
+      await flushPromises()
+
+      expect(chatApi.editMessage).toHaveBeenCalledWith(1, { text: '' })
+    })
+
+    it('does not let the author empty the text of a message without files', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(
+        chatList([buildMessage(1, { created_by: me, text: 'Only text' })]),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Изменить'))
+        ?.trigger('click')
+      await flushPromises()
+      await wrapper.find('.shot-chat__edit textarea').setValue('  ')
+
+      const save = wrapper.findAll('button').find((b) => b.text().includes('Сохранить'))
+      expect(save?.attributes('disabled')).toBeDefined()
+    })
+
+    it('offers no attach controls to read-only members', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10, canWrite: false } })
+      await flushPromises()
+
+      expect(wrapper.find('input[type="file"]').exists()).toBe(false)
+      expect(buttonByLabel(wrapper, 'Приложить версию').exists()).toBe(false)
     })
   })
 

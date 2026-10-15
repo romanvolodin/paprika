@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AxiosError } from 'axios'
 import {
+  describeChatAttachmentError,
   describeShotTaskError,
   describeVersionUploadError,
   firstValidationMessage,
@@ -82,5 +83,28 @@ describe('describeShotTaskError', () => {
     )
     expect(describeShotTaskError(axiosError(500, {}), 'fallback')).toBe('fallback')
     expect(describeShotTaskError(new Error('x'), 'fallback')).toBe('fallback')
+  })
+})
+
+describe('describeChatAttachmentError', () => {
+  it('names the size limit the server reported on a 413', () => {
+    const error = axiosError(413, {
+      detail: [{ msg: 'The file is too large. Max size is 100 MB.' }],
+    })
+
+    expect(describeChatAttachmentError(error)).toContain('100 МБ')
+  })
+
+  it('still explains a 413 without a readable limit', () => {
+    expect(describeChatAttachmentError(axiosError(413, {}))).toMatch(/слишком большой/)
+  })
+
+  it('explains a missing permission', () => {
+    expect(describeChatAttachmentError(axiosError(403, {}))).toMatch(/нет прав/)
+  })
+
+  it('falls back to a generic message', () => {
+    expect(describeChatAttachmentError(axiosError(500, {}))).toBe('Не удалось загрузить файл.')
+    expect(describeChatAttachmentError(new Error('network'))).toBe('Не удалось загрузить файл.')
   })
 })

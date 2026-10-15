@@ -70,12 +70,18 @@ export const useChatStore = defineStore('chat', () => {
       : [...items.value, message].sort((a, b) => a.id - b.id)
   }
 
-  async function send(text: string, replyToId: number | null = null) {
+  async function send(
+    text: string,
+    options: { replyToId?: number | null; versionIds?: number[]; attachmentIds?: number[] } = {},
+  ) {
     if (shotId === null) return
+    const { replyToId = null, versionIds = [], attachmentIds = [] } = options
     upsert(
       await chatApi.sendMessage(shotId, {
         text,
         ...(replyToId === null ? {} : { reply_to_id: replyToId }),
+        ...(versionIds.length === 0 ? {} : { version_ids: versionIds }),
+        ...(attachmentIds.length === 0 ? {} : { attachment_ids: attachmentIds }),
       }),
     )
   }

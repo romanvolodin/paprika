@@ -16,6 +16,13 @@ export function firstValidationMessage(error: unknown): string | null {
   return firstDetailMessage(error, 400)
 }
 
+function tooLargeMessage(error: unknown): string {
+  const limit = /Max size is (\d+) MB/.exec(firstDetailMessage(error) ?? '')
+  return limit
+    ? `Файл слишком большой. Максимальный размер — ${limit[1]} МБ.`
+    : 'Файл слишком большой.'
+}
+
 /**
  * A Russian message for a failed version upload, chosen by the status
  * the backend answered with.
@@ -25,18 +32,27 @@ export function describeVersionUploadError(error: unknown): string {
   switch (error.response?.status) {
     case 409:
       return 'Версия с таким именем уже есть в проекте.'
-    case 413: {
-      const limit = /Max size is (\d+) MB/.exec(firstDetailMessage(error) ?? '')
-      return limit
-        ? `Файл слишком большой. Максимальный размер — ${limit[1]} МБ.`
-        : 'Файл слишком большой.'
-    }
+    case 413:
+      return tooLargeMessage(error)
     case 400:
       return 'Не удалось обработать файл. Поддерживаются mp4 (h264), jpg и png.'
     case 403:
       return 'У вас нет прав загружать версии в этот проект.'
     default:
       return 'Не удалось загрузить версию.'
+  }
+}
+
+/** A Russian message for a failed chat file upload. */
+export function describeChatAttachmentError(error: unknown): string {
+  if (!isAxiosError(error)) return 'Не удалось загрузить файл.'
+  switch (error.response?.status) {
+    case 413:
+      return tooLargeMessage(error)
+    case 403:
+      return 'У вас нет прав загружать файлы в чат.'
+    default:
+      return 'Не удалось загрузить файл.'
   }
 }
 
