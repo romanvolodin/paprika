@@ -19,7 +19,7 @@ def _post_json(client, path, payload):
 
 @pytest.fixture
 def member_company(auth_user, company, company_membership_factory):
-    company_membership_factory(user=auth_user, company=company)
+    company_membership_factory(user=auth_user, company=company, role="admin")
     return company
 
 
@@ -176,7 +176,9 @@ class TestGetTaskType:
     def test_returns_the_type_for_a_company_member(
         self, auth_client, auth_user, task_type, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=task_type.company)
+        company_membership_factory(
+            user=auth_user, company=task_type.company, role="admin"
+        )
 
         response = auth_client.get(f"/api/v1/task-types/{task_type.id}/")
 
@@ -201,7 +203,9 @@ class TestGetTaskType:
 class TestUpdateTaskType:
     @pytest.fixture
     def member_type(self, auth_user, task_type, company_membership_factory):
-        company_membership_factory(user=auth_user, company=task_type.company)
+        company_membership_factory(
+            user=auth_user, company=task_type.company, role="admin"
+        )
         return task_type
 
     def test_updates_the_given_fields_only(self, auth_client, auth_user, member_type):
@@ -280,7 +284,9 @@ class TestUpdateTaskType:
 class TestDeleteTaskType:
     @pytest.fixture
     def member_type(self, auth_user, task_type, company_membership_factory):
-        company_membership_factory(user=auth_user, company=task_type.company)
+        company_membership_factory(
+            user=auth_user, company=task_type.company, role="admin"
+        )
         return task_type
 
     def test_deletes_an_unused_type(self, auth_client, member_type):
@@ -306,3 +312,35 @@ class TestDeleteTaskType:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
         assert TaskType.objects.filter(pk=task_type.pk).exists()
+
+
+class TestTaskTypeWritesAreCompanyAdminOnly:
+    def test_non_admin_member_can_list_but_not_create_update_or_delete(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        task_type_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company, role="producer")
+        task_type = task_type_factory(company=company, name="Roto", abbreviation="RTO")
+
+        listed = auth_client.get(f"/api/v1/companies/{company.id}/task-types/")
+        created = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/task-types/",
+            {"name": "Paint", "abbreviation": "PNT", "color": "#aabbcc"},
+        )
+        updated = _patch_json(
+            auth_client, f"/api/v1/task-types/{task_type.id}/", {"name": "Renamed"}
+        )
+        deleted = auth_client.delete(f"/api/v1/task-types/{task_type.id}/")
+
+        assert listed.status_code == HTTPStatus.OK
+        assert created.status_code == HTTPStatus.FORBIDDEN
+        assert updated.status_code == HTTPStatus.FORBIDDEN
+        assert deleted.status_code == HTTPStatus.FORBIDDEN
+        task_type.refresh_from_db()
+        assert task_type.name == "Roto"
+        assert not TaskType.objects.filter(company=company, name="Paint").exists()

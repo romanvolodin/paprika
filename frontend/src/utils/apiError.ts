@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 
-function firstDetailMessage(error: unknown, status?: number): string | null {
+export function firstDetailMessage(error: unknown, status?: number): string | null {
   if (!isAxiosError(error) || !error.response) return null
   if (status !== undefined && error.response.status !== status) return null
   const detail = error.response.data?.detail

@@ -19,7 +19,7 @@ def _post_json(client, path, payload):
 
 @pytest.fixture
 def member_company(auth_user, company, company_membership_factory):
-    company_membership_factory(user=auth_user, company=company)
+    company_membership_factory(user=auth_user, company=company, role="admin")
     return company
 
 
@@ -136,7 +136,9 @@ class TestGetTaskStatus:
     def test_returns_the_status_for_a_company_member(
         self, auth_client, auth_user, task_status, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=task_status.company)
+        company_membership_factory(
+            user=auth_user, company=task_status.company, role="admin"
+        )
 
         response = auth_client.get(f"/api/v1/task-statuses/{task_status.id}/")
 
@@ -161,7 +163,9 @@ class TestGetTaskStatus:
 class TestUpdateTaskStatus:
     @pytest.fixture
     def member_status(self, auth_user, task_status, company_membership_factory):
-        company_membership_factory(user=auth_user, company=task_status.company)
+        company_membership_factory(
+            user=auth_user, company=task_status.company, role="admin"
+        )
         return task_status
 
     def test_updates_the_given_fields_only(self, auth_client, auth_user, member_status):
@@ -237,7 +241,9 @@ class TestUpdateTaskStatus:
 class TestDeleteTaskStatus:
     @pytest.fixture
     def member_status(self, auth_user, task_status, company_membership_factory):
-        company_membership_factory(user=auth_user, company=task_status.company)
+        company_membership_factory(
+            user=auth_user, company=task_status.company, role="admin"
+        )
         return task_status
 
     def test_deletes_an_unused_status(self, auth_client, member_status):
@@ -271,3 +277,35 @@ class TestDeleteTaskStatus:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
         assert TaskStatus.objects.filter(pk=task_status.pk).exists()
+
+
+class TestTaskStatusWritesAreCompanyAdminOnly:
+    def test_non_admin_member_can_list_but_not_create_update_or_delete(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        task_status_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company, role="producer")
+        task_status = task_status_factory(company=company, name="In progress")
+
+        listed = auth_client.get(f"/api/v1/companies/{company.id}/task-statuses/")
+        created = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/task-statuses/",
+            {"name": "На ревью", "color": "#aabbcc"},
+        )
+        updated = _patch_json(
+            auth_client, f"/api/v1/task-statuses/{task_status.id}/", {"name": "Renamed"}
+        )
+        deleted = auth_client.delete(f"/api/v1/task-statuses/{task_status.id}/")
+
+        assert listed.status_code == HTTPStatus.OK
+        assert created.status_code == HTTPStatus.FORBIDDEN
+        assert updated.status_code == HTTPStatus.FORBIDDEN
+        assert deleted.status_code == HTTPStatus.FORBIDDEN
+        task_status.refresh_from_db()
+        assert task_status.name == "In progress"
+        assert not TaskStatus.objects.filter(company=company, name="На ревью").exists()

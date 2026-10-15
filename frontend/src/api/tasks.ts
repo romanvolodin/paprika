@@ -8,8 +8,14 @@ import type {
   TaskListOut,
   TaskListQuery,
   TaskOut,
+  TaskStatusCreateIn,
   TaskStatusListOut,
+  TaskStatusOut,
+  TaskStatusUpdateIn,
+  TaskTypeCreateIn,
   TaskTypeListOut,
+  TaskTypeOut,
+  TaskTypeUpdateIn,
 } from '@/types/api'
 
 export function listTasks(projectId: number, query: TaskListQuery = {}) {
@@ -48,4 +54,34 @@ export function updateShotTask(shotTaskId: number, input: ShotTaskUpdateIn) {
 
 export function deleteShotTask(shotTaskId: number) {
   return apiClient.delete<void>(`/shot-tasks/${shotTaskId}/`)
+}
+
+export function createTaskType(companyId: number, input: TaskTypeCreateIn) {
+  return apiClient
+    .post<TaskTypeOut>(`/companies/${companyId}/task-types/`, input)
+    .then((res) => res.data)
+}
+
+export function updateTaskType(taskTypeId: number, input: TaskTypeUpdateIn) {
+  return apiClient.patch<TaskTypeOut>(`/task-types/${taskTypeId}/`, input).then((res) => res.data)
+}
+
+export function deleteTaskType(taskTypeId: number) {
+  return apiClient.delete<void>(`/task-types/${taskTypeId}/`)
+}
+
+export function createTaskStatus(companyId: number, input: TaskStatusCreateIn) {
+  return apiClient
+    .post<TaskStatusOut>(`/companies/${companyId}/task-statuses/`, input)
+    .then((res) => res.data)
+}
+
+export function updateTaskStatus(taskStatusId: number, input: TaskStatusUpdateIn) {
+  return apiClient
+    .patch<TaskStatusOut>(`/task-statuses/${taskStatusId}/`, input)
+    .then((res) => res.data)
+}
+
+export function deleteTaskStatus(taskStatusId: number) {
+  return apiClient.delete<void>(`/task-statuses/${taskStatusId}/`)
 }

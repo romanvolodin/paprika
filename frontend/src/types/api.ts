@@ -93,8 +93,12 @@ export type TaskCreateIn = components['schemas']['TaskCreateIn']
 
 export type TaskTypeOut = components['schemas']['TaskTypeOut']
 export type TaskTypeListOut = components['schemas']['TaskTypeListOut']
+export type TaskTypeCreateIn = components['schemas']['TaskTypeCreateIn']
+export type TaskTypeUpdateIn = components['schemas']['TaskTypeUpdateIn']
 export type TaskStatusOut = components['schemas']['TaskStatusOut']
 export type TaskStatusListOut = components['schemas']['TaskStatusListOut']
+export type TaskStatusCreateIn = components['schemas']['TaskStatusCreateIn']
+export type TaskStatusUpdateIn = components['schemas']['TaskStatusUpdateIn']
 
 export type ShotTaskOut = components['schemas']['ShotTaskOut']
 export type ShotTaskListOut = components['schemas']['ShotTaskListOut']

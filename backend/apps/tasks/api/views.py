@@ -15,6 +15,7 @@ from apps.chat.events import (
     record_task_added,
 )
 from apps.companies.models import Company
+from apps.companies.permissions import require_company_admin
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project, ProjectMembership
 from apps.projects.permissions import require_can_write
@@ -204,6 +205,7 @@ class TaskTypeListController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task types"],
     )
@@ -213,6 +215,7 @@ class TaskTypeListController(Controller[PydanticSerializer]):
         parsed_body: Body[TaskTypeCreateIn],
     ) -> TaskTypeOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_admin(self.request.user, company)
 
         clash = _task_type_clash(
             company, name=parsed_body.name, abbreviation=parsed_body.abbreviation
@@ -263,6 +266,7 @@ class TaskTypeDetailController(Controller[PydanticSerializer]):
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task types"],
     )
@@ -272,6 +276,7 @@ class TaskTypeDetailController(Controller[PydanticSerializer]):
         parsed_body: Body[TaskTypeUpdateIn],
     ) -> TaskTypeOut:
         task_type = _get_task_type_or_404(self.request.user, parsed_path.task_type_id)
+        require_company_admin(self.request.user, task_type.company)
         _reject_explicit_nulls(self, parsed_body, ["name", "abbreviation", "color"])
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
@@ -304,11 +309,13 @@ class TaskTypeDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task types"],
     )
     def delete(self, parsed_path: Path[TaskTypePath]) -> None:
         task_type = _get_task_type_or_404(self.request.user, parsed_path.task_type_id)
+        require_company_admin(self.request.user, task_type.company)
         try:
             task_type.delete()
         except ProtectedError as exc:
@@ -413,6 +420,7 @@ class TaskStatusListController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task statuses"],
     )
@@ -422,6 +430,7 @@ class TaskStatusListController(Controller[PydanticSerializer]):
         parsed_body: Body[TaskStatusCreateIn],
     ) -> TaskStatusOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_admin(self.request.user, company)
 
         if TaskStatus.objects.filter(company=company, name=parsed_body.name).exists():
             raise _conflict(
@@ -479,6 +488,7 @@ class TaskStatusDetailController(Controller[PydanticSerializer]):
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task statuses"],
     )
@@ -490,6 +500,7 @@ class TaskStatusDetailController(Controller[PydanticSerializer]):
         task_status = _get_task_status_or_404(
             self.request.user, parsed_path.task_status_id
         )
+        require_company_admin(self.request.user, task_status.company)
         _reject_explicit_nulls(self, parsed_body, ["name", "color", "is_default"])
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
@@ -533,6 +544,7 @@ class TaskStatusDetailController(Controller[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Task statuses"],
     )
@@ -540,6 +552,7 @@ class TaskStatusDetailController(Controller[PydanticSerializer]):
         task_status = _get_task_status_or_404(
             self.request.user, parsed_path.task_status_id
         )
+        require_company_admin(self.request.user, task_status.company)
         try:
             task_status.delete()
         except ProtectedError as exc:
