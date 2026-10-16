@@ -28,7 +28,7 @@ services:
       sh -c "
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
-        gunicorn paprika.wsgi:application --bind 0.0.0.0:8000 --workers 3
+        gunicorn paprika.wsgi:application --bind 0.0.0.0:8000 --worker-class gthread --workers 3 --threads 4 --timeout 120
       "
     depends_on:
       pg:
