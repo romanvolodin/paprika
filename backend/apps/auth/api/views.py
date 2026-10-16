@@ -116,6 +116,10 @@ class LoginController(
                 cookies={**cls.issued_cookies_spec(), **cls.csrf_cookie_spec()},
                 description="The now-authenticated user.",
             ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
+            ),
             summary="Log in",
             description=(
                 "Authenticate with an email and password. On success, "
@@ -167,6 +171,10 @@ class RefreshController(
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
                 description="The authenticated user.",
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
             *cls.csrf_response_specs(),
             summary="Refresh tokens",

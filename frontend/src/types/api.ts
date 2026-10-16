@@ -18,7 +18,7 @@ export type UserCreateIn = components['schemas']['UserCreateIn']
 export type UserUpdateIn = components['schemas']['UserUpdateIn']
 
 export type UserListQuery = NonNullable<
-  operations['getUserlistcontrollerApiV1Users']['parameters']['query']
+  operations['getUserListControllerApiV1Users']['parameters']['query']
 >
 
 export type CompanyOut = components['schemas']['CompanyOut']
@@ -27,7 +27,7 @@ export type CompanyCreateIn = components['schemas']['CompanyCreateIn']
 export type CompanyUpdateIn = components['schemas']['CompanyUpdateIn']
 
 export type CompanyListQuery = NonNullable<
-  operations['getCompanylistcontrollerApiV1Companies']['parameters']['query']
+  operations['getCompanyListControllerApiV1Companies']['parameters']['query']
 >
 
 export type CompanyMemberOut = components['schemas']['CompanyMemberOut']
@@ -48,7 +48,7 @@ export type ProjectCreateIn = components['schemas']['ProjectCreateIn']
 export type ProjectUpdateIn = components['schemas']['ProjectUpdateIn']
 
 export type ProjectListQuery = NonNullable<
-  operations['getProjectlistcontrollerApiV1CompaniesCompanyIdProjects']['parameters']['query']
+  operations['getProjectListControllerApiV1CompaniesCompanyIdProjects']['parameters']['query']
 >
 
 export type ProjectMemberOut = components['schemas']['ProjectMemberOut']
@@ -62,7 +62,7 @@ export type ShotListOut = components['schemas']['ShotListOut']
 export type ShotCreateIn = components['schemas']['ShotCreateIn']
 export type ShotUpdateIn = components['schemas']['ShotUpdateIn']
 export type ShotListQuery = NonNullable<
-  operations['getShotlistcontrollerApiV1ProjectsProjectIdShots']['parameters']['query']
+  operations['getShotListControllerApiV1ProjectsProjectIdShots']['parameters']['query']
 >
 
 export type ShotGroupOut = components['schemas']['ShotGroupOut']
@@ -70,7 +70,7 @@ export type ShotGroupListOut = components['schemas']['ShotGroupListOut']
 export type ShotGroupCreateIn = components['schemas']['ShotGroupCreateIn']
 export type ShotGroupUpdateIn = components['schemas']['ShotGroupUpdateIn']
 export type ShotGroupListQuery = NonNullable<
-  operations['getShotgrouplistcontrollerApiV1ProjectsProjectIdShotGroups']['parameters']['query']
+  operations['getShotGroupListControllerApiV1ProjectsProjectIdShotGroups']['parameters']['query']
 >
 
 export type ShotStatusOut = components['schemas']['ShotStatusOut']
@@ -81,13 +81,13 @@ export type ShotStatusUpdateIn = components['schemas']['ShotStatusUpdateIn']
 export type VersionOut = components['schemas']['VersionOut']
 export type VersionListOut = components['schemas']['VersionListOut']
 export type VersionListQuery = NonNullable<
-  operations['getVersionlistcontrollerApiV1ShotsShotIdVersions']['parameters']['query']
+  operations['getVersionListControllerApiV1ShotsShotIdVersions']['parameters']['query']
 >
 
 export type TaskOut = components['schemas']['TaskOut']
 export type TaskListOut = components['schemas']['TaskListOut']
 export type TaskListQuery = NonNullable<
-  operations['getTasklistcontrollerApiV1ProjectsProjectIdTasks']['parameters']['query']
+  operations['getTaskListControllerApiV1ProjectsProjectIdTasks']['parameters']['query']
 >
 export type TaskCreateIn = components['schemas']['TaskCreateIn']
 
@@ -108,7 +108,7 @@ export type ShotTaskUpdateIn = components['schemas']['ShotTaskUpdateIn']
 export type MessageOut = components['schemas']['MessageOut']
 export type ChatListOut = components['schemas']['ChatListOut']
 export type ChatListQuery = NonNullable<
-  operations['getChatlistcontrollerApiV1ShotsShotIdChat']['parameters']['query']
+  operations['getChatListControllerApiV1ShotsShotIdChat']['parameters']['query']
 >
 export type MessageCreateIn = components['schemas']['MessageCreateIn']
 export type MessageUpdateIn = components['schemas']['MessageUpdateIn']

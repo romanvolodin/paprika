@@ -12,7 +12,7 @@
     "format": "prettier --write src/",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate-api-types": "openapi-typescript http://backend:8000/api/v1/docs/openapi.json -o src/api/schema.ts"
+    "generate-api-types": "openapi-typescript http://backend:8000/api/v1/docs/openapi.json -o src/api/schema.ts --default-non-nullable false"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
