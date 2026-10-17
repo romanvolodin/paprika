@@ -8,7 +8,6 @@ from dmr.endpoint import ValidateAnyCallable
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.jwt import request_jwt
-from dmr.security.jwt.auth import CookieJWTSyncAuth
 from dmr.security.jwt.blocklist import JWTokenBlocklistSyncMixin
 from dmr.security.jwt.views import (
     CookieLogoutSyncController,
@@ -18,9 +17,11 @@ from dmr.security.jwt.views import (
 )
 
 from apps.users.api.schemas import UserOut
+from apps.users.api.views import _serialize_user
 from apps.users.models import User
 
 from .schemas import LoginPayload
+from .security import access_token_auth
 
 
 # The refresh cookie is scoped to this path only, so it is never sent
@@ -46,36 +47,7 @@ class _CookieSecurity:
     jwt_cookie_secure = not settings.DEBUG
 
 
-class AccessTokenAuth(CookieJWTSyncAuth):
-    """Cookie JWT auth that only accepts access tokens.
-
-    ``CookieJWTSyncAuth`` on its own does not check the ``type`` claim we
-    put into the token's ``extras``, so a refresh token would otherwise
-    work just as well as an access token on any protected endpoint.
-    """
-
-    @override
-    def check_auth(self, user, token) -> None:
-        super().check_auth(user, token)
-        if token.extras.get("type") != "access":
-            from dmr.exceptions import NotAuthenticatedError  # noqa: PLC0415
-
-            raise NotAuthenticatedError("Invalid token type.")
-
-
-class AccessTokenBlocklistAuth(JWTokenBlocklistSyncMixin, AccessTokenAuth):
-    """Access token auth that also honors the revoked-tokens blocklist."""
-
-
-access_token_auth = AccessTokenBlocklistAuth()
-
-
 def _serialized_request_user(controller) -> UserOut:
-    # Imported lazily: `apps.users.api.views` imports `access_token_auth`
-    # from this module at module load time, so a top-level import here
-    # would be circular.
-    from apps.users.api.views import _serialize_user  # noqa: PLC0415
-
     return _serialize_user(controller.request, controller.request.user)
 
 

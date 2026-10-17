@@ -5,7 +5,6 @@ from django.db.models import Q
 from dmr import (
     APIError,
     Body,
-    Controller,
     FileMetadata,
     Path,
     Query,
@@ -15,9 +14,8 @@ from dmr import (
 from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.core.storage import delete_stored_file
 from apps.users.models import User
 
@@ -98,11 +96,8 @@ def _clear_avatar(user: User) -> None:
         delete_stored_file(old_storage, old_name)
 
 
-class MeController(Controller[PydanticFastSerializer]):
+class MeController(AuthenticatedController[PydanticFastSerializer]):
     """`GET /api/v1/users/me/` - return the currently authenticated user."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get current user",
@@ -115,15 +110,12 @@ class MeController(Controller[PydanticFastSerializer]):
         return _serialize_user(self.request, self.request.user)
 
 
-class UserListController(Controller[PydanticSerializer]):
+class UserListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/users/` - list and create users.
 
     Any authenticated user may list or create users; finer-grained
     permissions are deferred until they're actually needed.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List users",
@@ -196,11 +188,8 @@ class UserListController(Controller[PydanticSerializer]):
         return _serialize_user(self.request, user)
 
 
-class UserDetailController(Controller[PydanticSerializer]):
+class UserDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/users/<id>/` - manage a single user."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a user",

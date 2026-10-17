@@ -3,12 +3,11 @@ from http import HTTPStatus
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, Q
-from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
+from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.events import (
     record_assignee_changed,
     record_status_changed,
@@ -152,13 +151,10 @@ def _task_type_clash(
     return None
 
 
-class TaskTypeListController(Controller[PydanticSerializer]):
+class TaskTypeListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<company_id>/task-types/` - list and
     create a company's task types.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a company's task types",
@@ -234,13 +230,10 @@ class TaskTypeListController(Controller[PydanticSerializer]):
         return _serialize_task_type(self.request, task_type)
 
 
-class TaskTypeDetailController(Controller[PydanticSerializer]):
+class TaskTypeDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/task-types/<id>/` - manage a single task
     type.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a task type",
@@ -369,13 +362,10 @@ def _unset_other_defaults(company: Company, *, exclude_pk: int | None = None) ->
     queryset.update(is_default=False)
 
 
-class TaskStatusListController(Controller[PydanticSerializer]):
+class TaskStatusListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<company_id>/task-statuses/` - list and
     create a company's task statuses.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a company's task statuses",
@@ -454,13 +444,10 @@ class TaskStatusListController(Controller[PydanticSerializer]):
         return _serialize_task_status(self.request, task_status)
 
 
-class TaskStatusDetailController(Controller[PydanticSerializer]):
+class TaskStatusDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/task-statuses/<id>/` - manage a single
     task status.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a task status",
@@ -613,13 +600,10 @@ def _resolve_task_type(controller, project: Project, type_id: int) -> TaskType:
         ) from exc
 
 
-class TaskListController(Controller[PydanticSerializer]):
+class TaskListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<project_id>/tasks/` - list a project's
     tasks and create new ones.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a project's tasks",
@@ -699,11 +683,8 @@ class TaskListController(Controller[PydanticSerializer]):
         return _serialize_task(self.request, task)
 
 
-class TaskDetailController(Controller[PydanticSerializer]):
+class TaskDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/tasks/<id>/` - manage a single task."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a task",
@@ -870,13 +851,10 @@ def _resolve_assignee(controller, project: Project, assignee_id: int) -> User:
     return User.objects.get(pk=assignee_id)
 
 
-class ShotTaskListController(Controller[PydanticSerializer]):
+class ShotTaskListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/shots/<shot_id>/tasks/` - list the tasks placed on
     a shot and place another one.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a shot's tasks",
@@ -978,13 +956,10 @@ class ShotTaskListController(Controller[PydanticSerializer]):
         )
 
 
-class ShotTaskDetailController(Controller[PydanticSerializer]):
+class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/shot-tasks/<id>/` - manage a single task
     placed on a shot.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a shot task",

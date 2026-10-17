@@ -2,12 +2,11 @@ from http import HTTPStatus
 
 from django.core.paginator import Paginator
 from django.db.models import ProtectedError
-from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
+from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company
 from apps.companies.permissions import require_company_admin
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
@@ -79,13 +78,10 @@ def _get_shot_group_or_404(user: User, shot_group_id: int) -> ShotGroup:
         ) from exc
 
 
-class ShotGroupListController(Controller[PydanticSerializer]):
+class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<project_id>/shot-groups/` - list and
     create shot groups within a project.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a project's shot groups",
@@ -163,13 +159,10 @@ class ShotGroupListController(Controller[PydanticSerializer]):
         return _serialize_shot_group(self.request, shot_group)
 
 
-class ShotGroupDetailController(Controller[PydanticSerializer]):
+class ShotGroupDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/shot-groups/<id>/` - manage a single shot
     group.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a shot group",
@@ -298,13 +291,10 @@ def _unset_other_defaults(company: Company, *, exclude_pk: int | None = None) ->
     queryset.update(is_default=False)
 
 
-class ShotStatusListController(Controller[PydanticSerializer]):
+class ShotStatusListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<company_id>/shot-statuses/` - list and
     create a company's shot statuses.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a company's shot statuses",
@@ -383,13 +373,10 @@ class ShotStatusListController(Controller[PydanticSerializer]):
         return _serialize_shot_status(self.request, shot_status)
 
 
-class ShotStatusDetailController(Controller[PydanticSerializer]):
+class ShotStatusDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/shot-statuses/<id>/` - manage a single
     shot status.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a shot status",
@@ -633,16 +620,13 @@ def _filter_shots(queryset, query: ShotListQuery):
     return queryset
 
 
-class ShotListController(Controller[PydanticSerializer]):
+class ShotListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<project_id>/shots/` - list every shot in
     a project (regardless of group) and create new shots.
 
     This is the only shot-creation endpoint - see `ShotCreateIn` for why
     there's no corresponding create on the group-scoped collection.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a project's shots",
@@ -732,14 +716,11 @@ class ShotListController(Controller[PydanticSerializer]):
         return _serialize_shot(self.request, shot)
 
 
-class ShotGroupShotListController(Controller[PydanticSerializer]):
+class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
     """`GET /api/v1/shot-groups/<id>/shots/` - list the shots belonging to
     a single group. Read-only - shots are created via
     `ShotListController`, not here.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a shot group's shots",
@@ -777,11 +758,8 @@ class ShotGroupShotListController(Controller[PydanticSerializer]):
         )
 
 
-class ShotDetailController(Controller[PydanticSerializer]):
+class ShotDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/shots/<id>/` - manage a single shot."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a shot",

@@ -8,7 +8,6 @@ from django.utils import timezone
 from dmr import (
     APIError,
     Body,
-    Controller,
     FileMetadata,
     Path,
     Query,
@@ -18,9 +17,8 @@ from dmr import (
 from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.models import Attachment, Message, Reaction
 from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
@@ -191,11 +189,8 @@ def _require_own_user_message(controller, message: Message, user: User) -> None:
         )
 
 
-class ChatListController(Controller[PydanticSerializer]):
+class ChatListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/shots/<shot_id>/chat/` - read and write the chat."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a shot's chat messages",
@@ -365,11 +360,8 @@ class ChatListController(Controller[PydanticSerializer]):
         return _serialize_message(self.request, _get_message_or_404(user, message.pk))
 
 
-class ChatAttachmentUploadController(Controller[PydanticSerializer]):
+class ChatAttachmentUploadController(AuthenticatedController[PydanticSerializer]):
     """`POST /api/v1/shots/<shot_id>/chat/attachments/` - upload a file."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         parsers=[MultiPartParser()],
@@ -424,11 +416,8 @@ class ChatAttachmentUploadController(Controller[PydanticSerializer]):
         return _serialize_attachment(self.request, attachment)
 
 
-class ChatAttachmentDetailController(Controller[PydanticSerializer]):
+class ChatAttachmentDetailController(AuthenticatedController[PydanticSerializer]):
     """`DELETE /api/v1/chat/attachments/<id>/` - remove an unsent file."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
@@ -481,11 +470,8 @@ class ChatAttachmentDetailController(Controller[PydanticSerializer]):
         return None
 
 
-class ChatMessageDetailController(Controller[PydanticSerializer]):
+class ChatMessageDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/chat/<id>/` - a single message."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a chat message",
@@ -570,11 +556,8 @@ class ChatMessageDetailController(Controller[PydanticSerializer]):
         return None
 
 
-class ChatReactionController(Controller[PydanticSerializer]):
+class ChatReactionController(AuthenticatedController[PydanticSerializer]):
     """`PUT/DELETE /api/v1/chat/<id>/reactions/` - put or remove your emoji."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Put a reaction on a message",

@@ -1,12 +1,11 @@
 from http import HTTPStatus
 
 from django.core.paginator import Paginator
-from dmr import APIError, Body, Controller, Path, Query, ResponseSpec, modify
+from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company, CompanyMembership
 from apps.users.models import User
 
@@ -92,7 +91,7 @@ def _get_target_user_or_404(user_id: int) -> User:
         ) from exc
 
 
-class CompanyListController(Controller[PydanticSerializer]):
+class CompanyListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/` - list and create companies.
 
     A user only ever sees companies they're a member of - there is no
@@ -102,9 +101,6 @@ class CompanyListController(Controller[PydanticSerializer]):
     member or the company itself; role-based restrictions are deferred
     until they're actually needed.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List companies",
@@ -173,11 +169,8 @@ class CompanyListController(Controller[PydanticSerializer]):
         return _serialize_company(company)
 
 
-class CompanyDetailController(Controller[PydanticSerializer]):
+class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/companies/<id>/` - manage a single company."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a company",
@@ -244,11 +237,8 @@ class CompanyDetailController(Controller[PydanticSerializer]):
         return None
 
 
-class CompanyMemberListController(Controller[PydanticSerializer]):
+class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<id>/members/` - list and add members."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List company members",
@@ -308,11 +298,8 @@ class CompanyMemberListController(Controller[PydanticSerializer]):
         return _serialize_member(self.request, membership)
 
 
-class CompanyMemberDetailController(Controller[PydanticSerializer]):
+class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer]):
     """`PATCH/DELETE /api/v1/companies/<id>/members/<user_id>/` - manage a member."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Update a company member's role",

@@ -6,7 +6,6 @@ from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from dmr import (
     APIError,
-    Controller,
     FileMetadata,
     Path,
     Query,
@@ -16,9 +15,8 @@ from dmr import (
 from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.events import record_version_uploaded
 from apps.core.storage import delete_stored_file
 from apps.projects.models import Project
@@ -100,13 +98,10 @@ def _discard_files(version: Version) -> None:
             delete_stored_file(field.storage, field.name)
 
 
-class VersionListController(Controller[PydanticSerializer]):
+class VersionListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/shots/<shot_id>/versions/` - list a shot's versions
     and upload a new one.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a shot's versions",
@@ -254,15 +249,12 @@ class VersionListController(Controller[PydanticSerializer]):
         )
 
 
-class VersionDetailController(Controller[PydanticSerializer]):
+class VersionDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/DELETE /api/v1/versions/<id>/` - read or delete a single version.
 
     There is no `PATCH`: a version can't be edited or renamed. To fix a
     mistake, delete it and upload again.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a version",

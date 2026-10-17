@@ -4,7 +4,6 @@ from django.core.paginator import Paginator
 from dmr import (
     APIError,
     Body,
-    Controller,
     FileMetadata,
     Path,
     Query,
@@ -14,9 +13,8 @@ from dmr import (
 from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security import AuthenticatedHttpRequest
 
-from apps.auth.api.views import access_token_auth
+from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company
 from apps.core.storage import delete_stored_file
 from apps.projects.models import Project, ProjectMembership
@@ -180,7 +178,7 @@ def _get_company_member_or_404(company: Company, user_id: int) -> User:
         ) from exc
 
 
-class ProjectListController(Controller[PydanticSerializer]):
+class ProjectListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<company_id>/projects/` - list and create
     projects within a company.
 
@@ -188,9 +186,6 @@ class ProjectListController(Controller[PydanticSerializer]):
     within a company they belong to. Creating a project automatically
     makes the creator an `ADMIN` member of it.
     """
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List a company's projects",
@@ -292,11 +287,8 @@ class ProjectListController(Controller[PydanticSerializer]):
         return _serialize_project(self.request, project)
 
 
-class ProjectDetailController(Controller[PydanticSerializer]):
+class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
     """`GET/PATCH/DELETE /api/v1/projects/<id>/` - manage a single project."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Get a project",
@@ -369,11 +361,8 @@ class ProjectDetailController(Controller[PydanticSerializer]):
         return None
 
 
-class ProjectMemberListController(Controller[PydanticSerializer]):
+class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/projects/<id>/members/` - list and add members."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="List project members",
@@ -437,11 +426,8 @@ class ProjectMemberListController(Controller[PydanticSerializer]):
         return _serialize_member(self.request, membership)
 
 
-class ProjectMemberDetailController(Controller[PydanticSerializer]):
+class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer]):
     """`PATCH/DELETE /api/v1/projects/<id>/members/<user_id>/` - manage a member."""
-
-    request: AuthenticatedHttpRequest[User]
-    auth = (access_token_auth,)
 
     @modify(
         summary="Update a project member's role",
