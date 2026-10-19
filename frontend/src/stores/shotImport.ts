@@ -18,6 +18,7 @@ import {
   type ImportField,
   type ImportRow,
   type ImportTask,
+  type NewImportTask,
 } from '@/utils/shotImport'
 import { readSpreadsheet, type SheetData } from '@/utils/spreadsheet'
 import type {
@@ -70,6 +71,29 @@ export const useShotImportStore = defineStore('shotImport', () => {
       serverProblems: serverProblems.value,
     }),
   )
+  // Groups and tasks that were given to rows but don't exist in the project
+  // yet (they are created together with the shots). The assign dialog lists
+  // them, so the same new group or task can be given to other rows too.
+  // Only rows that will be imported count: skip a row and its new group or
+  // task is no longer going to be created.
+  const pendingGroups = computed(() => {
+    const known = new Set(groups.value.map((group) => group.name))
+    const names = rows.value
+      .filter((row) => !row.skipped)
+      .flatMap((row) => row.groups)
+      .filter((name) => !known.has(name))
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+  })
+  const pendingTasks = computed(() => {
+    const byKey = new Map<string, NewImportTask>()
+    for (const row of rows.value) {
+      if (row.skipped) continue
+      for (const task of row.tasks) {
+        if (task.kind === 'new') byKey.set(`${task.typeId}:${task.name}`, task)
+      }
+    }
+    return [...byKey.values()]
+  })
   const shotCount = computed(() => rows.value.filter((row) => !row.skipped).length)
   const skippedCount = computed(() => rows.value.length - shotCount.value)
   const canSubmit = computed(
@@ -272,6 +296,8 @@ export const useShotImportStore = defineStore('shotImport', () => {
     hasTimecodeColumn,
     isFpsValid,
     problems,
+    pendingGroups,
+    pendingTasks,
     shotCount,
     skippedCount,
     canSubmit,

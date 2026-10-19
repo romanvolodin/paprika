@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { NButton, NInput, NModal, NSelect } from 'naive-ui'
 import * as tasksApi from '@/api/tasks'
 import { useRemoteSearchOptions } from '@/composables/useRemoteSearchOptions'
-import type { ImportTask } from '@/utils/shotImport'
+import type { ImportTask, NewImportTask } from '@/utils/shotImport'
 import type { ShotGroupOut, TaskOut, TaskTypeOut } from '@/types/api'
 
 const props = defineProps<{
@@ -13,6 +13,10 @@ const props = defineProps<{
   projectId: number
   groups: ShotGroupOut[]
   taskTypes: TaskTypeOut[]
+  /** Groups given to rows in this import that the project doesn't have yet. */
+  pendingGroups: string[]
+  /** New tasks given to rows in this import that don't exist yet. */
+  pendingTasks: NewImportTask[]
 }>()
 
 const emit = defineEmits<{
@@ -24,21 +28,27 @@ const emit = defineEmits<{
 // --- Group: an existing one or a name typed in (created on import) --------
 
 const groupName = ref<string | null>(null)
-const groupOptions = computed(() =>
-  props.groups.map((group) => ({ label: group.name, value: group.name })),
-)
+const groupOptions = computed(() => [
+  ...props.groups.map((group) => ({ label: group.name, value: group.name })),
+  ...props.pendingGroups.map((name) => ({ label: `${name} (новая)`, value: name })),
+])
 
 // --- Task: pick an existing one, or switch to making a new one ------------
 
 const taskMode = ref<'pick' | 'create'>('pick')
-const pickedTaskId = ref<number | null>(null)
+// A number is an existing task's id; a string is the key of a pending new task.
+const pickedTaskId = ref<number | string | null>(null)
 const lastQuery = ref('')
 const newName = ref('')
 const newTypeId = ref<number | null>(null)
 const foundTasks = new Map<number, TaskOut>()
 
+function pendingKey(task: NewImportTask): string {
+  return `new:${task.typeId}:${task.name}`
+}
+
 const {
-  options: taskOptions,
+  options: remoteTaskOptions,
   loading: isSearching,
   search,
   loadInitial,
@@ -52,6 +62,19 @@ const {
       }),
   (task) => ({ label: `${task.code} · ${task.name}`, value: task.id }),
 )
+
+// The new tasks already given to other rows come first, so they can be
+// found again; the project's own tasks come from the search.
+const taskOptions = computed(() => {
+  const query = lastQuery.value.trim().toLowerCase()
+  const pending = props.pendingTasks
+    .filter((task) => task.name.toLowerCase().includes(query))
+    .map((task) => ({
+      label: `+ ${task.name} (${task.typeName}) · новая`,
+      value: pendingKey(task),
+    }))
+  return [...pending, ...remoteTaskOptions.value]
+})
 
 const typeOptions = computed(() =>
   props.taskTypes.map((type) => ({ label: `${type.name} (${type.abbreviation})`, value: type.id })),
@@ -95,9 +118,15 @@ function confirm() {
   if (props.mode === 'group') {
     emit('add-group', groupName.value!.trim())
   } else if (taskMode.value === 'pick') {
-    const task = foundTasks.get(pickedTaskId.value!)
-    if (!task) return
-    emit('add-task', { kind: 'existing', taskId: task.id, name: task.name, code: task.code })
+    const picked = pickedTaskId.value!
+    const pending = props.pendingTasks.find((task) => pendingKey(task) === picked)
+    if (pending) {
+      emit('add-task', { ...pending })
+    } else {
+      const task = typeof picked === 'number' ? foundTasks.get(picked) : undefined
+      if (!task) return
+      emit('add-task', { kind: 'existing', taskId: task.id, name: task.name, code: task.code })
+    }
   } else {
     const type = props.taskTypes.find((candidate) => candidate.id === newTypeId.value)
     if (!type) return

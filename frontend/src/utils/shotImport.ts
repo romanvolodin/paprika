@@ -14,9 +14,10 @@ export const IMPORT_FIELDS: { value: ImportField; label: string }[] = [
 /** What each column of the sheet is saved into; null = ignored. */
 export type ColumnMapping = (ImportField | null)[]
 
+export type NewImportTask = { kind: 'new'; name: string; typeId: number; typeName: string }
+
 export type ImportTask =
-  | { kind: 'existing'; taskId: number; name: string; code: string }
-  | { kind: 'new'; name: string; typeId: number; typeName: string }
+  { kind: 'existing'; taskId: number; name: string; code: string } | NewImportTask
 
 export interface ImportRow {
   /** Stable key of the row within the import (not the sheet row number). */

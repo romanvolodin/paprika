@@ -311,6 +311,8 @@ const hint = computed(() => {
       :project-id="store.project.id"
       :groups="store.groups"
       :task-types="store.taskTypes"
+      :pending-groups="store.pendingGroups"
+      :pending-tasks="store.pendingTasks"
       @update:show="(value: boolean) => !value && (assignMode = null)"
       @add-group="handleAddGroup"
       @add-task="handleAddTask"

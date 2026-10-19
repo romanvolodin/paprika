@@ -250,6 +250,33 @@ describe('mapping and rows', () => {
     expect(store.rows[1]!.tasks).toHaveLength(1)
   })
 
+  it('lists the groups and tasks that rows were given but the project lacks', async () => {
+    const store = await storeWithFile()
+    const task = { kind: 'new', name: 'Вставка', typeId: 3, typeName: 'Композ' } as const
+
+    // "01 СЕРИЯ" is a group of the project; the others are new.
+    store.addGroup([1, 2], '01 СЕРИЯ')
+    store.addGroup([1], '03 СЕРИЯ')
+    store.addGroup([2], '02 СЕРИЯ')
+    store.addGroup([2], '03 СЕРИЯ')
+    store.addTask([1, 2], task)
+    store.addTask([2], { kind: 'existing', taskId: 5, name: 'Клинап', code: 'CLN1' })
+
+    expect(store.pendingGroups).toEqual(['02 СЕРИЯ', '03 СЕРИЯ'])
+    expect(store.pendingTasks).toEqual([task])
+  })
+
+  it('does not list what only skipped rows would have created', async () => {
+    const store = await storeWithFile()
+    store.addGroup([1], '02 СЕРИЯ')
+    store.addTask([1], { kind: 'new', name: 'Вставка', typeId: 3, typeName: 'Композ' })
+
+    store.setSkipped([1], true)
+
+    expect(store.pendingGroups).toEqual([])
+    expect(store.pendingTasks).toEqual([])
+  })
+
   it('forgets the file on reset', async () => {
     const store = await storeWithFile()
 
