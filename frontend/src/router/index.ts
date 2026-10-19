@@ -90,6 +90,16 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/:companySlug/:projectCode/shots/import',
+      name: 'shot-import',
+      component: () => import('@/views/ShotImportView.vue'),
+      props: (route) => ({
+        companySlug: String(route.params.companySlug),
+        projectCode: String(route.params.projectCode),
+      }),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:companySlug/:projectCode/shots/:shotName',
       name: 'shot-detail',
       component: () => import('@/views/ShotDetailView.vue'),

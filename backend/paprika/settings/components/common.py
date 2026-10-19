@@ -127,4 +127,9 @@ CHAT_ATTACHMENT_MAX_FILE_SIZE_MB = env.int(
 # Max number of attachments in a single message.
 CHAT_MESSAGE_MAX_ATTACHMENTS = 10
 
+# Importing shots from a spreadsheet (see `apps.shot_import`).
+#
+# Max number of shots in a single import request.
+SHOT_IMPORT_MAX_ROWS = 2000
+
 AUTH_USER_MODEL = "users.User"

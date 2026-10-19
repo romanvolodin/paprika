@@ -53,6 +53,13 @@ async function handleCreate(values: ShotFormValues) {
   }
 }
 
+function goToImport() {
+  router.push({
+    name: 'shot-import',
+    params: { companySlug: props.companySlug, projectCode: props.projectCode },
+  })
+}
+
 const debouncedSearch = useDebounceFn((value: string) => {
   shots.setSearch(value)
 }, 300)
@@ -169,15 +176,10 @@ watch(
       <div class="shots-page__heading-row">
         <h1 class="shots-page__title">Кадры</h1>
         <span class="mono shots-page__code">{{ shots.project.code }}</span>
-        <n-button
-          v-if="canWrite"
-          type="primary"
-          size="small"
-          class="shots-page__new"
-          @click="isFormOpen = true"
-        >
-          Новый кадр
-        </n-button>
+        <div v-if="canWrite" class="shots-page__actions">
+          <n-button size="small" @click="goToImport">Импорт из таблицы</n-button>
+          <n-button type="primary" size="small" @click="isFormOpen = true">Новый кадр</n-button>
+        </div>
       </div>
 
       <n-input
@@ -260,8 +262,10 @@ watch(
   margin: 0;
 }
 
-.shots-page__new {
+.shots-page__actions {
   margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
 }
 
 .shots-page__code {

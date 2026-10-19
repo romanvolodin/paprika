@@ -435,6 +435,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/shot-imports/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import shots
+         * @description Create several shots in the project in one request. Each shot may be put into groups by name (a missing group is created), get tasks (existing ones by id, new ones by name and type; the same new task is created once and shared) and get chat messages written by the current user. All shots get the company's default status; tasks on shots get the default task status. Nothing is created if any row is invalid: the 400 response lists every problem with its row in `loc`.
+         */
+        post: operations["postProjectShotImportControllerApiV1ProjectsProjectIdShotImports"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/shots/": {
         parameters: {
             query?: never;
@@ -1544,6 +1564,73 @@ export interface components {
         ShotGroupUpdateIn: {
             /** Name */
             name: string;
+        };
+        /**
+         * ShotImportIn
+         * @description Payload for `POST /api/v1/projects/<id>/shot-imports/`.
+         */
+        ShotImportIn: {
+            /** Shots */
+            shots: components["schemas"]["ShotImportShotIn"][];
+        };
+        /** ShotImportOut */
+        ShotImportOut: {
+            /** Shots Created */
+            shots_created: number;
+            /** Groups Created */
+            groups_created: number;
+            /** Tasks Created */
+            tasks_created: number;
+            /** Messages Created */
+            messages_created: number;
+        };
+        /** ShotImportShotIn */
+        ShotImportShotIn: {
+            /** Name */
+            name: string;
+            /**
+             * Rec Timecode
+             * @description Start position of the shot in the edit, in frames.
+             * @default null
+             */
+            rec_timecode?: number | null;
+            /**
+             * Groups
+             * @description Names of the groups to put the shot into. A group that doesn't exist in the project yet is created.
+             */
+            groups?: string[];
+            /** Tasks */
+            tasks?: components["schemas"]["ShotImportTaskIn"][];
+            /**
+             * Messages
+             * @description Texts of chat messages to post to the shot, in order. They are written by the importing user as ordinary messages.
+             */
+            messages?: string[];
+        };
+        /**
+         * ShotImportTaskIn
+         * @description A task to put on an imported shot.
+         *
+         *     Either `task_id` - an existing task of the project - or `name` plus
+         *     `type_id` - a new task. The same new task (same `name` and `type_id`)
+         *     given for several shots is created once and shared by them.
+         */
+        ShotImportTaskIn: {
+            /**
+             * Task Id
+             * @default null
+             */
+            task_id?: number | null;
+            /**
+             * Name
+             * @default null
+             */
+            name?: string | null;
+            /**
+             * Type Id
+             * @default null
+             */
+            type_id?: number | null;
         };
         /**
          * ShotListOut
@@ -5158,6 +5245,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postProjectShotImportControllerApiV1ProjectsProjectIdShotImports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/projects/<id>/shot-imports/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShotImportIn"];
+            };
+        };
+        responses: {
+            /** @description How many objects were created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotImportOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */

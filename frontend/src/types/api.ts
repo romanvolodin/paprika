@@ -116,3 +116,8 @@ export type ReactionSummaryOut = components['schemas']['ReactionSummaryOut']
 export type ReactionsOut = components['schemas']['ReactionsOut']
 export type ReplyToOut = components['schemas']['ReplyToOut']
 export type AttachmentOut = components['schemas']['AttachmentOut']
+
+export type ShotImportIn = components['schemas']['ShotImportIn']
+export type ShotImportShotIn = components['schemas']['ShotImportShotIn']
+export type ShotImportTaskIn = components['schemas']['ShotImportTaskIn']
+export type ShotImportOut = components['schemas']['ShotImportOut']

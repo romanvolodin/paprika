@@ -10,6 +10,7 @@ from apps.auth.api.urls import router as auth_router
 from apps.chat.api.urls import router as chat_router
 from apps.companies.api.urls import router as companies_router
 from apps.projects.api.urls import router as projects_router
+from apps.shot_import.api.urls import router as shot_import_router
 from apps.shots.api.urls import router as shots_router
 from apps.tasks.api.urls import router as tasks_router
 from apps.users.api.urls import router as users_router
@@ -21,6 +22,7 @@ api_router.include(auth_router)
 api_router.include(chat_router)
 api_router.include(companies_router)
 api_router.include(projects_router)
+api_router.include(shot_import_router)
 api_router.include(shots_router)
 api_router.include(tasks_router)
 api_router.include(users_router)
