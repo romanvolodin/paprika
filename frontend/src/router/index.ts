@@ -73,42 +73,63 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/projects/:id(\\d+)',
-      name: 'project-detail',
-      component: () => import('@/views/ProjectDetailView.vue'),
-      props: (route) => ({ projectId: Number(route.params.id) }),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/:companySlug/:projectCode/shots',
-      name: 'shot-list',
-      component: () => import('@/views/ShotListView.vue'),
+      path: '/:companySlug/:projectCode',
+      component: () => import('@/views/ProjectLayoutView.vue'),
       props: (route) => ({
         companySlug: String(route.params.companySlug),
         projectCode: String(route.params.projectCode),
       }),
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/:companySlug/:projectCode/shots/import',
-      name: 'shot-import',
-      component: () => import('@/views/ShotImportView.vue'),
-      props: (route) => ({
-        companySlug: String(route.params.companySlug),
-        projectCode: String(route.params.projectCode),
-      }),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/:companySlug/:projectCode/shots/:shotName',
-      name: 'shot-detail',
-      component: () => import('@/views/ShotDetailView.vue'),
-      props: (route) => ({
-        companySlug: String(route.params.companySlug),
-        projectCode: String(route.params.projectCode),
-        shotName: String(route.params.shotName),
-      }),
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'project-home',
+          redirect: (to) => ({ name: 'shot-list', params: to.params }),
+        },
+        {
+          path: 'shots',
+          name: 'shot-list',
+          component: () => import('@/views/ShotListView.vue'),
+          props: (route) => ({
+            companySlug: String(route.params.companySlug),
+            projectCode: String(route.params.projectCode),
+          }),
+        },
+        {
+          path: 'shots/import',
+          name: 'shot-import',
+          component: () => import('@/views/ShotImportView.vue'),
+          props: (route) => ({
+            companySlug: String(route.params.companySlug),
+            projectCode: String(route.params.projectCode),
+          }),
+        },
+        {
+          path: 'shots/:shotName',
+          name: 'shot-detail',
+          component: () => import('@/views/ShotDetailView.vue'),
+          props: (route) => ({
+            companySlug: String(route.params.companySlug),
+            projectCode: String(route.params.projectCode),
+            shotName: String(route.params.shotName),
+          }),
+        },
+        {
+          path: 'tasks',
+          name: 'project-tasks',
+          component: () => import('@/views/ProjectTasksView.vue'),
+        },
+        {
+          path: 'groups',
+          name: 'project-groups',
+          component: () => import('@/views/ProjectGroupsView.vue'),
+        },
+        {
+          path: 'settings',
+          name: 'project-settings',
+          component: () => import('@/views/ProjectSettingsView.vue'),
+        },
+      ],
     },
     {
       path: '/:pathMatch(.*)*',

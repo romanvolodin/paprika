@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
   NButton,
@@ -11,7 +11,7 @@ import {
   NTag,
   type DataTableColumns,
 } from 'naive-ui'
-import { AddOutline, PencilOutline, SearchOutline } from '@vicons/ionicons5'
+import { AddOutline, SearchOutline } from '@vicons/ionicons5'
 import { useProjectsStore } from '@/stores/projects'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import type { ProjectOut } from '@/types/api'
@@ -39,6 +39,17 @@ const columns: DataTableColumns<ProjectOut> = [
   {
     title: 'Название',
     key: 'name',
+    render: (project) => {
+      const companySlug = currentCompany.companies.find(
+        (company) => company.id === project.company_id,
+      )?.slug
+      if (!companySlug) return project.name
+      return h(
+        RouterLink,
+        { to: { name: 'project-home', params: { companySlug, projectCode: project.code } } },
+        { default: () => project.name },
+      )
+    },
   },
   {
     title: 'Код',
@@ -62,22 +73,6 @@ const columns: DataTableColumns<ProjectOut> = [
     key: 'created_at',
     width: 140,
     render: (project) => formatDate(project.created_at),
-  },
-  {
-    title: '',
-    key: 'actions',
-    width: 48,
-    render: (project) =>
-      h(
-        NButton,
-        {
-          quaternary: true,
-          circle: true,
-          size: 'small',
-          onClick: () => router.push({ name: 'project-detail', params: { id: project.id } }),
-        },
-        { icon: () => h(NIcon, { component: PencilOutline }) },
-      ),
   },
 ]
 

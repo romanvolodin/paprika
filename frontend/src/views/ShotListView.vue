@@ -12,7 +12,7 @@ import {
   useMessage,
   type DataTableColumns,
 } from 'naive-ui'
-import { ArrowBackOutline, SearchOutline } from '@vicons/ionicons5'
+import { SearchOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
@@ -164,18 +164,8 @@ watch(
     </p>
 
     <template v-else-if="shots.project">
-      <button
-        class="shots-page__back"
-        type="button"
-        @click="router.push({ name: 'project-detail', params: { id: shots.project.id } })"
-      >
-        <n-icon :component="ArrowBackOutline" />
-        К проекту
-      </button>
-
       <div class="shots-page__heading-row">
-        <h1 class="shots-page__title">Кадры</h1>
-        <span class="mono shots-page__code">{{ shots.project.code }}</span>
+        <h2 class="shots-page__title">Кадры</h2>
         <div v-if="canWrite" class="shots-page__actions">
           <n-button size="small" @click="goToImport">Импорт из таблицы</n-button>
           <n-button type="primary" size="small" @click="isFormOpen = true">Новый кадр</n-button>
@@ -233,23 +223,6 @@ watch(
   color: var(--color-text-secondary);
 }
 
-.shots-page__back {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
-  cursor: pointer;
-}
-
-.shots-page__back:hover {
-  color: var(--color-text);
-}
-
 .shots-page__heading-row {
   display: flex;
   align-items: baseline;
@@ -257,7 +230,7 @@ watch(
 }
 
 .shots-page__title {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   margin: 0;
 }
@@ -266,11 +239,6 @@ watch(
   margin-left: auto;
   display: flex;
   gap: var(--space-2);
-}
-
-.shots-page__code {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
 }
 
 .shots-page__groups {

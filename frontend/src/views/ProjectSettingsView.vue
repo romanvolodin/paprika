@@ -20,41 +20,24 @@ import {
   type FormRules,
   type SelectOption,
 } from 'naive-ui'
-import { AddOutline, ArrowBackOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
-import { useProjectDetailStore } from '@/stores/projectDetail'
-import { useCurrentCompanyStore } from '@/stores/currentCompany'
-import ShotGroupsSection from '@/components/shots/ShotGroupsSection.vue'
+import { AddOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
+import { storeToRefs } from 'pinia'
+import { useProjectPageStore } from '@/stores/projectPage'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import type { CompanyMemberOut, ProjectMemberOut, ProjectMembershipRole } from '@/types/api'
 
-const props = defineProps<{ projectId: number }>()
-
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
-const store = useProjectDetailStore()
-const currentCompany = useCurrentCompanyStore()
-const { canEditProject, canWrite, canManageMembers, canRemoveMember, canChangeMemberRole } =
-  useProjectPermissions(computed(() => store.members))
+const store = useProjectPageStore()
+const { members } = storeToRefs(store)
+const { canEditProject, canManageProject, canManageMembers, canRemoveMember, canChangeMemberRole } =
+  useProjectPermissions(members)
 
 onMounted(() => {
-  store.fetch(props.projectId)
+  store.loadCompanyMembers()
 })
-
-const companySlug = computed(
-  () =>
-    currentCompany.companies.find((company) => company.id === store.project?.company_id)?.slug ??
-    null,
-)
-
-function openShots() {
-  if (!store.project || !companySlug.value) return
-  router.push({
-    name: 'shot-list',
-    params: { companySlug: companySlug.value, projectCode: store.project.code },
-  })
-}
 
 // --- Project settings ---------------------------------------------------
 
@@ -122,7 +105,7 @@ async function handleSaveProject() {
 
   isSaving.value = true
   try {
-    await store.updateProject(props.projectId, {
+    await store.updateProject({
       name: name.value,
       description: description.value,
       startDate: startDate.value,
@@ -147,7 +130,7 @@ function initials(member: { first_name: string; last_name: string }): string {
 
 async function handleRoleChange(member: ProjectMemberOut, role: ProjectMembershipRole) {
   try {
-    await store.updateMemberRole(props.projectId, member.user_id, role)
+    await store.updateMemberRole(member.user_id, role)
     message.success('Роль обновлена.')
   } catch {
     message.error('Не удалось изменить роль.')
@@ -162,7 +145,7 @@ function confirmRemoveMember(member: ProjectMemberOut) {
     negativeText: 'Отмена',
     onPositiveClick: async () => {
       try {
-        await store.removeMember(props.projectId, member.user_id)
+        await store.removeMember(member.user_id)
         message.success('Участник удалён.')
       } catch {
         message.error('Не удалось удалить участника.')
@@ -282,7 +265,7 @@ async function handleAddMember() {
 
   isAddingMember.value = true
   try {
-    await store.addMember(props.projectId, {
+    await store.addMember({
       user_id: newMemberUserId.value,
       role: newMemberRole.value,
     })
@@ -295,29 +278,41 @@ async function handleAddMember() {
     isAddingMember.value = false
   }
 }
+
+// --- Delete project --------------------------------------------------------
+
+const isDeleting = ref(false)
+
+function confirmDeleteProject() {
+  if (!store.project) return
+  dialog.warning({
+    title: 'Удалить проект',
+    content: `Удалить проект ${store.project.name} (${store.project.code})? Вместе с ним будут удалены все его кадры, версии, задачи и чаты. Это действие необратимо.`,
+    positiveText: 'Удалить',
+    negativeText: 'Отмена',
+    onPositiveClick: async () => {
+      isDeleting.value = true
+      try {
+        await store.deleteProject()
+        message.success('Проект удалён.')
+        router.push({ name: 'project-list' })
+      } catch {
+        message.error('Не удалось удалить проект.')
+      } finally {
+        isDeleting.value = false
+      }
+    },
+  })
+}
 </script>
 
 <template>
-  <div v-if="store.project" class="project-detail">
-    <button
-      class="project-detail__back"
-      type="button"
-      @click="router.push({ name: 'project-list' })"
-    >
-      <n-icon :component="ArrowBackOutline" />
-      К списку проектов
-    </button>
-
-    <div class="project-detail__heading-row">
-      <h1 class="project-detail__title">{{ store.project.name }}</h1>
-      <span class="mono project-detail__code">{{ store.project.code }}</span>
-      <n-button v-if="companySlug" size="small" class="project-detail__shots" @click="openShots">
-        Кадры
-      </n-button>
-    </div>
-
-    <section class="project-detail__section">
-      <h2 class="project-detail__heading">Настройки</h2>
+  <div v-if="!canManageProject" class="project-settings__message">
+    Настройки проекта доступны только администратору и продюсеру.
+  </div>
+  <div v-else-if="store.project" class="project-settings">
+    <section class="project-settings__section">
+      <h2 class="project-settings__heading">Настройки</h2>
       <n-form
         ref="formRef"
         :model="formModel"
@@ -326,17 +321,17 @@ async function handleAddMember() {
         :disabled="!canEditProject"
         @submit.prevent="handleSaveProject"
       >
-        <div class="project-detail__cover">
-          <div class="project-detail__cover-preview">
+        <div class="project-settings__cover">
+          <div class="project-settings__cover-preview">
             <img v-if="coverPreview" :src="coverPreview" alt="" />
             <n-icon v-else :component="CameraOutline" size="28" />
           </div>
-          <div v-if="canEditProject" class="project-detail__cover-actions">
+          <div v-if="canEditProject" class="project-settings__cover-actions">
             <input
               ref="coverInput"
               type="file"
               accept="image/png,image/jpeg,image/gif"
-              class="project-detail__cover-input"
+              class="project-settings__cover-input"
               @change="handleCoverChange"
             />
             <n-button size="small" @click="pickCover">
@@ -355,7 +350,7 @@ async function handleAddMember() {
         <n-form-item label="Код">
           <n-input :value="store.project.code" disabled />
         </n-form-item>
-        <p class="project-detail__hint">Код нельзя изменить после создания проекта.</p>
+        <p class="project-settings__hint">Код нельзя изменить после создания проекта.</p>
 
         <n-form-item label="Описание">
           <n-input v-model:value="description" type="textarea" />
@@ -391,8 +386,8 @@ async function handleAddMember() {
       </n-form>
     </section>
 
-    <section class="project-detail__section">
-      <h2 class="project-detail__heading">Участники</h2>
+    <section class="project-settings__section">
+      <h2 class="project-settings__heading">Участники</h2>
 
       <n-data-table
         :columns="columns"
@@ -402,7 +397,7 @@ async function handleAddMember() {
         :row-key="(row: ProjectMemberOut) => row.id"
       />
 
-      <div v-if="canManageMembers" class="project-detail__add-member">
+      <div v-if="canManageMembers" class="project-settings__add-member">
         <n-select
           v-model:value="newMemberUserId"
           filterable
@@ -429,85 +424,55 @@ async function handleAddMember() {
       </div>
     </section>
 
-    <section class="project-detail__section">
-      <h2 class="project-detail__heading">Группы кадров</h2>
-      <shot-groups-section :project-id="props.projectId" :can-write="canWrite" />
+    <section class="project-settings__section">
+      <h2 class="project-settings__heading">Удаление проекта</h2>
+      <div class="project-settings__danger">
+        <p class="project-settings__hint project-settings__hint--plain">
+          Проект будет удалён вместе со всеми кадрами, версиями, задачами и чатами. Отменить это
+          нельзя.
+        </p>
+        <n-button type="error" secondary :loading="isDeleting" @click="confirmDeleteProject">
+          Удалить проект
+        </n-button>
+      </div>
     </section>
   </div>
-  <p v-else-if="store.isLoading" class="project-detail__loading">Загрузка…</p>
 </template>
 
 <style scoped>
-.project-detail {
+.project-settings {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   max-width: 720px;
 }
 
-.project-detail__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
-  cursor: pointer;
-  padding: 0;
-  align-self: flex-start;
-}
-
-.project-detail__back:hover {
-  color: var(--color-text);
-}
-
-.project-detail__heading-row {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-}
-
-.project-detail__title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.project-detail__shots {
-  margin-left: auto;
-}
-.project-detail__code {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
-}
-
-.project-detail__section {
+.project-settings__section {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.project-detail__heading {
+.project-settings__heading {
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
 }
 
-.project-detail__hint {
+.project-settings__hint {
   margin: calc(var(--space-2) * -1) 0 var(--space-3);
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);
 }
 
-.project-detail__cover {
+.project-settings__cover {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
 
-.project-detail__cover-preview {
+.project-settings__cover-preview {
   width: 120px;
   height: 68px;
   border-radius: var(--radius-md);
@@ -520,30 +485,41 @@ async function handleAddMember() {
   flex-shrink: 0;
 }
 
-.project-detail__cover-preview img {
+.project-settings__cover-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.project-detail__cover-actions {
+.project-settings__cover-actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.project-detail__cover-input {
+.project-settings__cover-input {
   display: none;
 }
 
-.project-detail__loading {
-  color: var(--color-text-secondary);
-}
-
-.project-detail__add-member {
+.project-settings__add-member {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
   align-items: center;
+}
+
+.project-settings__message {
+  color: var(--color-text-secondary);
+}
+
+.project-settings__danger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.project-settings__hint--plain {
+  margin: 0;
 }
 </style>
