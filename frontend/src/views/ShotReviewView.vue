@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import ShotChatSection from '@/components/shots/ShotChatSection.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import ShotPlayer from '@/components/shots/ShotPlayer.vue'
+import ShotVersionsStrip from '@/components/shots/ShotVersionsStrip.vue'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import { useShotReviewStore } from '@/stores/shotReview'
 
@@ -19,6 +20,10 @@ const requestedName = computed(() => {
   const value = Array.isArray(route.query.version) ? route.query.version[0] : route.query.version
   return value ? value : null
 })
+
+// "Загрузить версию" leads to the upload form, which for now is the
+// "Версии" tab.
+const uploadTo = computed(() => ({ name: 'shot-versions', params: route.params }))
 
 // Opening the shot (or coming back to this tab) loads the versions
 // anew, so a version uploaded meanwhile shows up.
@@ -45,7 +50,14 @@ watch(requestedName, (name) => {
           :requested-name="requestedName"
         />
       </div>
-      <div class="shot-review__versions" data-test="versions-strip">Лента версий</div>
+      <div class="shot-review__versions" data-test="versions-strip">
+        <shot-versions-strip
+          :versions="review.versions"
+          :current-id="review.current?.id ?? null"
+          :can-write="canWrite"
+          :upload-to="uploadTo"
+        />
+      </div>
     </div>
 
     <aside class="shot-review__chat" data-test="chat">
@@ -76,14 +88,8 @@ watch(requestedName, (name) => {
 }
 
 .shot-review__versions {
-  display: flex;
   flex: none;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
+  min-width: 0;
 }
 
 .shot-review__chat {

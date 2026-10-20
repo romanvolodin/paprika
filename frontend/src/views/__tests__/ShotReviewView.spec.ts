@@ -79,7 +79,10 @@ async function mountReview(role: ProjectMembershipRole, path = '/shot') {
   ]
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/shot', component: ShotReviewView }],
+    routes: [
+      { path: '/shot', component: ShotReviewView },
+      { path: '/shot/versions', name: 'shot-versions', component: { render: () => null } },
+    ],
   })
   router.push(path)
   await router.isReady()
@@ -150,5 +153,23 @@ describe('ShotReviewView', () => {
     const { wrapper } = await mountReview('executor', '/shot?version=PRJ_0010_v99')
 
     expect(wrapper.find('[data-test="player"]').text()).toBe('Версия PRJ_0010_v99 не найдена.')
+  })
+
+  it('shows every version in the strip and frames the one being played', async () => {
+    const { wrapper } = await mountReview('executor', '/shot?version=PRJ_0010_v01')
+
+    const items = wrapper.findAll('.versions-strip__item')
+    expect(items.map((item) => item.text())).toEqual(['PRJ_0010_v02', 'PRJ_0010_v01'])
+    expect(wrapper.find('[aria-current="true"]').text()).toBe('PRJ_0010_v01')
+  })
+
+  it('plays the version whose thumbnail is clicked and puts its name in the address', async () => {
+    const { wrapper, router } = await mountReview('executor')
+
+    await wrapper.findAll('.versions-strip__item')[1].trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.version).toBe('PRJ_0010_v01')
+    expect(wrapper.find('video').attributes('src')).toBe('/media/PRJ_0010_v01.mp4')
   })
 })
