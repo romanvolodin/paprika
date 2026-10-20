@@ -69,6 +69,9 @@ async function mountLayout(
         children: [
           { path: 'shots', name: 'shot-list', component: Empty },
           { path: 'shots/:shotName', name: 'shot-detail', component: Empty },
+          { path: 'shots/:shotName/tasks', name: 'shot-tasks', component: Empty },
+          { path: 'shots/:shotName/versions', name: 'shot-versions', component: Empty },
+          { path: 'shots/:shotName/settings', name: 'shot-settings', component: Empty },
           { path: 'tasks', name: 'project-tasks', component: Empty },
           { path: 'groups', name: 'project-groups', component: Empty },
           { path: 'settings', name: 'project-settings', component: Empty },
@@ -157,6 +160,9 @@ describe('ProjectLayoutView', () => {
     ['/acme/PRJ/groups', 'Группы'],
     ['/acme/PRJ/settings', 'Настройки'],
     ['/acme/PRJ/shots', 'Кадры'],
+    ['/acme/PRJ/shots/0010/tasks', 'Кадры'],
+    ['/acme/PRJ/shots/0010/versions', 'Кадры'],
+    ['/acme/PRJ/shots/0010/settings', 'Кадры'],
   ])('highlights only the current section on %s', async (path, label) => {
     const wrapper = await mountLayout('admin', path)
 

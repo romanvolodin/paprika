@@ -106,13 +106,38 @@ const router = createRouter({
         },
         {
           path: 'shots/:shotName',
-          name: 'shot-detail',
-          component: () => import('@/views/ShotDetailView.vue'),
+          component: () => import('@/views/ShotLayoutView.vue'),
           props: (route) => ({
             companySlug: String(route.params.companySlug),
             projectCode: String(route.params.projectCode),
             shotName: String(route.params.shotName),
           }),
+          children: [
+            {
+              path: '',
+              name: 'shot-detail',
+              component: () => import('@/views/ShotReviewView.vue'),
+            },
+            {
+              path: 'tasks',
+              name: 'shot-tasks',
+              component: () => import('@/views/ShotTasksView.vue'),
+            },
+            {
+              path: 'versions',
+              name: 'shot-versions',
+              component: () => import('@/views/ShotVersionsView.vue'),
+            },
+            {
+              path: 'settings',
+              name: 'shot-settings',
+              component: () => import('@/views/ShotSettingsView.vue'),
+              props: (route) => ({
+                companySlug: String(route.params.companySlug),
+                projectCode: String(route.params.projectCode),
+              }),
+            },
+          ],
         },
         {
           path: 'tasks',

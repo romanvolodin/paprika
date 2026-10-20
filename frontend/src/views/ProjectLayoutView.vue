@@ -18,7 +18,14 @@ const { canManageProject } = useProjectPermissions(members)
 // shot page and the import page are siblings of the shot list in the
 // route tree, yet they belong to the "Кадры" section.
 const SECTION_ROUTES = {
-  shots: ['shot-list', 'shot-import', 'shot-detail'],
+  shots: [
+    'shot-list',
+    'shot-import',
+    'shot-detail',
+    'shot-tasks',
+    'shot-versions',
+    'shot-settings',
+  ],
   tasks: ['project-tasks'],
   groups: ['project-groups'],
   settings: ['project-settings'],
