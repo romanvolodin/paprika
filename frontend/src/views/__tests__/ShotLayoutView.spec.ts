@@ -172,6 +172,16 @@ describe('ShotLayoutView', () => {
     expect(wrapper.find('[data-test="child"]').exists()).toBe(true)
   })
 
+  it('has the project code as a link back to the shot list in the same strip', async () => {
+    const wrapper = await mountShot('executor')
+
+    const crumb = wrapper.find('header a.shot-page__crumb')
+    expect(crumb.text()).toBe('PRJ')
+    expect(crumb.attributes('href')).toBe('/acme/PRJ/shots')
+    expect(crumb.attributes('title')).toBe('Feature Film')
+    expect(wrapper.findAll('header nav').length).toBe(1)
+  })
+
   it.each([
     ['/acme/PRJ/shots/0010', 'Просмотр'],
     ['/acme/PRJ/shots/0010/tasks', 'Задачи'],

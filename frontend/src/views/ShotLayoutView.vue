@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, h, watch } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { NIcon, NSelect, NTag, useMessage, type SelectOption } from 'naive-ui'
-import { ArrowBackOutline } from '@vicons/ionicons5'
+import { RouterLink, RouterView } from 'vue-router'
+import { NSelect, NTag, useMessage, type SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
@@ -10,7 +9,6 @@ import { useCurrentCompanyStore } from '@/stores/currentCompany'
 
 const props = defineProps<{ companySlug: string; projectCode: string; shotName: string }>()
 
-const router = useRouter()
 const store = useShotDetailStore()
 const currentCompany = useCurrentCompanyStore()
 const message = useMessage()
@@ -77,45 +75,36 @@ watch(
 
     <template v-else-if="store.shot && store.project">
       <header class="shot-page__header">
-        <button
-          class="shot-page__back"
-          type="button"
-          @click="
-            router.push({
-              name: 'shot-list',
-              params: { companySlug: props.companySlug, projectCode: props.projectCode },
-            })
-          "
+        <RouterLink
+          class="shot-page__crumb mono"
+          :to="{ name: 'shot-list', params: { companySlug, projectCode } }"
+          :title="store.project.name"
         >
-          <n-icon :component="ArrowBackOutline" />
-          К списку кадров
-        </button>
-
-        <div class="shot-page__heading-row">
-          <h1 class="shot-page__title mono">{{ store.shot.name }}</h1>
-          <span class="mono shot-page__code">{{ store.project.code }}</span>
-          <n-select
-            v-if="canWrite"
-            class="shot-page__status-select"
-            size="small"
-            :value="store.shot.status_id"
-            :options="statusOptions"
-            :render-label="renderStatusLabel"
-            @update:value="handleStatusChange"
-          />
-          <n-tag
-            v-else-if="status"
-            size="small"
-            round
-            :color="{
-              color: `${status.color}26`,
-              borderColor: status.color,
-              textColor: status.color,
-            }"
-          >
-            {{ status.name }}
-          </n-tag>
-        </div>
+          {{ store.project.code }}
+        </RouterLink>
+        <span class="shot-page__separator" aria-hidden="true">/</span>
+        <h1 class="shot-page__title mono">{{ store.shot.name }}</h1>
+        <n-select
+          v-if="canWrite"
+          class="shot-page__status-select"
+          size="small"
+          :value="store.shot.status_id"
+          :options="statusOptions"
+          :render-label="renderStatusLabel"
+          @update:value="handleStatusChange"
+        />
+        <n-tag
+          v-else-if="status"
+          size="small"
+          round
+          :color="{
+            color: `${status.color}26`,
+            borderColor: status.color,
+            textColor: status.color,
+          }"
+        >
+          {{ status.name }}
+        </n-tag>
 
         <nav class="shot-page__nav" aria-label="Разделы кадра">
           <RouterLink
@@ -169,31 +158,26 @@ watch(
 
 .shot-page__header {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
+  min-height: 44px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.shot-page__back {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0;
-  border: none;
-  background: none;
+.shot-page__crumb {
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);
-  cursor: pointer;
+  text-decoration: none;
 }
 
-.shot-page__back:hover {
+.shot-page__crumb:hover {
   color: var(--color-text);
 }
 
-.shot-page__heading-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.shot-page__separator {
+  margin-left: calc(var(--space-1) * -1);
+  color: var(--color-text-secondary);
 }
 
 .shot-page__title {
@@ -202,23 +186,21 @@ watch(
   margin: 0;
 }
 
-.shot-page__code {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
-}
-
 .shot-page__status-select {
   width: 180px;
 }
 
 .shot-page__nav {
   display: flex;
+  align-self: stretch;
   gap: var(--space-1);
-  border-bottom: 1px solid var(--color-border);
+  margin-left: var(--space-3);
 }
 
 .shot-page__link {
-  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
   color: var(--color-text-secondary);

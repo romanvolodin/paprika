@@ -68,6 +68,7 @@ async function mountLayout(
         }),
         children: [
           { path: 'shots', name: 'shot-list', component: Empty },
+          { path: 'shots/import', name: 'shot-import', component: Empty },
           { path: 'shots/:shotName', name: 'shot-detail', component: Empty },
           { path: 'shots/:shotName/tasks', name: 'shot-tasks', component: Empty },
           { path: 'shots/:shotName/versions', name: 'shot-versions', component: Empty },
@@ -148,8 +149,18 @@ describe('ProjectLayoutView', () => {
     },
   )
 
-  it('keeps "Кадры" highlighted on the page of a single shot', async () => {
-    const wrapper = await mountLayout('admin', '/acme/PRJ/shots/0010')
+  it.each(['', '/tasks', '/versions', '/settings'])(
+    'hides the project header on the shot page %s',
+    async (suffix) => {
+      const wrapper = await mountLayout('admin', `/acme/PRJ/shots/0010${suffix}`)
+
+      expect(wrapper.find('header').exists()).toBe(false)
+      expect(wrapper.find('[data-test="child"]').exists()).toBe(true)
+    },
+  )
+
+  it('keeps "Кадры" highlighted on the import page', async () => {
+    const wrapper = await mountLayout('admin', '/acme/PRJ/shots/import')
 
     const active = wrapper.findAll('a.project-page__link--active').map((link) => link.text())
     expect(active).toEqual(['Кадры'])
@@ -160,9 +171,6 @@ describe('ProjectLayoutView', () => {
     ['/acme/PRJ/groups', 'Группы'],
     ['/acme/PRJ/settings', 'Настройки'],
     ['/acme/PRJ/shots', 'Кадры'],
-    ['/acme/PRJ/shots/0010/tasks', 'Кадры'],
-    ['/acme/PRJ/shots/0010/versions', 'Кадры'],
-    ['/acme/PRJ/shots/0010/settings', 'Кадры'],
   ])('highlights only the current section on %s', async (path, label) => {
     const wrapper = await mountLayout('admin', path)
 

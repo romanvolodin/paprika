@@ -15,17 +15,10 @@ const { members } = storeToRefs(store)
 const { canManageProject } = useProjectPermissions(members)
 
 // A link is highlighted by section, not by router-link matching: the
-// shot page and the import page are siblings of the shot list in the
-// route tree, yet they belong to the "Кадры" section.
+// import page is a sibling of the shot list in the route tree, yet it
+// belongs to the "Кадры" section.
 const SECTION_ROUTES = {
-  shots: [
-    'shot-list',
-    'shot-import',
-    'shot-detail',
-    'shot-tasks',
-    'shot-versions',
-    'shot-settings',
-  ],
+  shots: ['shot-list', 'shot-import'],
   tasks: ['project-tasks'],
   groups: ['project-groups'],
   settings: ['project-settings'],
@@ -36,6 +29,11 @@ type Section = keyof typeof SECTION_ROUTES
 function isActive(section: Section): boolean {
   return (SECTION_ROUTES[section] as readonly unknown[]).includes(route.name)
 }
+
+// The shot page has its own header that already carries the way back
+// to the project, so the project header is not shown there.
+const SHOT_PAGE_ROUTES = ['shot-detail', 'shot-tasks', 'shot-versions', 'shot-settings']
+const hasProjectHeader = computed(() => !SHOT_PAGE_ROUTES.includes(String(route.name)))
 
 const routeParams = computed(() => ({
   companySlug: props.companySlug,
@@ -73,7 +71,7 @@ watch(
     </p>
 
     <template v-else-if="store.project">
-      <header class="project-page__header">
+      <header v-if="hasProjectHeader" class="project-page__header">
         <div class="project-page__heading-row">
           <h1 class="project-page__title">{{ store.project.name }}</h1>
           <span class="mono project-page__code">{{ store.project.code }}</span>
