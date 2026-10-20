@@ -157,8 +157,10 @@ watch(
 <style scoped>
 .shot-page {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  min-height: 0;
 }
 
 .shot-page__message {
@@ -169,7 +171,6 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 960px;
 }
 
 .shot-page__back {

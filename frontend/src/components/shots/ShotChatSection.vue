@@ -451,13 +451,16 @@ function formatTime(value: string): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
 }
 
 .shot-chat__list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: 480px;
+  min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-2);
 }

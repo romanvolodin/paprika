@@ -10,7 +10,7 @@ const { canWrite } = useProjectPermissions(members)
 </script>
 
 <template>
-  <div v-if="store.shot && store.project" class="shot-tasks">
+  <div v-if="store.shot && store.project">
     <shot-tasks-section
       :shot-id="store.shot.id"
       :project-id="store.project.id"
@@ -20,9 +20,3 @@ const { canWrite } = useProjectPermissions(members)
     />
   </div>
 </template>
-
-<style scoped>
-.shot-tasks {
-  max-width: 960px;
-}
-</style>
