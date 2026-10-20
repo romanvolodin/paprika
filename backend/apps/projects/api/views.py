@@ -18,6 +18,7 @@ from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company
 from apps.core.storage import delete_stored_file
 from apps.projects.models import Project, ProjectMembership
+from apps.projects.permissions import require_can_manage_project
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
 
@@ -349,14 +350,19 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Delete a project",
-        description="Permanently delete a project and all its memberships.",
+        description=(
+            "Permanently delete a project and everything in it. Only a "
+            "project admin or producer can do this."
+        ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
     def delete(self, parsed_path: Path[ProjectPath]) -> None:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_can_manage_project(self.request.user, project)
         project.delete()
         return None
 

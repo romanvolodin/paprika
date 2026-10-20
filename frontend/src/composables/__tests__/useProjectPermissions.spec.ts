@@ -87,3 +87,42 @@ describe('useProjectPermissions', () => {
     expect(canWrite.value).toBe(false)
   })
 })
+
+describe('useProjectPermissions - canManageProject', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it.each(['admin', 'producer'] as const)('is true for a project %s', (role) => {
+    const auth = useAuthStore()
+    auth.currentUser = buildUser({ id: 1 })
+    const members = ref<ProjectMemberOut[]>([buildMember({ user_id: 1, role })])
+
+    const { canManageProject } = useProjectPermissions(members)
+
+    expect(canManageProject.value).toBe(true)
+  })
+
+  it.each(['coordinator', 'executor', 'freelancer', 'client'] as const)(
+    'is false for a project %s',
+    (role) => {
+      const auth = useAuthStore()
+      auth.currentUser = buildUser({ id: 1 })
+      const members = ref<ProjectMemberOut[]>([buildMember({ user_id: 1, role })])
+
+      const { canManageProject } = useProjectPermissions(members)
+
+      expect(canManageProject.value).toBe(false)
+    },
+  )
+
+  it('is false while the current user is not among the members', () => {
+    const auth = useAuthStore()
+    auth.currentUser = buildUser({ id: 1 })
+    const members = ref<ProjectMemberOut[]>([])
+
+    const { canManageProject } = useProjectPermissions(members)
+
+    expect(canManageProject.value).toBe(false)
+  })
+})

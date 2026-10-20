@@ -203,22 +203,47 @@ class TestUpdateProject:
 
 
 class TestDeleteProject:
-    def test_deletes_the_project(
-        self, auth_client, auth_user, project_factory, project_membership_factory
+    @pytest.mark.parametrize(
+        "role", [ProjectMembership.Role.ADMIN, ProjectMembership.Role.PRODUCER]
+    )
+    def test_admin_and_producer_can_delete_the_project(
+        self, auth_client, auth_user, project_factory, project_membership_factory, role
     ):
         project = project_factory()
-        project_membership_factory(user=auth_user, project=project)
+        project_membership_factory(user=auth_user, project=project, role=role)
 
         response = auth_client.delete(f"/api/v1/projects/{project.id}/")
 
         assert response.status_code == HTTPStatus.NO_CONTENT
         assert not Project.objects.filter(id=project.id).exists()
 
+    @pytest.mark.parametrize(
+        "role",
+        [
+            ProjectMembership.Role.COORDINATOR,
+            ProjectMembership.Role.EXECUTOR,
+            ProjectMembership.Role.FREELANCER,
+            ProjectMembership.Role.CLIENT,
+        ],
+    )
+    def test_other_roles_get_403(
+        self, auth_client, auth_user, project_factory, project_membership_factory, role
+    ):
+        project = project_factory()
+        project_membership_factory(user=auth_user, project=project, role=role)
+
+        response = auth_client.delete(f"/api/v1/projects/{project.id}/")
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert Project.objects.filter(id=project.id).exists()
+
     def test_deleting_a_project_cascades_its_memberships(
         self, auth_client, auth_user, project_factory, project_membership_factory
     ):
         project = project_factory()
-        membership = project_membership_factory(user=auth_user, project=project)
+        membership = project_membership_factory(
+            user=auth_user, project=project, role=ProjectMembership.Role.ADMIN
+        )
 
         auth_client.delete(f"/api/v1/projects/{project.id}/")
 

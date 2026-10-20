@@ -351,7 +351,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a project
-         * @description Permanently delete a project and all its memberships.
+         * @description Permanently delete a project and everything in it. Only a project admin or producer can do this.
          */
         delete: operations["deleteProjectDetailControllerApiV1ProjectsProjectId"];
         options?: never;
@@ -4628,13 +4628,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */

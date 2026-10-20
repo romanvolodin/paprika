@@ -23,3 +23,21 @@ def require_can_write(user: User, project: Project) -> None:
             {"detail": "Your role in this project is read-only."},
             status_code=HTTPStatus.FORBIDDEN,
         )
+
+
+def require_can_manage_project(user: User, project: Project) -> None:
+    """Reject everyone except project admins and producers with a 403.
+
+    Same precondition as `require_can_write`: the caller has already
+    established that `user` is a member of `project`.
+    """
+    can_manage = ProjectMembership.objects.filter(
+        project=project,
+        user=user,
+        role__in=[ProjectMembership.Role.ADMIN, ProjectMembership.Role.PRODUCER],
+    ).exists()
+    if not can_manage:
+        raise APIError(
+            {"detail": "Only a project admin or producer can do this."},
+            status_code=HTTPStatus.FORBIDDEN,
+        )
