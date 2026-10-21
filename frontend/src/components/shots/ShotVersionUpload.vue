@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { NButton, NIcon, NProgress, useMessage } from 'naive-ui'
+import { NButton, NIcon, NInput, NProgress, useMessage } from 'naive-ui'
 import { CloseOutline, CloudUploadOutline } from '@vicons/ionicons5'
+import * as chatApi from '@/api/chat'
 import { useVersionsStore } from '@/stores/versions'
 import { describeVersionUploadError } from '@/utils/apiError'
 import { formatFileSize } from '@/utils/format'
@@ -11,6 +12,8 @@ const props = defineProps<{ shotId: number }>()
 const emit = defineEmits<{ uploaded: [version: VersionOut] }>()
 
 const ALLOWED_EXTENSIONS = ['mp4', 'jpg', 'jpeg', 'png']
+// The comment is a chat message, whose text is capped by the backend.
+const MAX_COMMENT_LENGTH = 2000
 
 const store = useVersionsStore()
 const message = useMessage()
@@ -18,8 +21,13 @@ const message = useMessage()
 const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
 const previewUrl = ref('')
+const comment = ref('')
+// Set once the file is uploaded; only the comment may still be pending.
+const uploaded = ref<VersionOut | null>(null)
+const isSendingComment = ref(false)
+const commentFailed = ref(false)
 
-const isBusy = computed(() => store.uploadState !== 'idle')
+const isBusy = computed(() => store.uploadState !== 'idle' || isSendingComment.value)
 // The extension decides, not the MIME type: some systems send none.
 const isVideo = computed(() => file.value?.name.toLowerCase().endsWith('.mp4') ?? false)
 
@@ -63,14 +71,37 @@ function handleDrop(event: DragEvent) {
   choose(dropped[0])
 }
 
+// The comment goes into the chat of the shot with a link to the new
+// version. If it fails the version stays uploaded and only the comment
+// is sent again.
+async function finish(version: VersionOut) {
+  const text = comment.value.trim()
+  if (text !== '') {
+    isSendingComment.value = true
+    commentFailed.value = false
+    try {
+      await chatApi.sendMessage(props.shotId, { text, version_ids: [version.id] })
+    } catch {
+      commentFailed.value = true
+      return
+    } finally {
+      isSendingComment.value = false
+    }
+  }
+  emit('uploaded', version)
+}
+
 async function submit() {
   if (!file.value) return
+  let version: VersionOut
   try {
-    const version = await store.upload(props.shotId, file.value)
-    emit('uploaded', version)
+    version = await store.upload(props.shotId, file.value)
   } catch (error) {
     message.error(describeVersionUploadError(error))
+    return
   }
+  uploaded.value = version
+  await finish(version)
 }
 
 onBeforeUnmount(dropPreview)
@@ -97,7 +128,13 @@ onBeforeUnmount(dropPreview)
       <div v-else class="version-upload__preview" data-test="preview">
         <div class="version-upload__file-header">
           <span class="version-upload__file-name mono">{{ file.name }}</span>
-          <n-button quaternary circle :disabled="isBusy" aria-label="Сбросить файл" @click="reset">
+          <n-button
+            quaternary
+            circle
+            :disabled="isBusy || uploaded !== null"
+            aria-label="Сбросить файл"
+            @click="reset"
+          >
             <template #icon><n-icon :component="CloseOutline" /></template>
           </n-button>
         </div>
@@ -126,6 +163,19 @@ onBeforeUnmount(dropPreview)
         <dd>{{ formatFileSize(file.size) }}</dd>
       </dl>
 
+      <div class="version-upload__comment">
+        <label class="version-upload__label" for="version-comment">Комментарий</label>
+        <n-input
+          v-model:value="comment"
+          :input-props="{ id: 'version-comment' }"
+          type="textarea"
+          placeholder="Комментарий к версии…"
+          :maxlength="MAX_COMMENT_LENGTH"
+          :autosize="{ minRows: 4, maxRows: 12 }"
+          show-count
+        />
+      </div>
+
       <div class="version-upload__submit">
         <n-progress
           v-if="store.uploadState === 'uploading'"
@@ -136,7 +186,18 @@ onBeforeUnmount(dropPreview)
         <span v-else-if="store.uploadState === 'processing'" class="version-upload__processing">
           Файл отправлен, идёт обработка…
         </span>
-        <n-button type="primary" :disabled="!file || isBusy" @click="submit">
+        <template v-if="uploaded">
+          <p v-if="commentFailed" class="version-upload__error" role="alert">
+            Версия загружена, но комментарий не отправился.
+          </p>
+          <n-button type="primary" :loading="isSendingComment" @click="finish(uploaded)">
+            Повторить отправку комментария
+          </n-button>
+          <n-button :disabled="isSendingComment" @click="emit('uploaded', uploaded)">
+            Перейти к версии без комментария
+          </n-button>
+        </template>
+        <n-button v-else type="primary" :disabled="!file || isBusy" @click="submit">
           Отправить версию
         </n-button>
       </div>
@@ -251,6 +312,23 @@ onBeforeUnmount(dropPreview)
 .version-upload__facts dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.version-upload__label {
+  font-size: var(--text-sm, 13px);
+  color: var(--color-text-secondary);
+}
+
+.version-upload__comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.version-upload__error {
+  margin: 0;
+  color: var(--color-error, #d03050);
+  font-size: var(--text-sm, 13px);
 }
 
 .version-upload__submit {

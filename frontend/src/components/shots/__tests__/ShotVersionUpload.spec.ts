@@ -5,10 +5,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { NMessageProvider } from 'naive-ui'
 import ShotVersionUpload from '@/components/shots/ShotVersionUpload.vue'
 import { useVersionsStore } from '@/stores/versions'
+import * as chatApi from '@/api/chat'
 import * as versionsApi from '@/api/versions'
 import type { VersionOut } from '@/types/api'
 
 vi.mock('@/api/versions')
+vi.mock('@/api/chat')
 
 const created: VersionOut = {
   id: 20,
@@ -212,5 +214,131 @@ describe('ShotVersionUpload', () => {
     finish(created)
     await flushPromises()
     expect(wrapper.text()).not.toContain('идёт обработка')
+  })
+
+  describe('comment', () => {
+    function commentField(wrapper: ReturnType<typeof mount>) {
+      return wrapper.find('textarea')
+    }
+
+    async function send(wrapper: ReturnType<typeof mount>) {
+      await submitButton(wrapper).trigger('click')
+      await flushPromises()
+    }
+
+    function findButton(wrapper: ReturnType<typeof mount>, label: string) {
+      return wrapper.findAll('button').find((button) => button.text() === label)
+    }
+
+    it('has a field for the comment', () => {
+      const wrapper = mount(Host)
+
+      expect(commentField(wrapper).exists()).toBe(true)
+      expect(wrapper.text()).toContain('Комментарий')
+    })
+
+    it('sends the comment to the chat of the shot with a link to the new version', async () => {
+      vi.mocked(versionsApi.uploadVersion).mockResolvedValue(created)
+      vi.mocked(chatApi.sendMessage).mockResolvedValue({} as never)
+      const wrapper = mount(Host)
+      await chooseFile(wrapper, video)
+      await commentField(wrapper).setValue('  Поправил небо.  ')
+
+      await send(wrapper)
+
+      expect(chatApi.sendMessage).toHaveBeenCalledWith(10, {
+        text: 'Поправил небо.',
+        version_ids: [created.id],
+      })
+      expect(received).toEqual([created])
+    })
+
+    it('sends no message when there is no comment', async () => {
+      vi.mocked(versionsApi.uploadVersion).mockResolvedValue(created)
+      const wrapper = mount(Host)
+      await chooseFile(wrapper, video)
+      await commentField(wrapper).setValue('   ')
+
+      await send(wrapper)
+
+      expect(chatApi.sendMessage).not.toHaveBeenCalled()
+      expect(received).toEqual([created])
+    })
+
+    it('does not send the comment when the upload fails', async () => {
+      vi.mocked(versionsApi.uploadVersion).mockRejectedValue(new Error('boom'))
+      const wrapper = mount(Host)
+      await chooseFile(wrapper, video)
+      await commentField(wrapper).setValue('Поправил небо.')
+
+      await send(wrapper)
+
+      expect(chatApi.sendMessage).not.toHaveBeenCalled()
+      expect((commentField(wrapper).element as HTMLTextAreaElement).value).toBe('Поправил небо.')
+    })
+
+    describe('when the comment cannot be sent', () => {
+      async function failComment() {
+        vi.mocked(versionsApi.uploadVersion).mockResolvedValue(created)
+        vi.mocked(chatApi.sendMessage).mockRejectedValue(new Error('offline'))
+        const wrapper = mount(Host)
+        await chooseFile(wrapper, video)
+        await commentField(wrapper).setValue('Поправил небо.')
+        await send(wrapper)
+        return wrapper
+      }
+
+      it('stays on the page with an error and keeps the text', async () => {
+        const wrapper = await failComment()
+
+        expect(received).toEqual([])
+        expect(wrapper.text()).toContain('Версия загружена, но комментарий не отправился.')
+        expect((commentField(wrapper).element as HTMLTextAreaElement).value).toBe('Поправил небо.')
+      })
+
+      it('offers to send only the comment again, not the file', async () => {
+        const wrapper = await failComment()
+
+        expect(findButton(wrapper, 'Отправить версию')).toBeUndefined()
+        expect(findButton(wrapper, 'Повторить отправку комментария')).toBeDefined()
+        expect(
+          wrapper.find('button[aria-label="Сбросить файл"]').attributes('disabled'),
+        ).toBeDefined()
+      })
+
+      it('goes on once the retry succeeds, without uploading the file again', async () => {
+        const wrapper = await failComment()
+        vi.mocked(chatApi.sendMessage).mockResolvedValue({} as never)
+
+        await findButton(wrapper, 'Повторить отправку комментария')!.trigger('click')
+        await flushPromises()
+
+        expect(versionsApi.uploadVersion).toHaveBeenCalledTimes(1)
+        expect(chatApi.sendMessage).toHaveBeenCalledTimes(2)
+        expect(received).toEqual([created])
+      })
+
+      it('sends the edited text on the retry', async () => {
+        const wrapper = await failComment()
+        vi.mocked(chatApi.sendMessage).mockResolvedValue({} as never)
+        await commentField(wrapper).setValue('Поправил небо и тени.')
+
+        await findButton(wrapper, 'Повторить отправку комментария')!.trigger('click')
+        await flushPromises()
+
+        expect(chatApi.sendMessage).toHaveBeenLastCalledWith(10, {
+          text: 'Поправил небо и тени.',
+          version_ids: [created.id],
+        })
+      })
+
+      it('lets the user go on without the comment', async () => {
+        const wrapper = await failComment()
+
+        await findButton(wrapper, 'Перейти к версии без комментария')!.trigger('click')
+
+        expect(received).toEqual([created])
+      })
+    })
   })
 })
