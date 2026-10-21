@@ -52,11 +52,20 @@ function chooseFile(wrapper: ReturnType<typeof mount>, file: File) {
   return input.trigger('change')
 }
 
+function submitButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((button) => button.text() === 'Отправить версию')!
+}
+
+const video = new File(['x'], 'PRJ_0010_v02.mp4', { type: 'video/mp4' })
+const image = new File(['x'], 'frame.PNG', { type: 'image/png' })
+
 describe('ShotVersionUpload', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     received.length = 0
+    URL.createObjectURL = vi.fn(() => 'blob:preview')
+    URL.revokeObjectURL = vi.fn()
     vi.mocked(versionsApi.listVersions).mockResolvedValue({
       items: [],
       total: 0,
@@ -65,40 +74,123 @@ describe('ShotVersionUpload', () => {
     })
   })
 
-  it('uploads a chosen file for the shot and reports the created version', async () => {
-    vi.mocked(versionsApi.uploadVersion).mockResolvedValue(created)
+  it('asks for a file first, with nothing to send yet', () => {
     const wrapper = mount(Host)
-    const file = new File(['x'], 'PRJ_0010_v02.mp4', { type: 'video/mp4' })
 
-    await chooseFile(wrapper, file)
-    await flushPromises()
-
-    expect(versionsApi.uploadVersion).toHaveBeenCalledWith(10, file, expect.any(Function))
-    expect(received).toEqual([created])
+    expect(wrapper.find('[data-test="drop-zone"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="preview"]').exists()).toBe(false)
+    expect(submitButton(wrapper).attributes('disabled')).toBeDefined()
   })
 
-  it('refuses a file with an unsupported extension without calling the API', async () => {
+  it('shows a live preview of a chosen video without uploading it', async () => {
+    const wrapper = mount(Host)
+
+    await chooseFile(wrapper, video)
+
+    expect(wrapper.find('[data-test="drop-zone"]').exists()).toBe(false)
+    expect(wrapper.find('video').attributes('src')).toBe('blob:preview')
+    expect(wrapper.find('video').attributes('controls')).toBeDefined()
+    expect(wrapper.text()).toContain('PRJ_0010_v02.mp4')
+    expect(versionsApi.uploadVersion).not.toHaveBeenCalled()
+    expect(submitButton(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  it('shows a chosen image as a picture, whatever the case of its extension', async () => {
+    const wrapper = mount(Host)
+
+    await chooseFile(wrapper, image)
+
+    expect(wrapper.find('video').exists()).toBe(false)
+    expect(wrapper.find('img').attributes('src')).toBe('blob:preview')
+  })
+
+  it('takes a file dropped on the zone', async () => {
+    const wrapper = mount(Host)
+
+    await wrapper.find('[data-test="drop-zone"]').trigger('drop', {
+      dataTransfer: { files: [video] },
+    })
+
+    expect(wrapper.find('video').exists()).toBe(true)
+  })
+
+  it('takes the first of several dropped files', async () => {
+    const wrapper = mount(Host)
+
+    await wrapper.find('[data-test="drop-zone"]').trigger('drop', {
+      dataTransfer: { files: [image, video] },
+    })
+
+    expect(wrapper.find('img').exists()).toBe(true)
+    expect(wrapper.find('video').exists()).toBe(false)
+  })
+
+  it('refuses a file with an unsupported extension and keeps asking for one', async () => {
     const wrapper = mount(Host)
 
     await chooseFile(wrapper, new File(['x'], 'notes.txt', { type: 'text/plain' }))
-    await flushPromises()
 
-    expect(versionsApi.uploadVersion).not.toHaveBeenCalled()
-    expect(received).toEqual([])
+    expect(wrapper.find('[data-test="drop-zone"]').exists()).toBe(true)
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
   })
 
-  it('reports nothing when the upload fails', async () => {
+  it('goes back to the choice on a reset and frees the preview', async () => {
+    const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
+
+    await wrapper.find('button[aria-label="Сбросить файл"]').trigger('click')
+
+    expect(wrapper.find('[data-test="drop-zone"]').exists()).toBe(true)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
+  })
+
+  it('frees the preview of the earlier file when another one is chosen', async () => {
+    const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
+    await wrapper.find('button[aria-label="Сбросить файл"]').trigger('click')
+
+    await chooseFile(wrapper, image)
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(2)
+  })
+
+  it('frees the preview when the page is left', async () => {
+    const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
+
+    wrapper.unmount()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
+  })
+
+  it('uploads the chosen file for the shot on send and reports the created version', async () => {
+    vi.mocked(versionsApi.uploadVersion).mockResolvedValue(created)
+    const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
+
+    await submitButton(wrapper).trigger('click')
+    await flushPromises()
+
+    expect(versionsApi.uploadVersion).toHaveBeenCalledWith(10, video, expect.any(Function))
+    expect(received).toEqual([created])
+  })
+
+  it('keeps the chosen file when the upload fails, so it can be sent again', async () => {
     vi.mocked(versionsApi.uploadVersion).mockRejectedValue(new Error('boom'))
     const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
 
-    await chooseFile(wrapper, new File(['x'], 'PRJ_0010_v02.mp4', { type: 'video/mp4' }))
+    await submitButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(received).toEqual([])
     expect(useVersionsStore().uploadState).toBe('idle')
+    expect(wrapper.find('video').exists()).toBe(true)
+    expect(submitButton(wrapper).attributes('disabled')).toBeUndefined()
   })
 
-  it('shows the progress while uploading and the processing note after the last byte', async () => {
+  it('locks the reset and the send button while uploading and shows the processing note', async () => {
     let finish: (version: VersionOut) => void = () => {}
     vi.mocked(versionsApi.uploadVersion).mockImplementation(
       (_id, _file, onProgress) =>
@@ -108,10 +200,14 @@ describe('ShotVersionUpload', () => {
         }),
     )
     const wrapper = mount(Host)
+    await chooseFile(wrapper, video)
 
-    await chooseFile(wrapper, new File(['x'], 'PRJ_0010_v02.mp4', { type: 'video/mp4' }))
+    await submitButton(wrapper).trigger('click')
     await flushPromises()
+
     expect(wrapper.text()).toContain('идёт обработка')
+    expect(submitButton(wrapper).attributes('disabled')).toBeDefined()
+    expect(wrapper.find('button[aria-label="Сбросить файл"]').attributes('disabled')).toBeDefined()
 
     finish(created)
     await flushPromises()

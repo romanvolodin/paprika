@@ -93,6 +93,8 @@ describe('ShotUploadView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    URL.createObjectURL = vi.fn(() => 'blob:preview')
+    URL.revokeObjectURL = vi.fn()
     vi.mocked(versionsApi.listVersions).mockResolvedValue({
       items: [],
       total: 0,
@@ -123,6 +125,10 @@ describe('ShotUploadView', () => {
     Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
 
     await input.trigger('change')
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Отправить версию')!
+      .trigger('click')
     await flushPromises()
 
     expect(router.currentRoute.value.name).toBe('shot-detail')

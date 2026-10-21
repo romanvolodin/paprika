@@ -27,8 +27,6 @@ function handleUploaded(version: VersionOut) {
 
 <template>
   <div v-if="store.shot" class="shot-upload">
-    <h2 class="shot-upload__heading">Загрузить версию</h2>
-
     <shot-version-upload v-if="canWrite" :shot-id="store.shot.id" @uploaded="handleUploaded" />
     <p v-else class="shot-upload__note">У вас нет прав загружать версии в этот проект.</p>
   </div>
@@ -37,14 +35,9 @@ function handleUploaded(version: VersionOut) {
 <style scoped>
 .shot-upload {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
-}
-
-.shot-upload__heading {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  min-height: 0;
 }
 
 .shot-upload__note {
