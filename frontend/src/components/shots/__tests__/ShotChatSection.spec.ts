@@ -5,6 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { NDialogProvider, NMessageProvider, NSelect } from 'naive-ui'
 import ShotChatSection from '@/components/shots/ShotChatSection.vue'
+import UserAvatar from '@/components/common/UserAvatar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import * as chatApi from '@/api/chat'
@@ -771,6 +772,86 @@ describe('ShotChatSection', () => {
       expect(chatApi.listMessages).not.toHaveBeenCalled()
       visibility.mockRestore()
       wrapper.unmount()
+    })
+  })
+
+  describe('bubbles', () => {
+    async function mountWith(items: MessageOut[]) {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(chatList(items))
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      return wrapper
+    }
+
+    it("puts the user's own messages on the right and other people's on the left", async () => {
+      const wrapper = await mountWith([
+        buildMessage(1, { created_by: me }),
+        buildMessage(2, { created_by: other, created_at: '2026-01-01T12:00:00Z' }),
+      ])
+
+      const rows = wrapper.findAll('.shot-chat__message')
+      expect(rows[0].classes()).toContain('shot-chat__message--own')
+      expect(rows[1].classes()).not.toContain('shot-chat__message--own')
+    })
+
+    it('shows the avatar of another author only next to the last message of a run', async () => {
+      const wrapper = await mountWith([
+        buildMessage(1, { created_at: '2026-01-01T10:00:00Z' }),
+        buildMessage(2, { created_at: '2026-01-01T10:01:00Z' }),
+        buildMessage(3, { created_by: me, created_at: '2026-01-01T10:02:00Z' }),
+      ])
+
+      const avatars = wrapper.findAllComponents(UserAvatar)
+      expect(avatars).toHaveLength(1)
+      const rows = wrapper.findAll('.shot-chat__message')
+      expect(rows[1].findComponent(UserAvatar).exists()).toBe(true)
+      expect(rows[0].findComponent(UserAvatar).exists()).toBe(false)
+    })
+
+    it('shows no avatar for the own messages', async () => {
+      const wrapper = await mountWith([buildMessage(1, { created_by: me })])
+
+      expect(wrapper.findComponent(UserAvatar).exists()).toBe(false)
+    })
+
+    it('names another author only above the first message of a run, and never the user', async () => {
+      const wrapper = await mountWith([
+        buildMessage(1, { created_at: '2026-01-01T10:00:00Z' }),
+        buildMessage(2, { created_at: '2026-01-01T10:01:00Z' }),
+        buildMessage(3, { created_by: me, created_at: '2026-01-01T10:02:00Z' }),
+      ])
+
+      const rows = wrapper.findAll('.shot-chat__message')
+      expect(rows[0].find('.shot-chat__author').text()).toBe('Анна Смирнова')
+      expect(rows[1].find('.shot-chat__author').exists()).toBe(false)
+      expect(rows[2].find('.shot-chat__author').exists()).toBe(false)
+    })
+
+    it('shows the time of a message inside its bubble', async () => {
+      const wrapper = await mountWith([buildMessage(1)])
+
+      expect(wrapper.find('.shot-chat__stamp').text()).toMatch(/\d{2}:\d{2}/)
+    })
+
+    it('puts a heading above each new day', async () => {
+      const wrapper = await mountWith([
+        buildMessage(1, { created_at: '2026-01-01T10:00:00Z' }),
+        buildMessage(2, { created_at: '2026-01-03T10:00:00Z' }),
+        buildMessage(3, { created_at: '2026-01-03T10:01:00Z' }),
+      ])
+
+      expect(wrapper.findAll('.shot-chat__day')).toHaveLength(2)
+    })
+
+    it('keeps the actions of a message: reply for everyone, edit and delete for the author', async () => {
+      const wrapper = await mountWith([
+        buildMessage(1, { created_by: me }),
+        buildMessage(2, { created_by: other, created_at: '2026-01-01T12:00:00Z' }),
+      ])
+
+      const rows = wrapper.findAll('.shot-chat__message')
+      expect(rows[0].find('.shot-chat__actions').text()).toContain('Изменить')
+      expect(rows[1].find('.shot-chat__actions').text()).toBe('Ответить')
     })
   })
 })

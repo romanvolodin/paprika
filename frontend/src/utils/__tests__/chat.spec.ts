@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { describeSystemMessage, mergeLatestWindow, userName } from '@/utils/chat'
+import {
+  buildChatEntries,
+  describeSystemMessage,
+  formatClock,
+  formatDay,
+  mergeLatestWindow,
+  userName,
+} from '@/utils/chat'
 import type { MessageOut, UserOut } from '@/types/api'
 
 function buildUser(overrides: Partial<UserOut> = {}): UserOut {
@@ -165,5 +172,114 @@ describe('mergeLatestWindow', () => {
 
     expect(result.items).toEqual([])
     expect(result.hasOlder).toBe(false)
+  })
+})
+
+// Local times, so the tests do not depend on the time zone they run in.
+function at(day: number, hour: number, minute = 0, month = 9, year = 2026): string {
+  return new Date(year, month, day, hour, minute).toISOString()
+}
+
+describe('buildChatEntries', () => {
+  const ivan = buildUser({ id: 1 })
+  const anna = buildUser({ id: 2, first_name: 'Анна' })
+
+  it('starts and ends the run of a single message', () => {
+    const [entry] = buildChatEntries([buildMessage({ created_at: at(21, 10) })])
+
+    expect(entry.firstOfRun).toBe(true)
+    expect(entry.lastOfRun).toBe(true)
+  })
+
+  it('puts messages of one author a few minutes apart into one run', () => {
+    const entries = buildChatEntries([
+      buildMessage({ id: 1, created_by: ivan, created_at: at(21, 10, 0) }),
+      buildMessage({ id: 2, created_by: ivan, created_at: at(21, 10, 3) }),
+      buildMessage({ id: 3, created_by: ivan, created_at: at(21, 10, 6) }),
+    ])
+
+    expect(entries.map((entry) => entry.firstOfRun)).toEqual([true, false, false])
+    expect(entries.map((entry) => entry.lastOfRun)).toEqual([false, false, true])
+  })
+
+  it('starts a new run after a longer pause', () => {
+    const entries = buildChatEntries([
+      buildMessage({ id: 1, created_by: ivan, created_at: at(21, 10, 0) }),
+      buildMessage({ id: 2, created_by: ivan, created_at: at(21, 10, 6) }),
+    ])
+
+    expect(entries.map((entry) => entry.firstOfRun)).toEqual([true, true])
+    expect(entries.map((entry) => entry.lastOfRun)).toEqual([true, true])
+  })
+
+  it('starts a new run when the author changes', () => {
+    const entries = buildChatEntries([
+      buildMessage({ id: 1, created_by: ivan, created_at: at(21, 10, 0) }),
+      buildMessage({ id: 2, created_by: anna, created_at: at(21, 10, 1) }),
+      buildMessage({ id: 3, created_by: ivan, created_at: at(21, 10, 2) }),
+    ])
+
+    expect(entries.map((entry) => entry.firstOfRun)).toEqual([true, true, true])
+    expect(entries.map((entry) => entry.lastOfRun)).toEqual([true, true, true])
+  })
+
+  it('does not run messages across a system message', () => {
+    const entries = buildChatEntries([
+      buildMessage({ id: 1, created_by: ivan, created_at: at(21, 10, 0) }),
+      buildMessage({ id: 2, type: 'system', created_by: ivan, created_at: at(21, 10, 1) }),
+      buildMessage({ id: 3, created_by: ivan, created_at: at(21, 10, 2) }),
+    ])
+
+    expect(entries[0].lastOfRun).toBe(true)
+    expect(entries[2].firstOfRun).toBe(true)
+  })
+
+  it('does not run messages of deleted users together', () => {
+    const entries = buildChatEntries([
+      buildMessage({ id: 1, created_by: null, created_at: at(21, 10, 0) }),
+      buildMessage({ id: 2, created_by: null, created_at: at(21, 10, 1) }),
+    ])
+
+    expect(entries.map((entry) => entry.firstOfRun)).toEqual([true, true])
+  })
+
+  it('does not run messages across midnight and heads each new day', () => {
+    const entries = buildChatEntries(
+      [
+        buildMessage({ id: 1, created_by: ivan, created_at: at(20, 23, 58) }),
+        buildMessage({ id: 2, created_by: ivan, created_at: at(21, 0, 1) }),
+        buildMessage({ id: 3, created_by: ivan, created_at: at(21, 0, 2) }),
+      ],
+      new Date(2026, 9, 21, 12),
+    )
+
+    expect(entries.map((entry) => entry.dayLabel)).toEqual(['Вчера', 'Сегодня', null])
+    expect(entries.map((entry) => entry.firstOfRun)).toEqual([true, true, false])
+  })
+})
+
+describe('formatDay', () => {
+  const now = new Date(2026, 9, 21, 12)
+
+  it('says today and yesterday', () => {
+    expect(formatDay(at(21, 8), now)).toBe('Сегодня')
+    expect(formatDay(at(20, 23), now)).toBe('Вчера')
+  })
+
+  it('gives the date for an earlier day of the same year, without the year', () => {
+    const label = formatDay(at(2, 12), now)
+
+    expect(label).toContain('2')
+    expect(label).not.toContain('2026')
+  })
+
+  it('adds the year for another year', () => {
+    expect(formatDay(at(2, 12, 0, 9, 2025), now)).toContain('2025')
+  })
+})
+
+describe('formatClock', () => {
+  it('gives hours and minutes with a leading zero', () => {
+    expect(formatClock(at(21, 9, 5))).toBe('09:05')
   })
 })

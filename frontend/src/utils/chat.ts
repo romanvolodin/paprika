@@ -80,3 +80,69 @@ export function mergeLatestWindow(
     hasOlder: null,
   }
 }
+
+/** Messages of one author closer than this form one run of bubbles. */
+export const RUN_GAP_MS = 5 * 60 * 1000
+
+export interface ChatEntry {
+  message: MessageOut
+  // The day heading to show above the message, null inside the same day.
+  dayLabel: string | null
+  firstOfRun: boolean
+  lastOfRun: boolean
+}
+
+function dayKey(value: string): string {
+  const date = new Date(value)
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+/** "Сегодня", "Вчера", "2 окт." (with the year for another year). */
+export function formatDay(value: string, now: Date = new Date()): string {
+  const date = new Date(value)
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (dayKey(value) === dayKey(now.toISOString())) return 'Сегодня'
+  if (dayKey(value) === dayKey(yesterday.toISOString())) return 'Вчера'
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  })
+}
+
+/** "14:20" */
+export function formatClock(value: string): string {
+  return new Date(value).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+}
+
+function inSameRun(a: MessageOut | undefined, b: MessageOut): boolean {
+  return (
+    a !== undefined &&
+    a.type === 'user' &&
+    b.type === 'user' &&
+    a.created_by !== null &&
+    a.created_by.id === b.created_by?.id &&
+    dayKey(a.created_at) === dayKey(b.created_at) &&
+    Math.abs(new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) <= RUN_GAP_MS
+  )
+}
+
+/**
+ * The feed with what the bubbles need: where a new day starts and where
+ * a run of messages by one author begins and ends (the name goes above
+ * the first, the avatar next to the last).
+ */
+export function buildChatEntries(messages: MessageOut[], now: Date = new Date()): ChatEntry[] {
+  return messages.map((message, index) => {
+    const previous = messages[index - 1]
+    const next = messages[index + 1]
+    const newDay = !previous || dayKey(previous.created_at) !== dayKey(message.created_at)
+    return {
+      message,
+      dayLabel: newDay ? formatDay(message.created_at, now) : null,
+      firstOfRun: !inSameRun(previous, message),
+      lastOfRun: !next || !inSameRun(message, next),
+    }
+  })
+}

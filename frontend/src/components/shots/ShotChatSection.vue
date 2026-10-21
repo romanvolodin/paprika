@@ -9,7 +9,8 @@ import ChatReactions from '@/components/shots/ChatReactions.vue'
 import { MAX_CHAT_ATTACHMENTS, useChatAttachments } from '@/composables/useChatAttachments'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import { describeSystemMessage, userName } from '@/utils/chat'
+import UserAvatar from '@/components/common/UserAvatar.vue'
+import { buildChatEntries, describeSystemMessage, formatClock, userName } from '@/utils/chat'
 import { formatFileSize } from '@/utils/format'
 import { firstValidationMessage } from '@/utils/apiError'
 import type { MessageOut } from '@/types/api'
@@ -278,6 +279,8 @@ function confirmDelete(target: MessageOut) {
   })
 }
 
+const entries = computed(() => buildChatEntries(store.items))
+
 function isOwn(target: MessageOut): boolean {
   return target.type === 'user' && target.created_by?.id === currentUserId.value
 }
@@ -300,7 +303,12 @@ function formatTime(value: string): string {
         Сообщений пока нет.
       </p>
 
-      <template v-for="item in store.items" :key="item.id">
+      <template
+        v-for="{ message: item, dayLabel, firstOfRun, lastOfRun } in entries"
+        :key="item.id"
+      >
+        <p v-if="dayLabel" class="shot-chat__day">{{ dayLabel }}</p>
+
         <div v-if="item.type === 'system'" class="shot-chat__system-block">
           <p class="shot-chat__system">
             {{ describeSystemMessage(item) }}
@@ -314,11 +322,70 @@ function formatTime(value: string): string {
           />
         </div>
 
-        <div v-else class="shot-chat__message">
-          <div class="shot-chat__meta">
-            <strong>{{ userName(item.created_by) }}</strong>
-            <span class="shot-chat__time">{{ formatTime(item.created_at) }}</span>
-            <span v-if="item.edited_at" class="shot-chat__time">(изменено)</span>
+        <div
+          v-else
+          class="shot-chat__message"
+          :class="{
+            'shot-chat__message--own': isOwn(item),
+            'shot-chat__message--first': firstOfRun,
+          }"
+        >
+          <div v-if="!isOwn(item)" class="shot-chat__avatar">
+            <user-avatar v-if="lastOfRun" :user="item.created_by" :size="28" />
+          </div>
+
+          <div class="shot-chat__column">
+            <div class="shot-chat__bubble" :class="{ 'shot-chat__bubble--tail': lastOfRun }">
+              <strong v-if="!isOwn(item) && firstOfRun" class="shot-chat__author">
+                {{ userName(item.created_by) }}
+              </strong>
+
+              <div v-if="item.reply_to" class="shot-chat__quote">
+                <strong>{{ userName(item.reply_to.author) }}</strong>
+                <span v-if="item.reply_to.deleted" class="shot-chat__deleted">
+                  Сообщение удалено
+                </span>
+                <span v-else>{{ item.reply_to.text }}</span>
+              </div>
+
+              <div v-if="editingId === item.id" class="shot-chat__edit">
+                <n-input
+                  v-model:value="editDraft"
+                  type="textarea"
+                  :autosize="{ minRows: 1, maxRows: 6 }"
+                />
+                <div class="shot-chat__edit-actions">
+                  <n-button size="small" :disabled="isSavingEdit" @click="editingId = null">
+                    Отмена
+                  </n-button>
+                  <n-button
+                    size="small"
+                    type="primary"
+                    :disabled="!canSaveEdit(item)"
+                    :loading="isSavingEdit"
+                    @click="saveEdit(item)"
+                  >
+                    Сохранить
+                  </n-button>
+                </div>
+              </div>
+              <p v-else-if="item.text" class="shot-chat__text">{{ item.text }}</p>
+
+              <chat-message-files :attachments="item.attachments" :versions="item.versions" />
+
+              <span class="shot-chat__stamp">
+                <span v-if="item.edited_at">(изменено)</span>
+                {{ formatClock(item.created_at) }}
+              </span>
+            </div>
+
+            <chat-reactions
+              :reactions="item.reactions"
+              :current-user-id="currentUserId"
+              :can-react="canWrite"
+              @toggle="toggleReaction(item, $event)"
+            />
+
             <span v-if="canWrite && editingId !== item.id" class="shot-chat__actions">
               <n-button size="tiny" quaternary @click="startReply(item)">Ответить</n-button>
               <template v-if="isOwn(item)">
@@ -329,42 +396,6 @@ function formatTime(value: string): string {
               </template>
             </span>
           </div>
-
-          <div v-if="item.reply_to" class="shot-chat__quote">
-            <strong>{{ userName(item.reply_to.author) }}</strong>
-            <span v-if="item.reply_to.deleted" class="shot-chat__deleted">Сообщение удалено</span>
-            <span v-else>{{ item.reply_to.text }}</span>
-          </div>
-
-          <div v-if="editingId === item.id" class="shot-chat__edit">
-            <n-input
-              v-model:value="editDraft"
-              type="textarea"
-              :autosize="{ minRows: 1, maxRows: 6 }"
-            />
-            <div class="shot-chat__edit-actions">
-              <n-button size="small" :disabled="isSavingEdit" @click="editingId = null">
-                Отмена
-              </n-button>
-              <n-button
-                size="small"
-                type="primary"
-                :disabled="!canSaveEdit(item)"
-                :loading="isSavingEdit"
-                @click="saveEdit(item)"
-              >
-                Сохранить
-              </n-button>
-            </div>
-          </div>
-          <p v-else-if="item.text" class="shot-chat__text">{{ item.text }}</p>
-          <chat-message-files :attachments="item.attachments" :versions="item.versions" />
-          <chat-reactions
-            :reactions="item.reactions"
-            :current-user-id="currentUserId"
-            :can-react="canWrite"
-            @toggle="toggleReaction(item, $event)"
-          />
         </div>
       </template>
     </div>
@@ -459,7 +490,7 @@ function formatTime(value: string): string {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 2px;
   min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-2);
@@ -481,16 +512,14 @@ function formatTime(value: string): string {
   text-align: center;
 }
 
-.shot-chat__message {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.shot-chat__meta {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
+.shot-chat__day {
+  align-self: center;
+  margin: var(--space-3) 0 var(--space-1);
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 .shot-chat__time {
@@ -498,8 +527,74 @@ function formatTime(value: string): string {
   font-size: var(--text-sm, 13px);
 }
 
+.shot-chat__message {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.shot-chat__message--first {
+  margin-top: var(--space-2);
+}
+
+.shot-chat__message--own {
+  justify-content: flex-end;
+}
+
+.shot-chat__avatar {
+  flex: none;
+  width: 28px;
+}
+
+.shot-chat__column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 85%;
+}
+
+.shot-chat__message--own .shot-chat__column {
+  align-items: flex-end;
+}
+
+.shot-chat__bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 12px;
+  background: var(--color-bg-hover);
+}
+
+.shot-chat__message--own .shot-chat__bubble {
+  background: var(--color-accent-soft);
+}
+
+.shot-chat__bubble--tail {
+  border-bottom-left-radius: 4px;
+}
+
+.shot-chat__message--own .shot-chat__bubble--tail {
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 12px;
+}
+
+.shot-chat__author {
+  color: var(--color-accent);
+  font-size: var(--text-sm, 13px);
+}
+
+.shot-chat__stamp {
+  align-self: flex-end;
+  display: flex;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
 .shot-chat__actions {
-  margin-left: auto;
+  display: flex;
 }
 
 .shot-chat__text {
@@ -531,7 +626,9 @@ function formatTime(value: string): string {
   display: flex;
   flex-direction: column;
   padding: 2px var(--space-2);
-  border-left: 3px solid var(--color-border, rgba(128, 128, 128, 0.5));
+  border-left: 3px solid var(--color-accent);
+  border-radius: 2px;
+  background: var(--color-accent-soft);
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);
   overflow-wrap: anywhere;
