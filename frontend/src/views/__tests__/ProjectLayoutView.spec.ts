@@ -72,6 +72,7 @@ async function mountLayout(
           { path: 'shots/:shotName', name: 'shot-detail', component: Empty },
           { path: 'shots/:shotName/tasks', name: 'shot-tasks', component: Empty },
           { path: 'shots/:shotName/versions', name: 'shot-versions', component: Empty },
+          { path: 'shots/:shotName/upload', name: 'shot-upload', component: Empty },
           { path: 'shots/:shotName/settings', name: 'shot-settings', component: Empty },
           { path: 'tasks', name: 'project-tasks', component: Empty },
           { path: 'groups', name: 'project-groups', component: Empty },
@@ -149,7 +150,7 @@ describe('ProjectLayoutView', () => {
     },
   )
 
-  it.each(['', '/tasks', '/versions', '/settings'])(
+  it.each(['', '/tasks', '/versions', '/upload', '/settings'])(
     'hides the project header on the shot page %s',
     async (suffix) => {
       const wrapper = await mountLayout('admin', `/acme/PRJ/shots/0010${suffix}`)

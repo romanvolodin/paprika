@@ -129,6 +129,11 @@ const router = createRouter({
               component: () => import('@/views/ShotVersionsView.vue'),
             },
             {
+              path: 'upload',
+              name: 'shot-upload',
+              component: () => import('@/views/ShotUploadView.vue'),
+            },
+            {
               path: 'settings',
               name: 'shot-settings',
               component: () => import('@/views/ShotSettingsView.vue'),

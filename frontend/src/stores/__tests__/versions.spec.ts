@@ -134,8 +134,9 @@ describe('useVersionsStore', () => {
         return buildVersion({ id: 2 })
       })
 
-      await store.upload(10, file)
+      const created = await store.upload(10, file)
 
+      expect(created.id).toBe(2)
       expect(seen).toEqual([
         ['uploading', 50],
         ['processing', 100],

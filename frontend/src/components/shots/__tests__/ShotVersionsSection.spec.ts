@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { NDialogProvider, NMessageProvider } from 'naive-ui'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import ShotVersionsSection from '@/components/shots/ShotVersionsSection.vue'
 import { useVersionsStore } from '@/stores/versions'
 import * as versionsApi from '@/api/versions'
@@ -45,16 +46,26 @@ const Host = defineComponent({
         default: () =>
           h(NDialogProvider, null, {
             default: () =>
-              h(ShotVersionsSection, { shotId: props.shotId, canWrite: props.canWrite }),
+              h(ShotVersionsSection, {
+                shotId: props.shotId,
+                canWrite: props.canWrite,
+                uploadTo: { name: 'shot-upload' },
+              }),
           }),
       })
   },
 })
 
-function chooseFile(wrapper: ReturnType<typeof mount>, file: File) {
-  const input = wrapper.find('input[type="file"]')
-  Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
-  return input.trigger('change')
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', component: { render: () => null } },
+    { path: '/upload', name: 'shot-upload', component: { render: () => null } },
+  ],
+})
+
+function mountSection(props: { shotId: number; canWrite?: boolean }) {
+  return mount(Host, { props, global: { plugins: [router] } })
 }
 
 describe('ShotVersionsSection', () => {
@@ -70,7 +81,7 @@ describe('ShotVersionsSection', () => {
   })
 
   it('loads the versions of the given shot', async () => {
-    mount(Host, { props: { shotId: 10 } })
+    mountSection({ shotId: 10 })
     await flushPromises()
 
     expect(versionsApi.listVersions).toHaveBeenCalledWith(10, { page: 1, page_size: 20 })
@@ -80,7 +91,7 @@ describe('ShotVersionsSection', () => {
   // Moving from one shot page to another reuses the section with a new
   // shotId; the versions must follow it.
   it('reloads the versions when the shot changes', async () => {
-    const wrapper = mount(Host, { props: { shotId: 10 } })
+    const wrapper = mountSection({ shotId: 10 })
     await flushPromises()
 
     await wrapper.setProps({ shotId: 11 })
@@ -91,7 +102,7 @@ describe('ShotVersionsSection', () => {
   })
 
   it('shows the upload and delete controls to members who can write', async () => {
-    const wrapper = mount(Host, { props: { shotId: 10, canWrite: true } })
+    const wrapper = mountSection({ shotId: 10, canWrite: true })
     await flushPromises()
 
     expect(wrapper.text()).toContain('Загрузить версию')
@@ -99,7 +110,7 @@ describe('ShotVersionsSection', () => {
   })
 
   it('hides the upload and delete controls from read-only members', async () => {
-    const wrapper = mount(Host, { props: { shotId: 10, canWrite: false } })
+    const wrapper = mountSection({ shotId: 10, canWrite: false })
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Загрузить версию')
@@ -107,25 +118,12 @@ describe('ShotVersionsSection', () => {
     expect(wrapper.text()).toContain('PRJ_10_v01')
   })
 
-  it('uploads a chosen file for the current shot', async () => {
-    vi.mocked(versionsApi.uploadVersion).mockResolvedValue(buildVersion(10))
-    const wrapper = mount(Host, { props: { shotId: 10 } })
-    await flushPromises()
-    const file = new File(['x'], 'PRJ_10_v02.mp4', { type: 'video/mp4' })
-
-    await chooseFile(wrapper, file)
+  it('leads the upload button to the upload page', async () => {
+    const wrapper = mountSection({ shotId: 10 })
     await flushPromises()
 
-    expect(versionsApi.uploadVersion).toHaveBeenCalledWith(10, file, expect.any(Function))
-  })
-
-  it('refuses a file with an unsupported extension without calling the API', async () => {
-    const wrapper = mount(Host, { props: { shotId: 10 } })
-    await flushPromises()
-
-    await chooseFile(wrapper, new File(['x'], 'notes.txt', { type: 'text/plain' }))
-    await flushPromises()
-
-    expect(versionsApi.uploadVersion).not.toHaveBeenCalled()
+    const button = wrapper.find('a.shot-versions__upload')
+    expect(button.text()).toBe('Загрузить версию')
+    expect(button.attributes('href')).toBe('/upload')
   })
 })

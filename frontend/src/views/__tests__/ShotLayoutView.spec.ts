@@ -116,6 +116,7 @@ async function mountShot(role: ProjectMembershipRole, path = '/acme/PRJ/shots/00
           { path: '', name: 'shot-detail', component: Empty },
           { path: 'tasks', name: 'shot-tasks', component: Empty },
           { path: 'versions', name: 'shot-versions', component: Empty },
+          { path: 'upload', name: 'shot-upload', component: Empty },
           { path: 'settings', name: 'shot-settings', component: Empty },
         ],
       },
@@ -192,6 +193,13 @@ describe('ShotLayoutView', () => {
 
     const active = wrapper.findAll('a.shot-page__link--active').map((link) => link.text())
     expect(active).toEqual([label])
+  })
+
+  it('highlights no tab on the upload page', async () => {
+    const wrapper = await mountShot('executor', '/acme/PRJ/shots/0010/upload')
+
+    expect(wrapper.find('a.shot-page__link--active').exists()).toBe(false)
+    expect(wrapper.find('h1').text()).toBe('0010')
   })
 
   it('lets a member who can write change the status from the header', async () => {

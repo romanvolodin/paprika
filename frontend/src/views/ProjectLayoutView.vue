@@ -32,7 +32,13 @@ function isActive(section: Section): boolean {
 
 // The shot page has its own header that already carries the way back
 // to the project, so the project header is not shown there.
-const SHOT_PAGE_ROUTES = ['shot-detail', 'shot-tasks', 'shot-versions', 'shot-settings']
+const SHOT_PAGE_ROUTES = [
+  'shot-detail',
+  'shot-tasks',
+  'shot-versions',
+  'shot-upload',
+  'shot-settings',
+]
 const hasProjectHeader = computed(() => !SHOT_PAGE_ROUTES.includes(String(route.name)))
 
 const routeParams = computed(() => ({

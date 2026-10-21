@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, watch } from 'vue'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import {
   NButton,
   NDataTable,
   NIcon,
   NPagination,
-  NProgress,
   NTag,
   useDialog,
   useMessage,
@@ -13,51 +13,20 @@ import {
 } from 'naive-ui'
 import { CloudUploadOutline, ImageOutline } from '@vicons/ionicons5'
 import { useVersionsStore } from '@/stores/versions'
-import { describeVersionUploadError } from '@/utils/apiError'
 import { formatFileSize, formatVideoTiming } from '@/utils/format'
 import type { VersionOut } from '@/types/api'
 
-const props = defineProps<{ shotId: number; canWrite: boolean }>()
-
-const ALLOWED_EXTENSIONS = ['mp4', 'jpg', 'jpeg', 'png']
+const props = defineProps<{ shotId: number; canWrite: boolean; uploadTo: RouteLocationRaw }>()
 
 const store = useVersionsStore()
 const message = useMessage()
 const dialog = useDialog()
-
-const fileInput = ref<HTMLInputElement | null>(null)
-const isBusy = computed(() => store.uploadState !== 'idle')
 
 watch(
   () => props.shotId,
   (shotId) => store.fetch(shotId),
   { immediate: true },
 )
-
-function pickFile() {
-  fileInput.value?.click()
-}
-
-async function handleFileChosen(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  // Reset so choosing the same file again (after a failure) still fires.
-  input.value = ''
-  if (!file) return
-
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    message.error('Поддерживаются файлы mp4 (h264), jpg и png.')
-    return
-  }
-
-  try {
-    await store.upload(props.shotId, file)
-    message.success('Версия загружена.')
-  } catch (error) {
-    message.error(describeVersionUploadError(error))
-  }
-}
 
 function confirmDelete(version: VersionOut) {
   dialog.warning({
@@ -171,29 +140,12 @@ const columns = computed<DataTableColumns<VersionOut>>(() => [
 
 <template>
   <div class="shot-versions">
-    <div v-if="canWrite" class="shot-versions__upload">
-      <n-button type="primary" :disabled="isBusy" @click="pickFile">
+    <RouterLink v-if="canWrite" v-slot="{ href, navigate }" :to="uploadTo" custom>
+      <n-button class="shot-versions__upload" type="primary" tag="a" :href="href" @click="navigate">
         <template #icon><n-icon :component="CloudUploadOutline" /></template>
         Загрузить версию
       </n-button>
-      <input
-        ref="fileInput"
-        class="shot-versions__file-input"
-        type="file"
-        accept=".mp4,.jpg,.jpeg,.png,video/mp4,image/jpeg,image/png"
-        @change="handleFileChosen"
-      />
-      <n-progress
-        v-if="store.uploadState === 'uploading'"
-        type="line"
-        :percentage="store.uploadProgress"
-        :height="12"
-        class="shot-versions__progress"
-      />
-      <span v-else-if="store.uploadState === 'processing'" class="shot-versions__processing">
-        Файл отправлен, идёт обработка…
-      </span>
-    </div>
+    </RouterLink>
 
     <n-data-table
       :columns="columns"
@@ -223,23 +175,7 @@ const columns = computed<DataTableColumns<VersionOut>>(() => [
 }
 
 .shot-versions__upload {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.shot-versions__file-input {
-  display: none;
-}
-
-.shot-versions__progress {
-  flex: 1;
-  max-width: 320px;
-}
-
-.shot-versions__processing {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm, 13px);
+  align-self: flex-start;
 }
 
 .shot-versions__pagination {

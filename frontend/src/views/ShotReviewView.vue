@@ -21,9 +21,7 @@ const requestedName = computed(() => {
   return value ? value : null
 })
 
-// "Загрузить версию" leads to the upload form, which for now is the
-// "Версии" tab.
-const uploadTo = computed(() => ({ name: 'shot-versions', params: route.params }))
+const uploadTo = computed(() => ({ name: 'shot-upload', params: route.params }))
 
 // Opening the shot (or coming back to this tab) loads the versions
 // anew, so a version uploaded meanwhile shows up.

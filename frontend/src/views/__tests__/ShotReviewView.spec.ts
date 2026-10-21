@@ -81,7 +81,7 @@ async function mountReview(role: ProjectMembershipRole, path = '/shot') {
     history: createMemoryHistory(),
     routes: [
       { path: '/shot', component: ShotReviewView },
-      { path: '/shot/versions', name: 'shot-versions', component: { render: () => null } },
+      { path: '/shot/upload', name: 'shot-upload', component: { render: () => null } },
     ],
   })
   router.push(path)
@@ -125,6 +125,12 @@ describe('ShotReviewView', () => {
     const chat = (await mountReview('client')).wrapper.find('[data-test="chat-section"]')
 
     expect(chat.attributes('data-can-write')).toBe('false')
+  })
+
+  it('leads the upload tile of the strip to the upload page', async () => {
+    const { wrapper } = await mountReview('executor')
+
+    expect(wrapper.find('.versions-strip__upload').attributes('href')).toBe('/shot/upload')
   })
 
   it('plays the newest version when the address names none', async () => {

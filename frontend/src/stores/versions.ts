@@ -52,8 +52,9 @@ export const useVersionsStore = defineStore('versions', () => {
   async function upload(shotId: number, file: File) {
     uploadState.value = 'uploading'
     uploadProgress.value = 0
+    let created: VersionOut
     try {
-      await versionsApi.uploadVersion(shotId, file, (loaded, size) => {
+      created = await versionsApi.uploadVersion(shotId, file, (loaded, size) => {
         uploadProgress.value = Math.round((loaded / size) * 100)
         if (loaded >= size) uploadState.value = 'processing'
       })
@@ -64,6 +65,7 @@ export const useVersionsStore = defineStore('versions', () => {
     // The newest version is on the first page.
     page.value = 1
     await fetch(shotId)
+    return created
   }
 
   async function remove(shotId: number, versionId: number) {
