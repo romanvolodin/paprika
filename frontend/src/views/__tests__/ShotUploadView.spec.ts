@@ -7,10 +7,12 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import ShotUploadView from '@/views/ShotUploadView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useShotDetailStore } from '@/stores/shotDetail'
+import * as tasksApi from '@/api/tasks'
 import * as versionsApi from '@/api/versions'
 import type { ProjectMembershipRole, VersionOut } from '@/types/api'
 
 vi.mock('@/api/versions')
+vi.mock('@/api/tasks')
 
 const created: VersionOut = {
   id: 20,
@@ -44,6 +46,21 @@ async function mountUpload(role: ProjectMembershipRole) {
     date_joined: '2026-01-01T00:00:00Z',
   }
   const store = useShotDetailStore()
+  store.project = {
+    id: 1,
+    company_id: 7,
+    name: 'Feature Film',
+    code: 'PRJ',
+    description: '',
+    cover: null,
+    start_date: null,
+    deadline: null,
+    is_active: true,
+    created_by: null,
+    updated_by: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  }
   store.shot = {
     id: 5,
     project_id: 1,
@@ -95,6 +112,9 @@ describe('ShotUploadView', () => {
     vi.clearAllMocks()
     URL.createObjectURL = vi.fn(() => 'blob:preview')
     URL.revokeObjectURL = vi.fn()
+    vi.mocked(tasksApi.listShotTasks).mockResolvedValue({ items: [] } as never)
+    vi.mocked(tasksApi.listTaskTypes).mockResolvedValue({ items: [] } as never)
+    vi.mocked(tasksApi.listTaskStatuses).mockResolvedValue({ items: [] } as never)
     vi.mocked(versionsApi.listVersions).mockResolvedValue({
       items: [],
       total: 0,

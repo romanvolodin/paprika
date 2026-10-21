@@ -26,8 +26,14 @@ function handleUploaded(version: VersionOut) {
 </script>
 
 <template>
-  <div v-if="store.shot" class="shot-upload">
-    <shot-version-upload v-if="canWrite" :shot-id="store.shot.id" @uploaded="handleUploaded" />
+  <div v-if="store.shot && store.project" class="shot-upload">
+    <shot-version-upload
+      v-if="canWrite"
+      :shot-id="store.shot.id"
+      :project-id="store.project.id"
+      :company-id="store.project.company_id"
+      @uploaded="handleUploaded"
+    />
     <p v-else class="shot-upload__note">У вас нет прав загружать версии в этот проект.</p>
   </div>
 </template>

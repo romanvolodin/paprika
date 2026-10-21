@@ -3,12 +3,14 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { NButton, NIcon, NInput, NProgress, useMessage } from 'naive-ui'
 import { CloseOutline, CloudUploadOutline } from '@vicons/ionicons5'
 import * as chatApi from '@/api/chat'
+import ShotUploadTasks from '@/components/shots/ShotUploadTasks.vue'
+import { useShotTaskDrafts } from '@/composables/useShotTaskDrafts'
 import { useVersionsStore } from '@/stores/versions'
 import { describeVersionUploadError } from '@/utils/apiError'
 import { formatFileSize } from '@/utils/format'
 import type { VersionOut } from '@/types/api'
 
-const props = defineProps<{ shotId: number }>()
+const props = defineProps<{ shotId: number; projectId: number; companyId: number }>()
 const emit = defineEmits<{ uploaded: [version: VersionOut] }>()
 
 const ALLOWED_EXTENSIONS = ['mp4', 'jpg', 'jpeg', 'png']
@@ -22,12 +24,43 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
 const previewUrl = ref('')
 const comment = ref('')
-// Set once the file is uploaded; only the comment may still be pending.
+// Set once the file is uploaded; only the tasks and the comment may
+// still be pending.
 const uploaded = ref<VersionOut | null>(null)
-const isSendingComment = ref(false)
+const isFinishing = ref(false)
+const tasksFailed = ref(false)
 const commentFailed = ref(false)
+const commentSent = ref(false)
 
-const isBusy = computed(() => store.uploadState !== 'idle' || isSendingComment.value)
+const tasks = useShotTaskDrafts(
+  computed(() => ({
+    shotId: props.shotId,
+    projectId: props.projectId,
+    companyId: props.companyId,
+  })),
+)
+
+const isBusy = computed(() => store.uploadState !== 'idle' || isFinishing.value)
+const hasFailed = computed(() => tasksFailed.value || commentFailed.value)
+
+const failureText = computed(() => {
+  if (tasksFailed.value && commentFailed.value) {
+    return 'Версия загружена, но изменения задач не сохранились и комментарий не отправился.'
+  }
+  return tasksFailed.value
+    ? 'Версия загружена, но изменения задач не сохранились.'
+    : 'Версия загружена, но комментарий не отправился.'
+})
+const retryLabel = computed(() => {
+  if (tasksFailed.value && commentFailed.value) return 'Повторить'
+  return tasksFailed.value ? 'Повторить сохранение задач' : 'Повторить отправку комментария'
+})
+const skipLabel = computed(() => {
+  if (tasksFailed.value && commentFailed.value) return 'Перейти к версии без них'
+  return tasksFailed.value
+    ? 'Перейти к версии без сохранения задач'
+    : 'Перейти к версии без комментария'
+})
 // The extension decides, not the MIME type: some systems send none.
 const isVideo = computed(() => file.value?.name.toLowerCase().endsWith('.mp4') ?? false)
 
@@ -71,24 +104,31 @@ function handleDrop(event: DragEvent) {
   choose(dropped[0])
 }
 
-// The comment goes into the chat of the shot with a link to the new
-// version. If it fails the version stays uploaded and only the comment
-// is sent again.
+// After the upload the changed tasks are saved, then the comment goes
+// into the chat of the shot with a link to the new version. If a part
+// fails the version stays uploaded and only the failed parts are done
+// again.
 async function finish(version: VersionOut) {
-  const text = comment.value.trim()
-  if (text !== '') {
-    isSendingComment.value = true
-    commentFailed.value = false
-    try {
-      await chatApi.sendMessage(props.shotId, { text, version_ids: [version.id] })
-    } catch {
-      commentFailed.value = true
-      return
-    } finally {
-      isSendingComment.value = false
+  isFinishing.value = true
+  try {
+    tasksFailed.value = tasks.changedRows.value.length > 0 ? !(await tasks.saveChanged()) : false
+
+    const text = comment.value.trim()
+    if (text === '' || commentSent.value) {
+      commentFailed.value = false
+    } else {
+      try {
+        await chatApi.sendMessage(props.shotId, { text, version_ids: [version.id] })
+        commentSent.value = true
+        commentFailed.value = false
+      } catch {
+        commentFailed.value = true
+      }
     }
+  } finally {
+    isFinishing.value = false
   }
-  emit('uploaded', version)
+  if (!hasFailed.value) emit('uploaded', version)
 }
 
 async function submit() {
@@ -156,24 +196,37 @@ onBeforeUnmount(dropPreview)
     <aside class="version-upload__side">
       <h2 class="version-upload__heading">Загрузить версию</h2>
 
-      <dl v-if="file" class="version-upload__facts">
-        <dt>Файл</dt>
-        <dd class="mono">{{ file.name }}</dd>
-        <dt>Размер</dt>
-        <dd>{{ formatFileSize(file.size) }}</dd>
-      </dl>
+      <div class="version-upload__body">
+        <dl v-if="file" class="version-upload__facts">
+          <dt>Файл</dt>
+          <dd class="mono">{{ file.name }}</dd>
+          <dt>Размер</dt>
+          <dd>{{ formatFileSize(file.size) }}</dd>
+        </dl>
 
-      <div class="version-upload__comment">
-        <label class="version-upload__label" for="version-comment">Комментарий</label>
-        <n-input
-          v-model:value="comment"
-          :input-props="{ id: 'version-comment' }"
-          type="textarea"
-          placeholder="Комментарий к версии…"
-          :maxlength="MAX_COMMENT_LENGTH"
-          :autosize="{ minRows: 4, maxRows: 12 }"
-          show-count
+        <shot-upload-tasks
+          :rows="tasks.rows.value"
+          :status-options="tasks.statusOptions.value"
+          :loading="tasks.loading.value"
+          :load-failed="tasks.loadFailed.value"
+          :disabled="isBusy"
+          @status="tasks.setStatus"
+          @hours="tasks.setHours"
         />
+
+        <div class="version-upload__comment">
+          <label class="version-upload__label" for="version-comment">Комментарий</label>
+          <n-input
+            v-model:value="comment"
+            :input-props="{ id: 'version-comment' }"
+            type="textarea"
+            placeholder="Комментарий к версии…"
+            :maxlength="MAX_COMMENT_LENGTH"
+            :autosize="{ minRows: 4, maxRows: 12 }"
+            :disabled="commentSent"
+            show-count
+          />
+        </div>
       </div>
 
       <div class="version-upload__submit">
@@ -186,18 +239,22 @@ onBeforeUnmount(dropPreview)
         <span v-else-if="store.uploadState === 'processing'" class="version-upload__processing">
           Файл отправлен, идёт обработка…
         </span>
-        <template v-if="uploaded">
-          <p v-if="commentFailed" class="version-upload__error" role="alert">
-            Версия загружена, но комментарий не отправился.
-          </p>
-          <n-button type="primary" :loading="isSendingComment" @click="finish(uploaded)">
-            Повторить отправку комментария
+        <template v-if="uploaded && hasFailed">
+          <p class="version-upload__error" role="alert">{{ failureText }}</p>
+          <n-button type="primary" :loading="isFinishing" @click="finish(uploaded)">
+            {{ retryLabel }}
           </n-button>
-          <n-button :disabled="isSendingComment" @click="emit('uploaded', uploaded)">
-            Перейти к версии без комментария
+          <n-button :disabled="isFinishing" @click="emit('uploaded', uploaded)">
+            {{ skipLabel }}
           </n-button>
         </template>
-        <n-button v-else type="primary" :disabled="!file || isBusy" @click="submit">
+        <n-button
+          v-else
+          type="primary"
+          :loading="isFinishing"
+          :disabled="!file || isBusy || uploaded !== null"
+          @click="submit"
+        >
           Отправить версию
         </n-button>
       </div>
@@ -295,6 +352,15 @@ onBeforeUnmount(dropPreview)
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+}
+
+.version-upload__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .version-upload__facts {
