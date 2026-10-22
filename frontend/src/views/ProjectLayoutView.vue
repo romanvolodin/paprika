@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import { useProjectPageStore } from '@/stores/projectPage'
+import AppHeaderContent from '@/components/layout/AppHeaderContent.vue'
 
 const props = defineProps<{ companySlug: string; projectCode: string }>()
 
@@ -77,36 +78,34 @@ watch(
     </p>
 
     <template v-else-if="store.project">
-      <header v-if="hasProjectHeader" class="project-page__header">
-        <div class="project-page__heading-row">
+      <AppHeaderContent v-if="hasProjectHeader">
+        <div class="project-page__title-block">
           <h1 class="project-page__title">{{ store.project.name }}</h1>
           <span class="mono project-page__code">{{ store.project.code }}</span>
         </div>
 
         <nav class="project-page__nav" aria-label="Разделы проекта">
-          <div class="project-page__nav-group">
-            <RouterLink
-              class="project-page__link"
-              :class="{ 'project-page__link--active': isActive('shots') }"
-              :to="{ name: 'shot-list', params: routeParams }"
-            >
-              Кадры
-            </RouterLink>
-            <RouterLink
-              class="project-page__link"
-              :class="{ 'project-page__link--active': isActive('tasks') }"
-              :to="{ name: 'project-tasks', params: routeParams }"
-            >
-              Задачи
-            </RouterLink>
-            <RouterLink
-              class="project-page__link"
-              :class="{ 'project-page__link--active': isActive('groups') }"
-              :to="{ name: 'project-groups', params: routeParams }"
-            >
-              Группы
-            </RouterLink>
-          </div>
+          <RouterLink
+            class="project-page__link"
+            :class="{ 'project-page__link--active': isActive('shots') }"
+            :to="{ name: 'shot-list', params: routeParams }"
+          >
+            Кадры
+          </RouterLink>
+          <RouterLink
+            class="project-page__link"
+            :class="{ 'project-page__link--active': isActive('tasks') }"
+            :to="{ name: 'project-tasks', params: routeParams }"
+          >
+            Задачи
+          </RouterLink>
+          <RouterLink
+            class="project-page__link"
+            :class="{ 'project-page__link--active': isActive('groups') }"
+            :to="{ name: 'project-groups', params: routeParams }"
+          >
+            Группы
+          </RouterLink>
           <RouterLink
             v-if="canManageProject"
             class="project-page__link"
@@ -116,7 +115,7 @@ watch(
             Настройки
           </RouterLink>
         </nav>
-      </header>
+      </AppHeaderContent>
 
       <RouterView />
     </template>
@@ -135,22 +134,19 @@ watch(
   color: var(--color-text-secondary);
 }
 
-.project-page__header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  max-width: 960px;
-}
-
-.project-page__heading-row {
+.project-page__title-block {
   display: flex;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  white-space: nowrap;
 }
 
 .project-page__title {
-  font-size: 1.25rem;
+  max-width: 240px;
+  overflow: hidden;
+  font-size: 1.125rem;
   font-weight: 600;
+  text-overflow: ellipsis;
   margin: 0;
 }
 
@@ -161,19 +157,16 @@ watch(
 
 .project-page__nav {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.project-page__nav-group {
-  display: flex;
+  align-self: stretch;
   gap: var(--space-1);
+  margin-left: var(--space-3);
 }
 
 .project-page__link {
-  padding: var(--space-2) var(--space-3);
-  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);

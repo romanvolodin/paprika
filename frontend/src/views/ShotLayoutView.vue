@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
+import AppHeaderContent from '@/components/layout/AppHeaderContent.vue'
 
 const props = defineProps<{ companySlug: string; projectCode: string; shotName: string }>()
 
@@ -74,7 +75,7 @@ watch(
     </p>
 
     <template v-else-if="store.shot && store.project">
-      <header class="shot-page__header">
+      <AppHeaderContent>
         <RouterLink
           class="shot-page__crumb mono"
           :to="{ name: 'shot-list', params: { companySlug, projectCode } }"
@@ -136,7 +137,7 @@ watch(
             Настройки
           </RouterLink>
         </nav>
-      </header>
+      </AppHeaderContent>
 
       <RouterView />
     </template>
@@ -156,16 +157,8 @@ watch(
   color: var(--color-text-secondary);
 }
 
-.shot-page__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 44px;
-  border-bottom: 1px solid var(--color-border);
-}
-
 .shot-page__crumb {
+  white-space: nowrap;
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);
   text-decoration: none;
@@ -181,12 +174,14 @@ watch(
 }
 
 .shot-page__title {
-  font-size: 1.25rem;
+  white-space: nowrap;
+  font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
 }
 
 .shot-page__status-select {
+  flex: none;
   width: 180px;
 }
 
@@ -201,7 +196,7 @@ watch(
   display: flex;
   align-items: center;
   padding: 0 var(--space-3);
-  margin-bottom: -1px;
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
   color: var(--color-text-secondary);
   font-size: var(--text-sm, 13px);

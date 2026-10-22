@@ -129,6 +129,18 @@ describe('ProjectLayoutView', () => {
     expect(wrapper.find('[data-test="child"]').exists()).toBe(true)
   })
 
+  it('puts the settings link in the same group as the other sections', async () => {
+    const wrapper = await mountLayout('admin')
+
+    const nav = wrapper.find('nav[aria-label="Разделы проекта"]')
+    expect(nav.findAll('a').map((link) => link.text())).toEqual([
+      'Кадры',
+      'Задачи',
+      'Группы',
+      'Настройки',
+    ])
+  })
+
   it('has no feed link until the feed exists', async () => {
     const wrapper = await mountLayout('admin')
 
@@ -155,7 +167,7 @@ describe('ProjectLayoutView', () => {
     async (suffix) => {
       const wrapper = await mountLayout('admin', `/acme/PRJ/shots/0010${suffix}`)
 
-      expect(wrapper.find('header').exists()).toBe(false)
+      expect(wrapper.find('nav').exists()).toBe(false)
       expect(wrapper.find('[data-test="child"]').exists()).toBe(true)
     },
   )

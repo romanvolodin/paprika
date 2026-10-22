@@ -15,6 +15,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import CompanySwitcher from '@/components/layout/CompanySwitcher.vue'
+import { setAppHeaderSlot } from '@/composables/useAppHeaderSlot'
 
 const ui = useUiStore()
 const auth = useAuthStore()
@@ -122,6 +123,8 @@ async function handleLogout() {
         </n-button>
         <span v-if="isMobile" class="app-header__brand">Paprika</span>
 
+        <div :ref="setAppHeaderSlot" class="app-header__slot" />
+
         <div class="app-header__spacer" />
 
         <n-button quaternary circle title="Переключить тему" @click="ui.toggleTheme">
@@ -203,6 +206,20 @@ async function handleLogout() {
 
 .app-header__brand {
   font-weight: 600;
+}
+
+.app-header__slot {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.app-header__slot:empty {
+  display: none;
 }
 
 .app-header__spacer {
