@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { NButton, NDropdown, NIcon, NInput, NSelect, useDialog, useMessage } from 'naive-ui'
+import { NButton, NDropdown, NIcon, NInput, useDialog, useMessage } from 'naive-ui'
 import {
   AttachOutline,
   CloseOutline,
   EllipsisHorizontalOutline,
-  FilmOutline,
+  SendOutline,
 } from '@vicons/ionicons5'
-import * as versionsApi from '@/api/versions'
 import ChatMessageFiles from '@/components/shots/ChatMessageFiles.vue'
 import ChatReactions from '@/components/shots/ChatReactions.vue'
 import { MAX_CHAT_ATTACHMENTS, useChatAttachments } from '@/composables/useChatAttachments'
@@ -44,14 +43,6 @@ const isSavingEdit = ref(false)
 const attachments = useChatAttachments(() => props.shotId)
 const fileInput = ref<HTMLInputElement | null>(null)
 
-// Versions of the shot that the next message can point at. The list is
-// fetched the first time the picker is opened.
-const isPickingVersions = ref(false)
-const versionOptions = ref<Array<{ label: string; value: number }>>([])
-const selectedVersionIds = ref<number[]>([])
-const isLoadingVersions = ref(false)
-let versionsLoadedFor: number | null = null
-
 const visibility = useDocumentVisibility()
 const currentUserId = computed(() => auth.currentUser?.id ?? null)
 let followBottom = true
@@ -84,10 +75,6 @@ watch(
     editingId.value = null
     replyingTo.value = null
     draft.value = ''
-    selectedVersionIds.value = []
-    isPickingVersions.value = false
-    versionOptions.value = []
-    versionsLoadedFor = null
     void attachments.discardAll()
     try {
       await store.open(shotId)
@@ -145,9 +132,7 @@ function describeSendError(error: unknown, fallback: string): string {
 
 const canSend = computed(
   () =>
-    (draft.value.trim() !== '' ||
-      attachments.readyIds.value.length > 0 ||
-      selectedVersionIds.value.length > 0) &&
+    (draft.value.trim() !== '' || attachments.readyIds.value.length > 0) &&
     !attachments.isUploading.value &&
     !isSending.value,
 )
@@ -158,13 +143,10 @@ async function handleSend() {
   try {
     await store.send(draft.value.trim(), {
       replyToId: replyingTo.value?.id ?? null,
-      versionIds: selectedVersionIds.value,
       attachmentIds: attachments.readyIds.value,
     })
     draft.value = ''
     replyingTo.value = null
-    selectedVersionIds.value = []
-    isPickingVersions.value = false
     attachments.clear()
     followBottom = true
   } catch (error) {
@@ -186,28 +168,6 @@ function handleFilesChosen(event: Event) {
   const skipped = attachments.add(chosen)
   if (skipped > 0) {
     message.warning(`В одном сообщении не больше ${MAX_CHAT_ATTACHMENTS} файлов.`)
-  }
-}
-
-async function toggleVersionPicker() {
-  isPickingVersions.value = !isPickingVersions.value
-  if (!isPickingVersions.value || versionsLoadedFor === props.shotId) return
-  const shotId = props.shotId
-  isLoadingVersions.value = true
-  try {
-    const result = await versionsApi.listVersions(shotId, { page_size: 100 })
-    // The reader may have moved to another shot while this was loading.
-    if (shotId !== props.shotId) return
-    versionOptions.value = result.items.map((version) => ({
-      label: version.name,
-      value: version.id,
-    }))
-    versionsLoadedFor = shotId
-  } catch {
-    message.error('Не удалось загрузить версии кадра.')
-    isPickingVersions.value = false
-  } finally {
-    isLoadingVersions.value = false
   }
 }
 
@@ -503,16 +463,6 @@ function formatTime(value: string): string {
           </button>
         </span>
       </div>
-      <n-select
-        v-if="isPickingVersions"
-        v-model:value="selectedVersionIds"
-        multiple
-        filterable
-        clearable
-        placeholder="Версии кадра"
-        :options="versionOptions"
-        :loading="isLoadingVersions"
-      />
       <div class="shot-chat__composer">
         <input
           ref="fileInput"
@@ -521,26 +471,25 @@ function formatTime(value: string): string {
           multiple
           @change="handleFilesChosen"
         />
-        <n-button quaternary aria-label="Прикрепить файл" @click="pickFiles">
+        <n-button quaternary circle aria-label="Прикрепить файл" @click="pickFiles">
           <template #icon><n-icon :component="AttachOutline" /></template>
-        </n-button>
-        <n-button
-          quaternary
-          aria-label="Приложить версию"
-          :type="isPickingVersions || selectedVersionIds.length > 0 ? 'primary' : 'default'"
-          @click="toggleVersionPicker"
-        >
-          <template #icon><n-icon :component="FilmOutline" /></template>
         </n-button>
         <n-input
           v-model:value="draft"
           type="textarea"
-          placeholder="Сообщение (Enter — отправить, Shift+Enter — новая строка)"
+          placeholder="Сообщение…"
           :autosize="{ minRows: 1, maxRows: 6 }"
           @keydown="handleDraftKeydown"
         />
-        <n-button type="primary" :disabled="!canSend" :loading="isSending" @click="handleSend">
-          Отправить
+        <n-button
+          type="primary"
+          circle
+          aria-label="Отправить"
+          :disabled="!canSend"
+          :loading="isSending"
+          @click="handleSend"
+        >
+          <template #icon><n-icon :component="SendOutline" /></template>
         </n-button>
       </div>
     </div>
