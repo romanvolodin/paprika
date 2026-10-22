@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
-import { NButton, NIcon, NInput, NSelect, useDialog, useMessage } from 'naive-ui'
-import { AttachOutline, CloseOutline, FilmOutline } from '@vicons/ionicons5'
+import { NButton, NDropdown, NIcon, NInput, NSelect, useDialog, useMessage } from 'naive-ui'
+import {
+  AttachOutline,
+  CloseOutline,
+  EllipsisHorizontalOutline,
+  FilmOutline,
+} from '@vicons/ionicons5'
 import * as versionsApi from '@/api/versions'
 import ChatMessageFiles from '@/components/shots/ChatMessageFiles.vue'
 import ChatReactions from '@/components/shots/ChatReactions.vue'
@@ -60,6 +65,8 @@ function handleScroll() {
   const list = listRef.value
   if (!list) return
   followBottom = list.scrollHeight - list.scrollTop - list.clientHeight < STICK_TO_BOTTOM_PX
+  // The menu is anchored to a point of the screen, it would be left behind.
+  menu.value = null
 }
 
 async function refresh() {
@@ -281,6 +288,54 @@ function confirmDelete(target: MessageOut) {
 
 const entries = computed(() => buildChatEntries(store.items))
 
+// --- Menu of a message ---------------------------------------------------
+
+// One menu for the whole feed, put where the right click or the "⋯"
+// button was.
+const menu = ref<{ message: MessageOut; x: number; y: number } | null>(null)
+
+const menuOptions = computed(() => {
+  const target = menu.value?.message
+  if (!target) return []
+  return [
+    { label: 'Ответить', key: 'reply' },
+    ...(isOwn(target)
+      ? [
+          { label: 'Изменить', key: 'edit' },
+          {
+            label: 'Удалить',
+            key: 'delete',
+            props: { style: 'color: var(--color-status-blocked)' },
+          },
+        ]
+      : []),
+  ]
+})
+
+function canOpenMenu(target: MessageOut): boolean {
+  return props.canWrite && editingId.value !== target.id
+}
+
+function openContextMenu(target: MessageOut, event: MouseEvent) {
+  if (!canOpenMenu(target)) return
+  event.preventDefault()
+  menu.value = { message: target, x: event.clientX, y: event.clientY }
+}
+
+function openMenuFromButton(target: MessageOut, event: MouseEvent) {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  menu.value = { message: target, x: rect.left, y: rect.bottom }
+}
+
+function handleMenuSelect(key: string) {
+  const target = menu.value?.message
+  menu.value = null
+  if (!target) return
+  if (key === 'reply') startReply(target)
+  else if (key === 'edit') startEdit(target)
+  else if (key === 'delete') confirmDelete(target)
+}
+
 function isOwn(target: MessageOut): boolean {
   return target.type === 'user' && target.created_by?.id === currentUserId.value
 }
@@ -335,7 +390,11 @@ function formatTime(value: string): string {
           </div>
 
           <div class="shot-chat__column">
-            <div class="shot-chat__bubble" :class="{ 'shot-chat__bubble--tail': lastOfRun }">
+            <div
+              class="shot-chat__bubble"
+              :class="{ 'shot-chat__bubble--tail': lastOfRun }"
+              @contextmenu="openContextMenu(item, $event)"
+            >
               <strong v-if="!isOwn(item) && firstOfRun" class="shot-chat__author">
                 {{ userName(item.created_by) }}
               </strong>
@@ -385,20 +444,31 @@ function formatTime(value: string): string {
               :can-react="canWrite"
               @toggle="toggleReaction(item, $event)"
             />
-
-            <span v-if="canWrite && editingId !== item.id" class="shot-chat__actions">
-              <n-button size="tiny" quaternary @click="startReply(item)">Ответить</n-button>
-              <template v-if="isOwn(item)">
-                <n-button size="tiny" quaternary @click="startEdit(item)">Изменить</n-button>
-                <n-button size="tiny" quaternary type="error" @click="confirmDelete(item)">
-                  Удалить
-                </n-button>
-              </template>
-            </span>
           </div>
+
+          <button
+            v-if="canOpenMenu(item)"
+            type="button"
+            class="shot-chat__more"
+            aria-label="Действия с сообщением"
+            @click="openMenuFromButton(item, $event)"
+          >
+            <n-icon :component="EllipsisHorizontalOutline" />
+          </button>
         </div>
       </template>
     </div>
+
+    <n-dropdown
+      trigger="manual"
+      placement="bottom-start"
+      :show="menu !== null"
+      :x="menu?.x ?? 0"
+      :y="menu?.y ?? 0"
+      :options="menuOptions"
+      @select="handleMenuSelect"
+      @clickoutside="menu = null"
+    />
 
     <div v-if="canWrite" class="shot-chat__composer-block">
       <div v-if="replyingTo" class="shot-chat__reply-bar">
@@ -548,6 +618,7 @@ function formatTime(value: string): string {
 
 .shot-chat__column {
   display: flex;
+  flex: 0 1 auto;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
@@ -593,8 +664,39 @@ function formatTime(value: string): string {
   font-size: 11px;
 }
 
-.shot-chat__actions {
+.shot-chat__more {
   display: flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+  padding: var(--space-1);
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.shot-chat__message--own .shot-chat__more {
+  order: -1;
+}
+
+.shot-chat__message:hover .shot-chat__more,
+.shot-chat__more:focus-visible {
+  opacity: 1;
+}
+
+.shot-chat__more:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+/* No hovering on a touch screen: the button is always there. */
+@media (hover: none) {
+  .shot-chat__more {
+    opacity: 1;
+  }
 }
 
 .shot-chat__text {

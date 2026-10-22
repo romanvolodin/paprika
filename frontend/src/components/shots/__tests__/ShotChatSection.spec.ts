@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { AxiosError } from 'axios'
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { NDialogProvider, NMessageProvider, NSelect } from 'naive-ui'
 import ShotChatSection from '@/components/shots/ShotChatSection.vue'
@@ -47,6 +47,30 @@ function chatList(items: MessageOut[], hasOlder = false) {
   return { items, has_older: hasOlder, has_newer: false }
 }
 
+// A section left mounted keeps polling the shared mock every ten seconds.
+enableAutoUnmount(afterEach)
+
+// The menu of a message is drawn into the body, outside the wrapper.
+function menuLabels(): string[] {
+  return [...document.body.querySelectorAll('.n-dropdown-option-body__label')].map(
+    (label) => label.textContent ?? '',
+  )
+}
+
+async function openMenu(wrapper: ReturnType<typeof mount>, row: number) {
+  await wrapper.findAll('.shot-chat__message')[row]?.find('.shot-chat__more').trigger('click')
+  await flushPromises()
+}
+
+async function chooseAction(wrapper: ReturnType<typeof mount>, row: number, label: string) {
+  await openMenu(wrapper, row)
+  const option = [...document.body.querySelectorAll('.n-dropdown-option-body')].find((element) =>
+    element.textContent?.includes(label),
+  ) as HTMLElement
+  option.click()
+  await flushPromises()
+}
+
 // The section needs naive-ui's message and dialog providers.
 const Host = defineComponent({
   props: {
@@ -85,6 +109,7 @@ describe('ShotChatSection', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    document.body.innerHTML = ''
   })
 
   it('shows user messages and builds the sentence of system messages', async () => {
@@ -112,13 +137,16 @@ describe('ShotChatSection', () => {
     const wrapper = mount(Host, { props: { shotId: 10 } })
     await flushPromises()
 
-    const own = wrapper.findAll('.shot-chat__message')[0]
-    const foreign = wrapper.findAll('.shot-chat__message')[1]
+    await openMenu(wrapper, 0)
+    expect(menuLabels()).toEqual(['Ответить', 'Изменить', 'Удалить'])
+  })
 
-    expect(own?.text()).toContain('Изменить')
-    expect(own?.text()).toContain('Удалить')
-    expect(foreign?.text()).not.toContain('Изменить')
-    expect(foreign?.text()).not.toContain('Удалить')
+  it("offers only a reply on other people's messages", async () => {
+    const wrapper = mount(Host, { props: { shotId: 10 } })
+    await flushPromises()
+
+    await openMenu(wrapper, 1)
+    expect(menuLabels()).toEqual(['Ответить'])
   })
 
   it('shows no composer and no message actions to read-only members', async () => {
@@ -127,7 +155,7 @@ describe('ShotChatSection', () => {
 
     expect(wrapper.find('textarea').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Отправить')
-    expect(wrapper.text()).not.toContain('Изменить')
+    expect(wrapper.find('.shot-chat__more').exists()).toBe(false)
     expect(wrapper.text()).toContain('My own message')
   })
 
@@ -221,21 +249,14 @@ describe('ShotChatSection', () => {
   })
 
   describe('replies', () => {
-    function findButton(wrapper: ReturnType<typeof mount>, text: string, scope?: Element) {
-      const root = scope
-        ? [...scope.querySelectorAll('button')]
-        : wrapper.findAll('button').map((b) => b.element)
-      return root.find((button) => button.textContent?.includes(text)) as HTMLElement | undefined
-    }
-
-    it('offers a reply button on every user message but not on system lines', async () => {
+    it('offers the menu with a reply on every user message but not on system lines', async () => {
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
 
       const messages = wrapper.findAll('.shot-chat__message')
       expect(messages).toHaveLength(2)
-      expect(messages.every((m) => m.text().includes('Ответить'))).toBe(true)
-      expect(wrapper.find('.shot-chat__system-block').text()).not.toContain('Ответить')
+      expect(messages.every((m) => m.find('.shot-chat__more').exists())).toBe(true)
+      expect(wrapper.find('.shot-chat__system-block .shot-chat__more').exists()).toBe(false)
     })
 
     it('shows who is being replied to and sends reply_to_id with the message', async () => {
@@ -243,8 +264,7 @@ describe('ShotChatSection', () => {
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
 
-      findButton(wrapper, 'Ответить', wrapper.findAll('.shot-chat__message')[1]?.element)?.click()
-      await flushPromises()
+      await chooseAction(wrapper, 1, 'Ответить')
       expect(wrapper.find('.shot-chat__reply-bar').text()).toContain('Ответ для Анна Смирнова')
       expect(wrapper.find('.shot-chat__reply-bar').text()).toContain("Someone else's message")
 
@@ -260,8 +280,7 @@ describe('ShotChatSection', () => {
     it('cancels the reply without sending anything', async () => {
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
-      findButton(wrapper, 'Ответить', wrapper.findAll('.shot-chat__message')[1]?.element)?.click()
-      await flushPromises()
+      await chooseAction(wrapper, 1, 'Ответить')
 
       await wrapper.find('.shot-chat__reply-bar button').trigger('click')
 
@@ -273,8 +292,7 @@ describe('ShotChatSection', () => {
       vi.mocked(chatApi.sendMessage).mockResolvedValue(buildMessage(4, { created_by: me }))
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
-      findButton(wrapper, 'Ответить', wrapper.findAll('.shot-chat__message')[1]?.element)?.click()
-      await flushPromises()
+      await chooseAction(wrapper, 1, 'Ответить')
       await wrapper.find('.shot-chat__reply-bar button').trigger('click')
 
       const input = wrapper.find('textarea')
@@ -294,8 +312,7 @@ describe('ShotChatSection', () => {
       )
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
-      findButton(wrapper, 'Ответить', wrapper.findAll('.shot-chat__message')[1]?.element)?.click()
-      await flushPromises()
+      await chooseAction(wrapper, 1, 'Ответить')
 
       const input = wrapper.find('textarea')
       await input.setValue('Thanks')
@@ -332,7 +349,7 @@ describe('ShotChatSection', () => {
       const wrapper = mount(Host, { props: { shotId: 10, canWrite: false } })
       await flushPromises()
 
-      expect(wrapper.text()).not.toContain('Ответить')
+      expect(wrapper.find('.shot-chat__more').exists()).toBe(false)
       expect(wrapper.find('.shot-chat__reply-bar').exists()).toBe(false)
     })
   })
@@ -688,11 +705,7 @@ describe('ShotChatSection', () => {
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
 
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text().includes('Изменить'))
-        ?.trigger('click')
-      await flushPromises()
+      await chooseAction(wrapper, 0, 'Изменить')
       await wrapper.find('.shot-chat__edit textarea').setValue('')
       const save = wrapper.findAll('button').find((b) => b.text().includes('Сохранить'))
       expect(save?.attributes('disabled')).toBeUndefined()
@@ -709,11 +722,7 @@ describe('ShotChatSection', () => {
       const wrapper = mount(Host, { props: { shotId: 10 } })
       await flushPromises()
 
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text().includes('Изменить'))
-        ?.trigger('click')
-      await flushPromises()
+      await chooseAction(wrapper, 0, 'Изменить')
       await wrapper.find('.shot-chat__edit textarea').setValue('  ')
 
       const save = wrapper.findAll('button').find((b) => b.text().includes('Сохранить'))
@@ -843,15 +852,41 @@ describe('ShotChatSection', () => {
       expect(wrapper.findAll('.shot-chat__day')).toHaveLength(2)
     })
 
-    it('keeps the actions of a message: reply for everyone, edit and delete for the author', async () => {
-      const wrapper = await mountWith([
-        buildMessage(1, { created_by: me }),
-        buildMessage(2, { created_by: other, created_at: '2026-01-01T12:00:00Z' }),
-      ])
+    it('opens the menu of a message on a right click, with the same actions', async () => {
+      const wrapper = await mountWith([buildMessage(1, { created_by: me })])
 
-      const rows = wrapper.findAll('.shot-chat__message')
-      expect(rows[0].find('.shot-chat__actions').text()).toContain('Изменить')
-      expect(rows[1].find('.shot-chat__actions').text()).toBe('Ответить')
+      await wrapper.find('.shot-chat__bubble').trigger('contextmenu')
+      await flushPromises()
+
+      expect(menuLabels()).toEqual(['Ответить', 'Изменить', 'Удалить'])
+    })
+
+    it('does not take over the right click of a read-only member', async () => {
+      vi.mocked(chatApi.listMessages).mockResolvedValue(chatList([buildMessage(1)]))
+      const wrapper = mount(Host, { props: { shotId: 10, canWrite: false } })
+      await flushPromises()
+
+      await wrapper.find('.shot-chat__bubble').trigger('contextmenu')
+      await flushPromises()
+
+      expect(menuLabels()).toEqual([])
+    })
+
+    it('does not offer the menu on a message that is being edited', async () => {
+      const wrapper = await mountWith([buildMessage(1, { created_by: me })])
+      await chooseAction(wrapper, 0, 'Изменить')
+
+      expect(wrapper.find('.shot-chat__more').exists()).toBe(false)
+    })
+
+    it('asks for a confirmation before deleting a message', async () => {
+      vi.mocked(chatApi.deleteMessage).mockResolvedValue(undefined as never)
+      const wrapper = await mountWith([buildMessage(1, { created_by: me })])
+
+      await chooseAction(wrapper, 0, 'Удалить')
+
+      expect(document.body.textContent).toContain('Удалить сообщение? Это действие необратимо.')
+      expect(chatApi.deleteMessage).not.toHaveBeenCalled()
     })
   })
 })
