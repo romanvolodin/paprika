@@ -417,6 +417,13 @@ describe('ShotChatSection', () => {
       expect(chips[0]?.classes()).toContain('chat-reactions__chip--mine')
     })
 
+    it('puts the reactions inside the bubble', async () => {
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      expect(wrapper.find('.shot-chat__bubble .chat-reactions').exists()).toBe(true)
+    })
+
     it('takes back your own reaction when you click it', async () => {
       vi.mocked(chatApi.removeReaction).mockResolvedValue({
         reactions: [

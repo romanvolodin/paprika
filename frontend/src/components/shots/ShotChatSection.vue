@@ -392,18 +392,21 @@ function formatTime(value: string): string {
 
               <chat-message-files :attachments="item.attachments" :versions="item.versions" />
 
-              <span class="shot-chat__stamp">
-                <span v-if="item.edited_at">(изменено)</span>
-                {{ formatClock(item.created_at) }}
-              </span>
-            </div>
+              <div class="shot-chat__footer">
+                <chat-reactions
+                  class="shot-chat__reactions"
+                  :reactions="item.reactions"
+                  :current-user-id="currentUserId"
+                  :can-react="canWrite"
+                  @toggle="toggleReaction(item, $event)"
+                />
 
-            <chat-reactions
-              :reactions="item.reactions"
-              :current-user-id="currentUserId"
-              :can-react="canWrite"
-              @toggle="toggleReaction(item, $event)"
-            />
+                <span class="shot-chat__stamp">
+                  <span v-if="item.edited_at">(изменено)</span>
+                  {{ formatClock(item.created_at) }}
+                </span>
+              </div>
+            </div>
           </div>
 
           <button
@@ -605,9 +608,23 @@ function formatTime(value: string): string {
   font-size: var(--text-sm, 13px);
 }
 
-.shot-chat__stamp {
-  align-self: flex-end;
+.shot-chat__footer {
   display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.shot-chat__reactions {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shot-chat__stamp {
+  display: flex;
+  flex: none;
+  margin-left: auto;
   gap: var(--space-1);
   color: var(--color-text-secondary);
   font-size: 11px;
