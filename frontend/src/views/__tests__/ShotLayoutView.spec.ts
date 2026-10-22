@@ -81,7 +81,10 @@ async function mountShot(role: ProjectMembershipRole, path = '/acme/PRJ/shots/00
         color: '#cc3333',
         order: 1,
         is_default: true,
+        created_by: null,
+        updated_by: null,
         created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
       {
         id: 2,
@@ -90,7 +93,10 @@ async function mountShot(role: ProjectMembershipRole, path = '/acme/PRJ/shots/00
         color: '#3366cc',
         order: 2,
         is_default: false,
+        created_by: null,
+        updated_by: null,
         created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
       },
     ],
   })
