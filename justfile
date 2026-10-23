@@ -103,8 +103,11 @@ superuser: _require-mode
   docker compose -f {{COMPOSE-FILE}} exec backend {{MANAGE}} createsuperuser
 
 backup: _require-mode
-  @if [ "{{MODE}}" != "prod" ]; then echo "{{RED}}Nothing to back up in dev.{{RESET-COLOR}}"; exit 1; fi
-  docker compose -f compose.prod.yaml exec pg sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "backup-$(date +%Y%m%d-%H%M%S).sql"
+  @if [ "{{MODE}}" = "dev" ]; then \
+    docker compose -f compose.dev.yaml exec pg sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "paprika-dev-backup-$(date +%Y%m%d-%H%M%S).sql"; \
+  elif [ "{{MODE}}" = "prod" ]; then \
+    docker compose -f compose.prod.yaml exec pg sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "paprika-prod-backup-$(date +%Y%m%d-%H%M%S).sql"; \
+  fi
 
 test *ARGS:
   docker compose -f compose.dev.yaml exec backend uv run pytest {{ARGS}}
