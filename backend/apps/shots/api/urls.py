@@ -2,6 +2,7 @@ from dmr.routing import Router, path
 
 from .views import (
     ShotDetailController,
+    ShotFiltersController,
     ShotGroupDetailController,
     ShotGroupListController,
     ShotGroupShotListController,
@@ -38,6 +39,11 @@ router = Router(
             "projects/<int:project_id>/shots/",
             ShotListController.as_view(),
             name="shot-list",
+        ),
+        path(
+            "projects/<int:project_id>/shot-filters/",
+            ShotFiltersController.as_view(),
+            name="shot-filters",
         ),
         path(
             "shot-groups/<int:shot_group_id>/shots/",

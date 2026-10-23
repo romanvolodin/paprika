@@ -60,6 +60,7 @@ export type ProjectMembershipRole = MembershipRole
 export type ShotOut = components['schemas']['ShotOut']
 export type ShotListOut = components['schemas']['ShotListOut']
 export type ShotCreateIn = components['schemas']['ShotCreateIn']
+export type ShotFiltersOut = components['schemas']['ShotFiltersOut']
 export type ShotUpdateIn = components['schemas']['ShotUpdateIn']
 export type ShotListQuery = NonNullable<
   operations['getShotListControllerApiV1ProjectsProjectIdShots']['parameters']['query']

@@ -14,6 +14,7 @@ import {
 } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
+import ShotFilterSection from '@/components/shots/ShotFilterSection.vue'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { firstValidationMessage } from '@/utils/apiError'
@@ -67,6 +68,22 @@ const debouncedSearch = useDebounceFn((value: string) => {
 function handleSearchInput(value: string) {
   searchInput.value = value
   debouncedSearch(value)
+}
+
+const statusFilterOptions = computed(() =>
+  shots.statusOptions.map((status) => ({
+    value: status.id,
+    label: status.name,
+    color: status.color,
+  })),
+)
+
+const hasFilters = computed(
+  () => shots.statusOptions.length > 0 || shots.assigneeOptions.length > 0,
+)
+
+function handleStatusFilter(selected: (number | 'none')[], inverted: boolean) {
+  shots.setStatusFilter(selected as number[], inverted)
 }
 
 const statusById = computed(() => new Map(shots.statuses.map((status) => [status.id, status])))
@@ -182,13 +199,45 @@ watch(
         <template #prefix><n-icon :component="SearchOutline" /></template>
       </n-input>
 
-      <n-data-table
-        :columns="columns"
-        :data="shots.items"
-        :loading="shots.isLoading"
-        :bordered="false"
-        :row-key="(row: ShotOut) => row.id"
-      />
+      <div class="shots-page__body">
+        <div class="shots-page__main">
+          <n-data-table
+            :columns="columns"
+            :data="shots.items"
+            :loading="shots.isLoading"
+            :bordered="false"
+            :row-key="(row: ShotOut) => row.id"
+          />
+
+          <div class="shots-page__pagination">
+            <n-pagination
+              :page="shots.page"
+              :page-size="shots.pageSize"
+              :item-count="shots.total"
+              @update:page="shots.setPage"
+            />
+          </div>
+        </div>
+
+        <aside v-if="hasFilters" class="shots-page__filters">
+          <shot-filter-section
+            v-if="shots.statusOptions.length > 0"
+            title="Статус"
+            :options="statusFilterOptions"
+            :selected="shots.statusSelected"
+            :inverted="shots.statusInverted"
+            @change="handleStatusFilter"
+          />
+          <shot-filter-section
+            v-if="shots.assigneeOptions.length > 0"
+            title="Исполнитель"
+            :options="shots.assigneeOptions"
+            :selected="shots.assigneeSelected"
+            :inverted="shots.assigneeInverted"
+            @change="shots.setAssigneeFilter"
+          />
+        </aside>
+      </div>
 
       <shot-form-modal
         v-model:show="isFormOpen"
@@ -198,15 +247,6 @@ watch(
         :is-submitting="isSaving"
         @submit="handleCreate"
       />
-
-      <div class="shots-page__pagination">
-        <n-pagination
-          :page="shots.page"
-          :page-size="shots.pageSize"
-          :item-count="shots.total"
-          @update:page="shots.setPage"
-        />
-      </div>
     </template>
   </div>
 </template>
@@ -216,7 +256,28 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 960px;
+  max-width: 1200px;
+}
+
+.shots-page__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6, 32px);
+}
+
+.shots-page__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.shots-page__filters {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 24px);
 }
 
 .shots-page__message {

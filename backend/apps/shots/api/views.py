@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from django.core.paginator import Paginator
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
@@ -21,6 +21,7 @@ from .schemas import (
     ProjectShotGroupsPath,
     ProjectShotsPath,
     ShotCreateIn,
+    ShotFiltersOut,
     ShotGroupCreateIn,
     ShotGroupListOut,
     ShotGroupListQuery,
@@ -606,7 +607,29 @@ def _resolve_status_for_update(
         ) from exc
 
 
-def _filter_shots(queryset, query: ShotListQuery):
+def _parse_ids(controller, raw: str, loc: str, *, allow_none: bool = False):
+    """Split a comma-separated id list into `(ids, wants_none)`."""
+    ids: set[int] = set()
+    wants_none = False
+    for part in (part.strip() for part in raw.split(",")):
+        if allow_none and part == "none":
+            wants_none = True
+        elif part.isdecimal() and int(part) > 0:
+            ids.add(int(part))
+        else:
+            expected = "user ids or `none`" if allow_none else "ids"
+            raise APIError(
+                controller.format_error(
+                    f"`{loc}` must be a comma-separated list of {expected}.",
+                    loc=[loc],
+                    error_type=ErrorType.value_error,
+                ),
+                status_code=HTTPStatus.BAD_REQUEST,
+            )
+    return ids, wants_none
+
+
+def _filter_shots(controller, queryset, query: ShotListQuery):
     """Apply the filters shared by both shot list endpoints."""
     if query.search:
         queryset = queryset.filter(name__icontains=query.search)
@@ -617,6 +640,17 @@ def _filter_shots(queryset, query: ShotListQuery):
         # looked up by name so `apps.shots` doesn't import the tasks app.
         # A shot with several tasks of that type would otherwise repeat.
         queryset = queryset.filter(tasks__type_id=query.task_type).distinct()
+    if query.status:
+        status_ids, _ = _parse_ids(controller, query.status, "status")
+        queryset = queryset.filter(status_id__in=status_ids)
+    if query.assigned_to:
+        user_ids, wants_none = _parse_ids(
+            controller, query.assigned_to, "assigned_to", allow_none=True
+        )
+        condition = Q(shot_tasks__assignee_id__in=user_ids)
+        if wants_none:
+            condition |= Q(shot_tasks__isnull=False, shot_tasks__assignee__isnull=True)
+        queryset = queryset.filter(condition).distinct()
     return queryset
 
 
@@ -633,11 +667,13 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Return a paginated list of every shot in the given project, "
             "regardless of which group(s) it belongs to, optionally "
-            "filtered by `search` against the name."
+            "filtered by `search` against the name, by `status` and by "
+            "`assigned_to`."
         ),
         response_description="A page of shots.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
         ],
         tags=["Shots"],
     )
@@ -650,7 +686,7 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
 
         queryset = Shot.objects.filter(project=project)
 
-        queryset = _filter_shots(queryset, parsed_query)
+        queryset = _filter_shots(self, queryset, parsed_query)
 
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)
@@ -716,6 +752,42 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
         return _serialize_shot(self.request, shot)
 
 
+class ShotFiltersController(AuthenticatedController[PydanticSerializer]):
+    """`GET /api/v1/projects/<project_id>/shot-filters/` - the values the
+    shot list filters are built from."""
+
+    @modify(
+        summary="List the values a project's shots can be filtered by",
+        description=(
+            "Return the shot statuses and task assignees that actually "
+            "occur in the project, so the filter panel offers nothing "
+            "that would give an empty list."
+        ),
+        response_description="Available filter values.",
+        extra_responses=[
+            ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+        ],
+        tags=["Shots"],
+    )
+    def get(self, parsed_path: Path[ProjectShotsPath]) -> ShotFiltersOut:
+        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        shots = Shot.objects.filter(project=project)
+        assignee_ids = set(
+            shots.filter(shot_tasks__assignee__isnull=False).values_list(
+                "shot_tasks__assignee_id", flat=True
+            )
+        )
+        return ShotFiltersOut(
+            status_ids=sorted(
+                shots.order_by().values_list("status_id", flat=True).distinct()
+            ),
+            assignee_ids=sorted(assignee_ids),
+            has_unassigned=shots.filter(
+                shot_tasks__isnull=False, shot_tasks__assignee__isnull=True
+            ).exists(),
+        )
+
+
 class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
     """`GET /api/v1/shot-groups/<id>/shots/` - list the shots belonging to
     a single group. Read-only - shots are created via
@@ -745,7 +817,7 @@ class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
 
         queryset = Shot.objects.filter(groups=shot_group)
 
-        queryset = _filter_shots(queryset, parsed_query)
+        queryset = _filter_shots(self, queryset, parsed_query)
 
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)

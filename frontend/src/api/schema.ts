@@ -431,6 +431,26 @@ export interface paths {
         patch: operations["patchProjectMemberDetailControllerApiV1ProjectsProjectIdMembersUserId"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/shot-filters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the values a project's shots can be filtered by
+         * @description Return the shot statuses and task assignees that actually occur in the project, so the filter panel offers nothing that would give an empty list.
+         */
+        get: operations["getShotFiltersControllerApiV1ProjectsProjectIdShotFilters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/shot-groups/": {
         parameters: {
             query?: never;
@@ -484,7 +504,7 @@ export interface paths {
         };
         /**
          * List a project's shots
-         * @description Return a paginated list of every shot in the given project, regardless of which group(s) it belongs to, optionally filtered by `search` against the name.
+         * @description Return a paginated list of every shot in the given project, regardless of which group(s) it belongs to, optionally filtered by `search` against the name, by `status` and by `assigned_to`.
          */
         get: operations["getShotListControllerApiV1ProjectsProjectIdShots"];
         put?: never;
@@ -1628,6 +1648,27 @@ export interface components {
              * @default null
              */
             duration?: number | null;
+        };
+        /**
+         * ShotFiltersOut
+         * @description Filter values that at least one shot of the project actually has.
+         */
+        ShotFiltersOut: {
+            /**
+             * Status Ids
+             * @description Ids of the shot statuses used by at least one shot.
+             */
+            status_ids: number[];
+            /**
+             * Assignee Ids
+             * @description Ids of the users who have at least one task on a shot.
+             */
+            assignee_ids: number[];
+            /**
+             * Has Unassigned
+             * @description Whether at least one shot has a task with no assignee.
+             */
+            has_unassigned: boolean;
         };
         /**
          * ShotGroupCreateIn
@@ -5306,6 +5347,76 @@ export interface operations {
             };
         };
     };
+    getShotFiltersControllerApiV1ProjectsProjectIdShotFilters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's shots collection. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available filter values. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShotFiltersOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getShotGroupListControllerApiV1ProjectsProjectIdShotGroups: {
         parameters: {
             query?: {
@@ -5582,6 +5693,10 @@ export interface operations {
                 name?: string | null;
                 /** @description Only shots that have at least one task of the task type with this id. */
                 task_type?: number | null;
+                /** @description Comma-separated shot status ids, e.g. `3,5`: only shots whose status is one of them. */
+                status?: string | null;
+                /** @description Comma-separated user ids, e.g. `4,9`: only shots that have at least one task assigned to one of those users. The value `none` stands for a task with no assignee and can be mixed in (`4,none`). */
+                assigned_to?: string | null;
             };
             header?: never;
             path: {
@@ -5601,13 +5716,15 @@ export interface operations {
                     "application/json": components["schemas"]["ShotListOut"];
                 };
             };
-            /** @description Raised when request components cannot be parsed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when auth was not successful */
@@ -6173,6 +6290,10 @@ export interface operations {
                 name?: string | null;
                 /** @description Only shots that have at least one task of the task type with this id. */
                 task_type?: number | null;
+                /** @description Comma-separated shot status ids, e.g. `3,5`: only shots whose status is one of them. */
+                status?: string | null;
+                /** @description Comma-separated user ids, e.g. `4,9`: only shots that have at least one task assigned to one of those users. The value `none` stands for a task with no assignee and can be mixed in (`4,none`). */
+                assigned_to?: string | null;
             };
             header?: never;
             path: {

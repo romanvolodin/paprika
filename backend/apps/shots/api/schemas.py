@@ -216,6 +216,17 @@ class ShotListQuery(pydantic.BaseModel):
         description="Only shots that have at least one task of the task "
         "type with this id.",
     )
+    status: str | None = pydantic.Field(
+        default=None,
+        description="Comma-separated shot status ids, e.g. `3,5`: only shots "
+        "whose status is one of them.",
+    )
+    assigned_to: str | None = pydantic.Field(
+        default=None,
+        description="Comma-separated user ids, e.g. `4,9`: only shots that have "
+        "at least one task assigned to one of those users. The value `none` "
+        "stands for a task with no assignee and can be mixed in (`4,none`).",
+    )
 
 
 class ShotListOut(pydantic.BaseModel):
@@ -225,6 +236,20 @@ class ShotListOut(pydantic.BaseModel):
     total: int = pydantic.Field(description="Total number of shots matching filters.")
     page: int
     page_size: int
+
+
+class ShotFiltersOut(pydantic.BaseModel):
+    """Filter values that at least one shot of the project actually has."""
+
+    status_ids: list[int] = pydantic.Field(
+        description="Ids of the shot statuses used by at least one shot."
+    )
+    assignee_ids: list[int] = pydantic.Field(
+        description="Ids of the users who have at least one task on a shot."
+    )
+    has_unassigned: bool = pydantic.Field(
+        description="Whether at least one shot has a task with no assignee."
+    )
 
 
 class ProjectShotsPath(pydantic.BaseModel):

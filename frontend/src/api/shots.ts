@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type {
   ShotCreateIn,
+  ShotFiltersOut,
   ShotGroupCreateIn,
   ShotGroupListOut,
   ShotGroupListQuery,
@@ -19,6 +20,12 @@ import type {
 export function listShots(projectId: number, query: ShotListQuery = {}) {
   return apiClient
     .get<ShotListOut>(`/projects/${projectId}/shots/`, { params: query })
+    .then((res) => res.data)
+}
+
+export function getShotFilters(projectId: number) {
+  return apiClient
+    .get<ShotFiltersOut>(`/projects/${projectId}/shot-filters/`)
     .then((res) => res.data)
 }
 
