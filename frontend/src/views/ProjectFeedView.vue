@@ -31,9 +31,6 @@ watch(
 const days = computed(() => groupFeedByDay(feed.items))
 const typesLabel = computed(() => describeTypeFilter(feed.types))
 
-// The checkboxes show every box ticked while no filter is set.
-const checkedTypes = computed(() => (feed.types.length === 0 ? FEED_EVENT_TYPES : feed.types))
-
 function changeScope(value: FeedScope) {
   feed.setScope(value)
 }
@@ -49,7 +46,7 @@ function changeTypes(value: Array<string | number>) {
       <h2 class="project-feed__title">Лента событий</h2>
 
       <n-space align="center" :size="8">
-        <n-button text size="small" :disabled="feed.isDefaultFilter" @click="feed.resetFilters()">
+        <n-button v-if="!feed.isDefaultFilter" text size="small" @click="feed.resetFilters()">
           Сбросить
         </n-button>
 
@@ -75,7 +72,7 @@ function changeTypes(value: Array<string | number>) {
               <template #icon><n-icon :component="ChevronDownOutline" /></template>
             </n-button>
           </template>
-          <n-checkbox-group :value="checkedTypes" @update:value="changeTypes">
+          <n-checkbox-group :value="feed.types" @update:value="changeTypes">
             <n-space vertical :size="8">
               <n-checkbox v-for="type in FEED_EVENT_TYPES" :key="type" :value="type">
                 {{ FEED_TYPE_LABELS[type] }}

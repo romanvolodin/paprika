@@ -29,7 +29,10 @@ export const useProjectFeedStore = defineStore('projectFeed', () => {
   function query(beforeDate?: string): FeedQuery {
     return {
       mine: scope.value === 'mine' ? true : undefined,
-      type: types.value.length > 0 ? types.value.join(',') : undefined,
+      type:
+        types.value.length > 0 && types.value.length < FEED_EVENT_TYPES.length
+          ? types.value.join(',')
+          : undefined,
       before_date: beforeDate,
     }
   }
@@ -87,11 +90,7 @@ export const useProjectFeedStore = defineStore('projectFeed', () => {
   }
 
   async function setTypes(value: FeedEventType[]) {
-    // Every type chosen is the same as no filter.
-    types.value =
-      value.length === FEED_EVENT_TYPES.length
-        ? []
-        : FEED_EVENT_TYPES.filter((t) => value.includes(t))
+    types.value = FEED_EVENT_TYPES.filter((t) => value.includes(t))
     await load()
   }
 

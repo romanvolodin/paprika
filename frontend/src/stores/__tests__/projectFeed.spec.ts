@@ -87,7 +87,7 @@ describe('useProjectFeedStore', () => {
     expect(store.isDefaultFilter).toBe(false)
   })
 
-  it('setTypes sends the chosen types, and every type means no filter', async () => {
+  it('setTypes sends the chosen types, and every type ticked sends no type', async () => {
     const store = useProjectFeedStore()
     await store.open(5)
 
@@ -98,7 +98,7 @@ describe('useProjectFeedStore', () => {
     )
 
     await store.setTypes(['chat', 'version', 'task'])
-    expect(store.types).toEqual([])
+    expect(store.types).toEqual(['chat', 'version', 'task'])
     expect(feedApi.listFeed).toHaveBeenLastCalledWith(
       5,
       expect.objectContaining({ type: undefined }),
