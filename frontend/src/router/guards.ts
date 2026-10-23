@@ -18,7 +18,7 @@ export function setupAuthGuard(router: Router) {
     }
 
     if (to.name === 'login' && auth.isAuthenticated) {
-      return { name: 'users-list' }
+      return { name: 'project-list' }
     }
 
     if (auth.isAuthenticated) {

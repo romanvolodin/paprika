@@ -20,7 +20,7 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: { name: 'users-list' },
+      redirect: { name: 'project-list' },
     },
     {
       path: '/users',

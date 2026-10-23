@@ -17,7 +17,7 @@ async function handleSubmit() {
   isSubmitting.value = true
   try {
     await auth.login(email.value, password.value)
-    const redirect = (route.query.redirect as string) || '/users'
+    const redirect = (route.query.redirect as string) || '/projects'
     router.push(redirect)
   } catch {
     message.error('Неверный email или пароль.')

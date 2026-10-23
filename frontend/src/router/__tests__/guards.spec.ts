@@ -32,6 +32,12 @@ function buildRouter() {
         component: { template: '<div />' },
         meta: { requiresAuth: true },
       },
+      {
+        path: '/projects',
+        name: 'project-list',
+        component: { template: '<div />' },
+        meta: { requiresAuth: true },
+      },
     ],
   })
   setupAuthGuard(router)
@@ -83,7 +89,7 @@ describe('setupAuthGuard', () => {
 
     await router.push('/login')
 
-    expect(router.currentRoute.value.name).toBe('users-list')
+    expect(router.currentRoute.value.name).toBe('project-list')
   })
 
   it('lets an unauthenticated visitor reach the login page', async () => {
