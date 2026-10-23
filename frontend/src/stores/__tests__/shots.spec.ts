@@ -90,8 +90,9 @@ function buildMember(userId: number, firstName: string, lastName: string): Proje
     first_name: firstName,
     last_name: lastName,
     avatar: null,
-    role: 'artist',
-  } as ProjectMemberOut
+    role: 'executor',
+    created_at: '2026-01-01T00:00:00Z',
+  }
 }
 
 function mockFilters(filters: Partial<ShotFiltersOut> = {}) {
