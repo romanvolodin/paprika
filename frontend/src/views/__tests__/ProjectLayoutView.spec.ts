@@ -74,6 +74,7 @@ async function mountLayout(
           { path: 'shots/:shotName/versions', name: 'shot-versions', component: Empty },
           { path: 'shots/:shotName/upload', name: 'shot-upload', component: Empty },
           { path: 'shots/:shotName/settings', name: 'shot-settings', component: Empty },
+          { path: 'feed', name: 'project-feed', component: Empty },
           { path: 'tasks', name: 'project-tasks', component: Empty },
           { path: 'groups', name: 'project-groups', component: Empty },
           { path: 'settings', name: 'project-settings', component: Empty },
@@ -123,6 +124,7 @@ describe('ProjectLayoutView', () => {
     expect(wrapper.text()).toContain('Feature Film')
     expect(wrapper.text()).toContain('PRJ')
     const links = wrapper.findAll('a').map((link) => link.text())
+    expect(links).toContain('Лента')
     expect(links).toContain('Кадры')
     expect(links).toContain('Задачи')
     expect(links).toContain('Группы')
@@ -134,17 +136,12 @@ describe('ProjectLayoutView', () => {
 
     const nav = wrapper.find('nav[aria-label="Разделы проекта"]')
     expect(nav.findAll('a').map((link) => link.text())).toEqual([
+      'Лента',
       'Кадры',
       'Задачи',
       'Группы',
       'Настройки',
     ])
-  })
-
-  it('has no feed link until the feed exists', async () => {
-    const wrapper = await mountLayout('admin')
-
-    expect(wrapper.findAll('a').map((link) => link.text())).not.toContain('Лента')
   })
 
   it.each(['admin', 'producer'] as const)('shows the settings link to a %s', async (role) => {
@@ -180,6 +177,7 @@ describe('ProjectLayoutView', () => {
   })
 
   it.each([
+    ['/acme/PRJ/feed', 'Лента'],
     ['/acme/PRJ/tasks', 'Задачи'],
     ['/acme/PRJ/groups', 'Группы'],
     ['/acme/PRJ/settings', 'Настройки'],

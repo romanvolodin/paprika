@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildChatEntries,
+  describeEventAction,
   describeSystemMessage,
   formatClock,
   formatDay,
@@ -281,5 +282,14 @@ describe('formatDay', () => {
 describe('formatClock', () => {
   it('gives hours and minutes with a leading zero', () => {
     expect(formatClock(at(21, 9, 5))).toBe('09:05')
+  })
+})
+
+describe('describeEventAction', () => {
+  it('describes an event without the actor', () => {
+    expect(describeEventAction('version_uploaded', { version_name: 'PRJ_0010_v02' })).toBe(
+      'загрузил версию PRJ_0010_v02',
+    )
+    expect(describeEventAction('unknown', {})).toBe('изменил кадр')
   })
 })

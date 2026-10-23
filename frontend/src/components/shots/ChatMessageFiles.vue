@@ -5,7 +5,10 @@ import { DocumentOutline, ImageOutline } from '@vicons/ionicons5'
 import { formatFileSize } from '@/utils/format'
 import type { AttachmentOut, VersionOut } from '@/types/api'
 
-const props = defineProps<{ attachments: AttachmentOut[]; versions: VersionOut[] }>()
+// All the chip needs of a version (the feed has no more than that).
+type LinkedVersion = Pick<VersionOut, 'id' | 'name' | 'thumb' | 'converted' | 'source'>
+
+const props = defineProps<{ attachments: AttachmentOut[]; versions: LinkedVersion[] }>()
 
 const images = computed(() =>
   props.attachments.filter((attachment) => attachment.content_type.startsWith('image/')),
@@ -14,7 +17,7 @@ const otherFiles = computed(() =>
   props.attachments.filter((attachment) => !attachment.content_type.startsWith('image/')),
 )
 
-function versionHref(version: VersionOut): string {
+function versionHref(version: LinkedVersion): string {
   return version.converted ?? version.source
 }
 </script>

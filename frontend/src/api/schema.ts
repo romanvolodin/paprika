@@ -363,6 +363,26 @@ export interface paths {
         patch: operations["patchProjectDetailControllerApiV1ProjectsProjectId"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/feed/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the project's events
+         * @description Chat messages, uploaded versions and task events (a task added to a shot, its status or assignee changed) of all the shots of the project, newest first. The events are collected on the fly from the chat and version tables. One response covers a window of 5 days, counted back from the newest event found (so a quiet week doesn't give an empty page). To load earlier events pass the `next_before_date` of the response as `before_date`.
+         */
+        get: operations["getProjectFeedControllerApiV1ProjectsProjectIdFeed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/members/": {
         parameters: {
             query?: never;
@@ -1107,6 +1127,118 @@ export interface components {
         ErrorModel: {
             /** Detail */
             detail: components["schemas"]["ErrorDetail"][];
+        };
+        /**
+         * FeedItemOut
+         * @description One event of the feed.
+         *
+         *     `type` says which of the optional fields are filled:
+         *
+         *     - `chat` - a user message: `text`, `attachments` and `versions` (the
+         *       versions the message links to).
+         *     - `version` - a version was uploaded: `version`.
+         *     - `task` - something happened to a task on a shot: `event`
+         *       (`task_added`, `status_changed` or `assignee_changed`) and
+         *       `payload` with the details, exactly as in the shot's chat.
+         */
+        FeedItemOut: {
+            /**
+             * Key
+             * @description Identifies the event within the feed, e.g. `chat-12`.
+             */
+            key: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "chat" | "task" | "version";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** @description Who did it, or null if that user has since been deleted. */
+            created_by: components["schemas"]["UserOut"] | null;
+            shot: components["schemas"]["FeedShotOut"];
+            /**
+             * Text
+             * @description Only for `chat`.
+             */
+            text: string | null;
+            /**
+             * Attachments
+             * @description Only for `chat`.
+             */
+            attachments: components["schemas"]["AttachmentOut"][];
+            /**
+             * Versions
+             * @description Only for `chat`.
+             */
+            versions: components["schemas"]["FeedVersionOut"][];
+            /** @description Only for `version`. */
+            version: components["schemas"]["FeedVersionOut"] | null;
+            /**
+             * Event
+             * @description Only for `task`.
+             */
+            event: string | null;
+            /**
+             * Payload
+             * @description Only for `task`; empty otherwise.
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * FeedOut
+         * @description A slice of the feed, newest events first.
+         */
+        FeedOut: {
+            /** Items */
+            items: components["schemas"]["FeedItemOut"][];
+            /**
+             * Next Before Date
+             * @description Pass as `before_date` to load the next, older slice. Null when there is nothing older.
+             */
+            next_before_date: string | null;
+        };
+        /** FeedShotOut */
+        FeedShotOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
+        /**
+         * FeedVersionOut
+         * @description A version, as much of it as the feed needs to show and open it.
+         */
+        FeedVersionOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Type
+             * @description `video` or `image`.
+             */
+            type: string;
+            /**
+             * Source
+             * @description Absolute URL of the original file.
+             */
+            source: string;
+            /**
+             * Converted
+             * @description Absolute URL of the browser-friendly rendition, or null.
+             */
+            converted: string | null;
+            /**
+             * Thumb
+             * @description Absolute URL of a small JPG thumbnail, or null.
+             */
+            thumb: string | null;
         };
         /**
          * LoginPayload
@@ -4729,6 +4861,85 @@ export interface operations {
             };
             /** @description Raised when CSRF check failed */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getProjectFeedControllerApiV1ProjectsProjectIdFeed: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated event types to return: `chat`, `task`, `version`. All of them if omitted. */
+                type?: string | null;
+                /** @description Only events on shots that have a task assigned to the current user. */
+                mine?: boolean;
+                /** @description Return events created before this moment (exclusive). Pass the `next_before_date` of the previous response to load earlier events. Without it the feed starts from the newest events. */
+                before_date?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description URL path parameters identifying a project's feed. */
+                project_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A slice of the feed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.chat",
     "apps.companies",
+    "apps.feed",
     "apps.projects",
     "apps.shots",
     "apps.tasks",

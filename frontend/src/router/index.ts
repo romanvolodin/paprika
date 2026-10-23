@@ -87,6 +87,11 @@ const router = createRouter({
           redirect: (to) => ({ name: 'shot-list', params: to.params }),
         },
         {
+          path: 'feed',
+          name: 'project-feed',
+          component: () => import('@/views/ProjectFeedView.vue'),
+        },
+        {
           path: 'shots',
           name: 'shot-list',
           component: () => import('@/views/ShotListView.vue'),

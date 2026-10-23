@@ -19,35 +19,39 @@ function refName(value: unknown): string | null {
 }
 
 /**
- * The sentence for a system message, built from its `event` and
- * `payload` (the backend stores ids and names as they were when the
- * event happened, so the line stays readable after things are renamed
- * or deleted).
+ * What happened, without the actor: "загрузил версию PRJ_0010_v02".
+ * Built from an event's `event` and `payload` (the backend stores ids
+ * and names as they were when the event happened, so the line stays
+ * readable after things are renamed or deleted).
  */
-export function describeSystemMessage(message: MessageOut): string {
-  const actor = userName(message.created_by)
-  const payload = message.payload
+export function describeEventAction(
+  event: string | null,
+  payload: Record<string, unknown>,
+): string {
   const task = `${str(payload.task_code)}`.trim()
 
-  switch (message.event) {
+  switch (event) {
     case 'version_uploaded':
-      return `${actor} загрузил версию ${str(payload.version_name)}`
+      return `загрузил версию ${str(payload.version_name)}`
     case 'task_added':
-      return `${actor} добавил задачу ${task} «${str(payload.task_name)}»`
+      return `добавил задачу ${task} «${str(payload.task_name)}»`
     case 'status_changed':
-      return `${actor} сменил статус задачи ${task}: ${refName(payload.from) ?? '—'} → ${refName(payload.to) ?? '—'}`
+      return `сменил статус задачи ${task}: ${refName(payload.from) ?? '—'} → ${refName(payload.to) ?? '—'}`
     case 'assignee_changed': {
       const from = refName(payload.from)
       const to = refName(payload.to)
-      if (from === null && to !== null)
-        return `${actor} назначил исполнителем задачи ${task}: ${to}`
-      if (from !== null && to === null)
-        return `${actor} снял исполнителя задачи ${task} (был: ${from})`
-      return `${actor} сменил исполнителя задачи ${task}: ${from ?? '—'} → ${to ?? '—'}`
+      if (from === null && to !== null) return `назначил исполнителем задачи ${task}: ${to}`
+      if (from !== null && to === null) return `снял исполнителя задачи ${task} (был: ${from})`
+      return `сменил исполнителя задачи ${task}: ${from ?? '—'} → ${to ?? '—'}`
     }
     default:
-      return `${actor} изменил кадр`
+      return 'изменил кадр'
   }
+}
+
+/** The sentence for a system message: the actor and what they did. */
+export function describeSystemMessage(message: MessageOut): string {
+  return `${userName(message.created_by)} ${describeEventAction(message.event, message.payload)}`
 }
 
 /**

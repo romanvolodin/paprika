@@ -19,6 +19,7 @@ const { canManageProject } = useProjectPermissions(members)
 // import page is a sibling of the shot list in the route tree, yet it
 // belongs to the "Кадры" section.
 const SECTION_ROUTES = {
+  feed: ['project-feed'],
   shots: ['shot-list', 'shot-import'],
   tasks: ['project-tasks'],
   groups: ['project-groups'],
@@ -85,6 +86,13 @@ watch(
         </div>
 
         <nav class="project-page__nav" aria-label="Разделы проекта">
+          <RouterLink
+            class="project-page__link"
+            :class="{ 'project-page__link--active': isActive('feed') }"
+            :to="{ name: 'project-feed', params: routeParams }"
+          >
+            Лента
+          </RouterLink>
           <RouterLink
             class="project-page__link"
             :class="{ 'project-page__link--active': isActive('shots') }"
