@@ -104,9 +104,9 @@ superuser: _require-mode
 
 backup: _require-mode
   @if [ "{{MODE}}" = "dev" ]; then \
-    docker compose -f compose.dev.yaml exec pg sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "paprika-dev-backup-$(date +%Y%m%d-%H%M%S).sql"; \
+    docker compose -f compose.dev.yaml exec -T pg sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl' > "paprika-dev-backup-$(date +%Y%m%d-%H%M%S).sql"; \
   elif [ "{{MODE}}" = "prod" ]; then \
-    docker compose -f compose.prod.yaml exec pg sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "paprika-prod-backup-$(date +%Y%m%d-%H%M%S).sql"; \
+    docker compose -f compose.prod.yaml exec -T pg sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl' > paprika.sql; \
   fi
 
 test *ARGS:
