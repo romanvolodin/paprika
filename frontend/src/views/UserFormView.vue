@@ -15,6 +15,7 @@ import {
 } from 'naive-ui'
 import { CameraOutline, TrashOutline, ArrowBackOutline } from '@vicons/ionicons5'
 import * as usersApi from '@/api/users'
+import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
 import type { UserOut } from '@/types/api'
 
 const props = defineProps<{ userId?: number }>()
@@ -34,6 +35,9 @@ const password = ref('')
 const firstName = ref('')
 const lastName = ref('')
 const isActive = ref(true)
+const loadedFullName = ref('')
+
+useDynamicPageTitle(loadedFullName)
 
 const rules: FormRules = {
   email: [{ required: true, message: 'Укажите email', trigger: ['input', 'blur'] }],
@@ -90,6 +94,7 @@ async function loadUser(userId: number) {
     lastName.value = user.last_name
     isActive.value = user.is_active
     existingAvatarUrl.value = user.avatar
+    loadedFullName.value = `${user.first_name} ${user.last_name}`.trim()
   } catch {
     message.error('Не удалось загрузить пользователя.')
     router.push({ name: 'users-list' })

@@ -24,6 +24,7 @@ import ShotStatusesSection from '@/components/shots/ShotStatusesSection.vue'
 import TaskStatusesSection from '@/components/tasks/TaskStatusesSection.vue'
 import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
+import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
 import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
 import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import { slugify } from '@/utils/slugify'
@@ -37,6 +38,8 @@ const dialog = useDialog()
 const store = useCompanyDetailStore()
 const { canEditCompany, canManageMembers, canRemoveMember, canChangeMemberRole } =
   useCompanyPermissions(computed(() => store.members))
+
+useDynamicPageTitle(() => (store.company?.id === props.companyId ? store.company.name : null))
 
 onMounted(() => {
   store.fetch(props.companyId)
