@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { NTag } from 'naive-ui'
 import ShotStatusTag from '@/components/shots/ShotStatusTag.vue'
 import type { ShotGroupOut, ShotOut, ShotStatusOut } from '@/types/api'
 
