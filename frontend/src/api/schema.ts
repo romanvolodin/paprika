@@ -1859,6 +1859,12 @@ export interface components {
              * @description Length of the shot, in frames.
              */
             duration: number | null;
+            /**
+             * Thumb
+             * @description Absolute URL of the thumbnail of the shot's latest version, or null if the shot has no versions.
+             * @default null
+             */
+            thumb?: string | null;
             /** @description The user who created the shot, or null if that user has since been deleted. */
             created_by: components["schemas"]["UserOut"] | null;
             /** @description The user who last updated the shot, or null if that user has since been deleted. */

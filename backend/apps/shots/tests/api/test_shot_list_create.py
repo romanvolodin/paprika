@@ -443,3 +443,94 @@ class TestCreateShot:
         )
 
         assert response.status_code == 401
+
+
+class TestShotThumb:
+    def test_is_the_thumbnail_of_the_latest_version(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_factory,
+        version_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot = shot_factory(project=project)
+        version_factory(shot=shot, name="PRJ_0010_v01")
+        latest = version_factory(shot=shot, name="PRJ_0010_v02")
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shots/")
+
+        thumb = response.json()["items"][0]["thumb"]
+        assert thumb.endswith(latest.thumb.url)
+        assert thumb.startswith("http")
+
+    def test_is_null_when_the_shot_has_no_versions(
+        self, auth_client, auth_user, project, project_membership_factory, shot_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot_factory(project=project)
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shots/")
+
+        assert response.json()["items"][0]["thumb"] is None
+
+    def test_is_null_when_the_latest_version_has_no_thumbnail(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_factory,
+        version_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        shot = shot_factory(project=project)
+        version_factory(shot=shot, thumb="")
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shots/")
+
+        assert response.json()["items"][0]["thumb"] is None
+
+    def test_number_of_queries_does_not_grow_with_the_number_of_shots(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_factory,
+        version_factory,
+        django_assert_max_num_queries,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        for _ in range(3):
+            version_factory(shot=shot_factory(project=project))
+        url = f"/api/v1/projects/{project.id}/shots/"
+        auth_client.get(url)
+
+        with django_assert_max_num_queries(12):
+            response = auth_client.get(url)
+
+        assert all(item["thumb"] for item in response.json()["items"])
+
+    def test_is_also_in_the_group_shot_list_and_the_shot_detail(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        project_membership_factory,
+        shot_factory,
+        shot_group_factory,
+        version_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project)
+        group = shot_group_factory(project=project)
+        shot = shot_factory(project=project, groups=[group])
+        version = version_factory(shot=shot)
+
+        in_group = auth_client.get(f"/api/v1/shot-groups/{group.id}/shots/")
+        detail = auth_client.get(f"/api/v1/shots/{shot.id}/")
+
+        assert in_group.json()["items"][0]["thumb"].endswith(version.thumb.url)
+        assert detail.json()["thumb"].endswith(version.thumb.url)

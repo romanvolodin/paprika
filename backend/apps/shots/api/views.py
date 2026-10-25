@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from django.core.paginator import Paginator
-from django.db.models import ProtectedError, Q
+from django.db.models import OuterRef, ProtectedError, Q, Subquery
 from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
@@ -15,6 +15,7 @@ from apps.projects.permissions import require_can_write
 from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
+from apps.versions.models import Version
 
 from .schemas import (
     CompanyShotStatusesPath,
@@ -481,6 +482,27 @@ class ShotStatusDetailController(AuthenticatedController[PydanticSerializer]):
         return None
 
 
+def _with_latest_thumb(queryset):
+    latest = (
+        Version.objects.filter(shot=OuterRef("pk"))
+        .order_by("-created_at", "-id")
+        .values("thumb")[:1]
+    )
+    return queryset.annotate(latest_thumb=Subquery(latest))
+
+
+def _shot_thumb_url(request, shot: Shot) -> str | None:
+    if hasattr(shot, "latest_thumb"):
+        name = shot.latest_thumb
+    else:
+        name = shot.versions.values_list("thumb", flat=True).first()
+    if not name:
+        return None
+    return request.build_absolute_uri(
+        Version._meta.get_field("thumb").storage.url(name)
+    )
+
+
 def _serialize_shot(request, shot: Shot) -> ShotOut:
     return ShotOut(
         id=shot.id,
@@ -490,6 +512,7 @@ def _serialize_shot(request, shot: Shot) -> ShotOut:
         name=shot.name,
         rec_timecode=shot.rec_timecode,
         duration=shot.duration,
+        thumb=_shot_thumb_url(request, shot),
         created_by=_serialize_user(request, shot.created_by)
         if shot.created_by
         else None,
@@ -684,7 +707,7 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotListOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
 
-        queryset = Shot.objects.filter(project=project)
+        queryset = _with_latest_thumb(Shot.objects.filter(project=project))
 
         queryset = _filter_shots(self, queryset, parsed_query)
 
@@ -815,7 +838,7 @@ class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
             self.request.user, parsed_path.shot_group_id
         )
 
-        queryset = Shot.objects.filter(groups=shot_group)
+        queryset = _with_latest_thumb(Shot.objects.filter(groups=shot_group))
 
         queryset = _filter_shots(self, queryset, parsed_query)
 

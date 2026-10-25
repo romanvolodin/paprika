@@ -179,6 +179,11 @@ class ShotOut(pydantic.BaseModel):
         description="Start position of the shot in the edit, in frames."
     )
     duration: int | None = pydantic.Field(description="Length of the shot, in frames.")
+    thumb: str | None = pydantic.Field(
+        default=None,
+        description="Absolute URL of the thumbnail of the shot's latest version, "
+        "or null if the shot has no versions.",
+    )
     created_by: UserOut | None = pydantic.Field(
         description="The user who created the shot, or null if that user "
         "has since been deleted."

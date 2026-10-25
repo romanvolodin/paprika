@@ -4,7 +4,6 @@ import { RouterLink, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
   NButton,
-  NDataTable,
   NIcon,
   NInput,
   NPagination,
@@ -14,9 +13,14 @@ import {
 } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
+import ItemList from '@/components/common/ItemList.vue'
+import ViewModeSwitch from '@/components/common/ViewModeSwitch.vue'
+import ShotCard from '@/components/shots/ShotCard.vue'
 import ShotFilterSection from '@/components/shots/ShotFilterSection.vue'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
+import ShotStatusTag from '@/components/shots/ShotStatusTag.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { useViewMode } from '@/composables/useViewMode'
 import { firstValidationMessage } from '@/utils/apiError'
 import { useShotsStore } from '@/stores/shots'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
@@ -32,6 +36,7 @@ const message = useMessage()
 const { members } = storeToRefs(shots)
 const { canWrite } = useProjectPermissions(members)
 
+const viewMode = useViewMode('shots')
 const searchInput = ref('')
 const isFormOpen = ref(false)
 const isSaving = ref(false)
@@ -89,26 +94,30 @@ function handleStatusFilter(selected: (number | 'none')[], inverted: boolean) {
 const statusById = computed(() => new Map(shots.statuses.map((status) => [status.id, status])))
 const groupById = computed(() => new Map(shots.groups.map((group) => [group.id, group])))
 
+function shotRoute(shot: ShotOut) {
+  return {
+    name: 'shot-detail',
+    params: {
+      companySlug: props.companySlug,
+      projectCode: props.projectCode,
+      shotName: shot.name,
+    },
+  }
+}
+
+function groupsOf(shot: ShotOut) {
+  return shot.group_ids.flatMap((id) => {
+    const group = groupById.value.get(id)
+    return group ? [group] : []
+  })
+}
+
 const columns = computed<DataTableColumns<ShotOut>>(() => [
   {
     title: 'Кадр',
     key: 'name',
     render: (shot) =>
-      h(
-        RouterLink,
-        {
-          class: 'mono',
-          to: {
-            name: 'shot-detail',
-            params: {
-              companySlug: props.companySlug,
-              projectCode: props.projectCode,
-              shotName: shot.name,
-            },
-          },
-        },
-        { default: () => shot.name },
-      ),
+      h(RouterLink, { class: 'mono', to: shotRoute(shot) }, { default: () => shot.name }),
   },
   {
     title: 'Группы',
@@ -117,12 +126,9 @@ const columns = computed<DataTableColumns<ShotOut>>(() => [
       h(
         'div',
         { class: 'shots-page__groups' },
-        shot.group_ids.flatMap((id) => {
-          const group = groupById.value.get(id)
-          return group
-            ? [h(NTag, { size: 'small', round: true }, { default: () => group.name })]
-            : []
-        }),
+        groupsOf(shot).map((group) =>
+          h(NTag, { size: 'small', round: true }, { default: () => group.name }),
+        ),
       ),
   },
   {
@@ -131,20 +137,7 @@ const columns = computed<DataTableColumns<ShotOut>>(() => [
     width: 180,
     render: (shot) => {
       const status = statusById.value.get(shot.status_id)
-      if (!status) return null
-      return h(
-        NTag,
-        {
-          size: 'small',
-          round: true,
-          color: {
-            color: `${status.color}26`,
-            borderColor: status.color,
-            textColor: status.color,
-          },
-        },
-        { default: () => status.name },
-      )
+      return status ? h(ShotStatusTag, { status }) : null
     },
   },
 ])
@@ -189,25 +182,37 @@ watch(
         </div>
       </div>
 
-      <n-input
-        :value="searchInput"
-        placeholder="Поиск по названию"
-        clearable
-        style="max-width: 320px"
-        @update:value="handleSearchInput"
-      >
-        <template #prefix><n-icon :component="SearchOutline" /></template>
-      </n-input>
+      <div class="shots-page__toolbar">
+        <n-input
+          :value="searchInput"
+          placeholder="Поиск по названию"
+          clearable
+          style="max-width: 320px"
+          @update:value="handleSearchInput"
+        >
+          <template #prefix><n-icon :component="SearchOutline" /></template>
+        </n-input>
+        <view-mode-switch v-model="viewMode" />
+      </div>
 
       <div class="shots-page__body">
         <div class="shots-page__main">
-          <n-data-table
+          <item-list
+            :items="shots.items"
             :columns="columns"
-            :data="shots.items"
+            :mode="viewMode"
             :loading="shots.isLoading"
-            :bordered="false"
-            :row-key="(row: ShotOut) => row.id"
-          />
+            :row-key="(shot: ShotOut) => shot.id"
+          >
+            <template #card="{ item }">
+              <shot-card
+                :shot="item"
+                :status="statusById.get(item.status_id)"
+                :groups="groupsOf(item)"
+                :to="shotRoute(item)"
+              />
+            </template>
+          </item-list>
 
           <div class="shots-page__pagination">
             <n-pagination
@@ -278,6 +283,13 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--space-5, 24px);
+}
+
+.shots-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .shots-page__message {
