@@ -5,7 +5,11 @@ dev_addr = "localhost:8001"
 
 [project.theme]
 language = "ru"
-features = ["navigation.footer"]
+features = [
+  "content.code.copy",
+  "navigation.footer",
+]
+
 
 # Palette toggle for automatic mode
 [[project.theme.palette]]
