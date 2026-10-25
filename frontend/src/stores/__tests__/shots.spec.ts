@@ -118,12 +118,13 @@ function mockShotData() {
     items: [buildShot()],
     total: 1,
     page: 1,
-    page_size: 20,
+    page_size: 50,
   })
 }
 
 describe('useShotsStore', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
@@ -139,7 +140,7 @@ describe('useShotsStore', () => {
     expect(store.project?.id).toBe(1)
     expect(shotsApi.listShots).toHaveBeenCalledWith(1, {
       page: 1,
-      page_size: 20,
+      page_size: 50,
       search: undefined,
     })
     expect(store.items).toHaveLength(1)
@@ -194,7 +195,7 @@ describe('useShotsStore', () => {
     expect(store.search).toBe('')
     expect(vi.mocked(shotsApi.listShots).mock.lastCall).toEqual([
       1,
-      { page: 1, page_size: 20, search: undefined },
+      { page: 1, page_size: 50, search: undefined },
     ])
   })
 
@@ -210,8 +211,37 @@ describe('useShotsStore', () => {
     expect(store.page).toBe(1)
     expect(vi.mocked(shotsApi.listShots).mock.lastCall).toEqual([
       1,
-      { page: 1, page_size: 20, search: '00' },
+      { page: 1, page_size: 50, search: '00' },
     ])
+  })
+
+  it('setPageSize goes back to the first page and refetches with the new size', async () => {
+    mockProjectLookup([buildProject()])
+    mockShotData()
+
+    const store = useShotsStore()
+    await store.open(company, 'PRJ')
+    await store.setPage(2)
+    await store.setPageSize(200)
+
+    expect(store.page).toBe(1)
+    expect(store.pageSize).toBe(200)
+    expect(vi.mocked(shotsApi.listShots).mock.lastCall).toEqual([
+      1,
+      { page: 1, page_size: 200, search: undefined },
+    ])
+  })
+
+  it('remembers the page size for the next time the list is opened', async () => {
+    mockProjectLookup([buildProject()])
+    mockShotData()
+
+    await useShotsStore().setPageSize(100)
+    setActivePinia(createPinia())
+    const store = useShotsStore()
+    await store.open(company, 'PRJ')
+
+    expect(vi.mocked(shotsApi.listShots).mock.lastCall![1]).toMatchObject({ page_size: 100 })
   })
 
   it('createShot posts to the open project and refetches the list', async () => {
@@ -338,7 +368,7 @@ describe('useShotsStore', () => {
     it('sends no filter parameters while nothing is ticked', async () => {
       await openWithFilters()
 
-      expect(lastQuery()).toEqual({ page: 1, page_size: 20 })
+      expect(lastQuery()).toEqual({ page: 1, page_size: 50 })
     })
 
     it('sends the ticked statuses and goes back to the first page', async () => {
@@ -365,7 +395,7 @@ describe('useShotsStore', () => {
 
       expect(lastQuery()).toEqual({
         page: 1,
-        page_size: 20,
+        page_size: 50,
         search: '00',
         status: '3',
         assigned_to: '12',
@@ -402,7 +432,7 @@ describe('useShotsStore', () => {
       await store.setStatusFilter([], true)
 
       expect(store.statusInverted).toBe(false)
-      expect(lastQuery()).toEqual({ page: 1, page_size: 20 })
+      expect(lastQuery()).toEqual({ page: 1, page_size: 50 })
     })
 
     it('resetting a filter removes it from the request', async () => {
@@ -412,7 +442,7 @@ describe('useShotsStore', () => {
 
       expect(store.statusSelected).toEqual([])
       expect(store.statusInverted).toBe(false)
-      expect(lastQuery()).toEqual({ page: 1, page_size: 20 })
+      expect(lastQuery()).toEqual({ page: 1, page_size: 50 })
     })
 
     it('open forgets the filters left over from a previous visit', async () => {
@@ -425,7 +455,7 @@ describe('useShotsStore', () => {
       expect(store.statusInverted).toBe(false)
       expect(store.assigneeSelected).toEqual([])
       expect(store.assigneeInverted).toBe(false)
-      expect(lastQuery()).toEqual({ page: 1, page_size: 20 })
+      expect(lastQuery()).toEqual({ page: 1, page_size: 50 })
     })
 
     it('createShot refreshes the offered values and drops a ticked one that disappeared', async () => {
@@ -443,7 +473,7 @@ describe('useShotsStore', () => {
 
       expect(store.statusOptions.map((status) => status.id)).toEqual([1, 2, 3])
       expect(store.statusSelected).toEqual([])
-      expect(lastQuery()).toEqual({ page: 1, page_size: 20 })
+      expect(lastQuery()).toEqual({ page: 1, page_size: 50 })
     })
 
     it('a slower, older answer does not overwrite a newer one', async () => {
@@ -459,14 +489,14 @@ describe('useShotsStore', () => {
         items: [buildShot({ id: 2 })],
         total: 1,
         page: 1,
-        page_size: 20,
+        page_size: 50,
       })
       await store.setStatusFilter([3], false)
       resolveSlow({
         items: [buildShot({ id: 1 }), buildShot({ id: 4 })],
         total: 2,
         page: 1,
-        page_size: 20,
+        page_size: 50,
       })
       await slow
 

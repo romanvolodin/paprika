@@ -20,6 +20,7 @@ import ShotFilterSection from '@/components/shots/ShotFilterSection.vue'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
 import ShotStatusTag from '@/components/shots/ShotStatusTag.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PAGE_SIZE_OPTIONS } from '@/composables/usePageSize'
 import { useViewMode } from '@/composables/useViewMode'
 import { firstValidationMessage } from '@/utils/apiError'
 import { useShotsStore } from '@/stores/shots'
@@ -37,6 +38,10 @@ const { members } = storeToRefs(shots)
 const { canWrite } = useProjectPermissions(members)
 
 const viewMode = useViewMode('shots')
+const pageSizeOptions = PAGE_SIZE_OPTIONS.map((size) => ({
+  label: `${size} на странице`,
+  value: size,
+}))
 const searchInput = ref('')
 const isFormOpen = ref(false)
 const isSaving = ref(false)
@@ -219,7 +224,10 @@ watch(
               :page="shots.page"
               :page-size="shots.pageSize"
               :item-count="shots.total"
+              :page-sizes="pageSizeOptions"
+              show-size-picker
               @update:page="shots.setPage"
+              @update:page-size="shots.setPageSize"
             />
           </div>
         </div>

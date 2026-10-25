@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { isAxiosError } from 'axios'
 import * as projectsApi from '@/api/projects'
 import * as shotsApi from '@/api/shots'
+import { usePageSize } from '@/composables/usePageSize'
 import type {
   CompanyOut,
   ProjectMemberOut,
@@ -48,7 +49,7 @@ export const useShotsStore = defineStore('shots', () => {
   const items = ref<ShotOut[]>([])
   const total = ref(0)
   const page = ref(1)
-  const pageSize = ref(20)
+  const pageSize = usePageSize('shots')
   const search = ref('')
   const isLoading = ref(false)
 
@@ -119,7 +120,6 @@ export const useShotsStore = defineStore('shots', () => {
       items.value = result.items
       total.value = result.total
       page.value = result.page
-      pageSize.value = result.page_size
     } finally {
       if (token === fetchToken) isLoading.value = false
     }
@@ -202,6 +202,12 @@ export const useShotsStore = defineStore('shots', () => {
     await fetchShots()
   }
 
+  async function setPageSize(value: number) {
+    pageSize.value = value
+    page.value = 1
+    await fetchShots()
+  }
+
   async function setStatusFilter(selected: number[], inverted: boolean) {
     statusSelected.value = selected
     statusInverted.value = selected.length > 0 && inverted
@@ -249,6 +255,7 @@ export const useShotsStore = defineStore('shots', () => {
     open,
     setSearch,
     setPage,
+    setPageSize,
     setStatusFilter,
     setAssigneeFilter,
     createShot,

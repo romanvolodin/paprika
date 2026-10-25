@@ -205,7 +205,7 @@ class ShotListQuery(pydantic.BaseModel):
     page_size: int = pydantic.Field(
         default=20,
         ge=1,
-        le=100,
+        le=500,
         description="Number of shots per page.",
     )
     search: str | None = pydantic.Field(

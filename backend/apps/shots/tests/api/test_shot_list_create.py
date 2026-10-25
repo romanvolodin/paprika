@@ -75,6 +75,29 @@ class TestListShotsByProject:
         assert body["total"] == 1
         assert body["items"][0]["name"] == "0010"
 
+    def test_page_size_up_to_500_is_accepted(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+
+        response = auth_client.get(
+            f"/api/v1/projects/{project.id}/shots/?page_size=500"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["page_size"] == 500
+
+    def test_page_size_over_500_is_rejected(
+        self, auth_client, auth_user, project, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project)
+
+        response = auth_client.get(
+            f"/api/v1/projects/{project.id}/shots/?page_size=501"
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
     def test_non_member_of_project_gets_404(
         self, auth_client, project_factory, project_membership_factory
     ):
