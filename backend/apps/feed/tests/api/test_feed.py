@@ -48,11 +48,22 @@ class TestAccess:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-    def test_client_role_can_read(
+    @pytest.mark.parametrize("role", ["client", "freelancer"])
+    def test_role_without_the_feed_permission_gets_a_403(
+        self, auth_client, auth_user, project_factory, project_membership_factory, role
+    ):
+        project = project_factory()
+        project_membership_factory(user=auth_user, project=project, role=role)
+
+        response = auth_client.get(_url(project))
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_executor_can_read(
         self, auth_client, auth_user, project_factory, project_membership_factory
     ):
         project = project_factory()
-        project_membership_factory(user=auth_user, project=project, role="client")
+        project_membership_factory(user=auth_user, project=project, role="executor")
 
         response = auth_client.get(_url(project))
 

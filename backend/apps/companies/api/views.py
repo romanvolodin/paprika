@@ -5,6 +5,17 @@ from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.api.schemas import RoleRefOut
+from apps.access.checks import (
+    companies_q,
+    company_permissions,
+    company_permissions_by_id,
+    require_company_perm,
+    role_manager_would_vanish,
+)
+from apps.access.defaults import get_default_role
+from apps.access.models import Role
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company, CompanyMembership
 from apps.users.models import User
@@ -24,11 +35,12 @@ from .schemas import (
 )
 
 
-def _serialize_company(company: Company) -> CompanyOut:
+def _serialize_company(company: Company, permissions) -> CompanyOut:
     return CompanyOut(
         id=company.id,
         name=company.name,
         slug=company.slug,
+        my_permissions=sorted(permissions),
         created_at=company.created_at,
         updated_at=company.updated_at,
     )
@@ -47,7 +59,11 @@ def _serialize_member(request, membership: CompanyMembership) -> CompanyMemberOu
         first_name=membership.user.first_name,
         last_name=membership.user.last_name,
         avatar=avatar_url,
-        role=CompanyMembership.Role(membership.role),
+        role=RoleRefOut(
+            id=membership.role.id,
+            name=membership.role.name,
+            color=membership.role.color,
+        ),
         created_at=membership.created_at,
     )
 
@@ -59,9 +75,7 @@ def _get_company_or_404(user: User, company_id: int) -> Company:
     doesn't exist at all - membership isn't leaked to non-members.
     """
     try:
-        return (
-            Company.objects.filter(memberships__user=user).distinct().get(pk=company_id)
-        )
+        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
     except Company.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Company with id={company_id} was not found."},
@@ -71,7 +85,7 @@ def _get_company_or_404(user: User, company_id: int) -> Company:
 
 def _get_membership_or_404(company: Company, user_id: int) -> CompanyMembership:
     try:
-        return CompanyMembership.objects.select_related("user").get(
+        return CompanyMembership.objects.select_related("user", "role").get(
             company=company, user_id=user_id
         )
     except CompanyMembership.DoesNotExist as exc:
@@ -79,6 +93,27 @@ def _get_membership_or_404(company: Company, user_id: int) -> CompanyMembership:
             {"detail": (f"User with id={user_id} is not a member of this company.")},
             status_code=HTTPStatus.NOT_FOUND,
         ) from exc
+
+
+def _get_role_or_400(controller, company: Company, role_id: int) -> Role:
+    try:
+        return Role.objects.get(pk=role_id, company=company)
+    except Role.DoesNotExist as exc:
+        raise APIError(
+            controller.format_error(
+                "This role does not belong to the company.",
+                loc=["role_id"],
+                error_type=ErrorType.value_error,
+            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+        ) from exc
+
+
+def _last_role_manager_error() -> APIError:
+    return APIError(
+        {"detail": "The company must keep at least one person who can edit roles."},
+        status_code=HTTPStatus.CONFLICT,
+    )
 
 
 def _get_target_user_or_404(user_id: int) -> User:
@@ -96,10 +131,8 @@ class CompanyListController(AuthenticatedController[PydanticSerializer]):
 
     A user only ever sees companies they're a member of - there is no
     "browse all companies" view, by design (data isolation between
-    tenants). Creating a company automatically makes the creator an
-    `ADMIN` member of it. Beyond that, any member may manage any other
-    member or the company itself; role-based restrictions are deferred
-    until they're actually needed.
+    tenants). Creating a company automatically makes the creator its
+    admin (the starter role with every permission).
     """
 
     @modify(
@@ -112,9 +145,7 @@ class CompanyListController(AuthenticatedController[PydanticSerializer]):
         tags=["Companies"],
     )
     def get(self, parsed_query: Query[CompanyListQuery]) -> CompanyListOut:
-        queryset = Company.objects.filter(
-            memberships__user=self.request.user
-        ).distinct()
+        queryset = Company.objects.filter(companies_q(self.request.user, "pk"))
 
         if parsed_query.search:
             queryset = queryset.filter(name__icontains=parsed_query.search)
@@ -122,8 +153,15 @@ class CompanyListController(AuthenticatedController[PydanticSerializer]):
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)
 
+        companies = list(page.object_list)
+        permissions = company_permissions_by_id(
+            self.request.user, [company.id for company in companies]
+        )
         return CompanyListOut(
-            items=[_serialize_company(company) for company in page.object_list],
+            items=[
+                _serialize_company(company, permissions.get(company.id, ()))
+                for company in companies
+            ],
             total=paginator.count,
             page=parsed_query.page,
             page_size=parsed_query.page_size,
@@ -134,7 +172,7 @@ class CompanyListController(AuthenticatedController[PydanticSerializer]):
         summary="Create a company",
         description=(
             "Create a new company. The creator is automatically added as "
-            "an `admin` member."
+            "its admin and the company gets the starter set of roles."
         ),
         response_description="The created company.",
         extra_responses=[
@@ -162,11 +200,13 @@ class CompanyListController(AuthenticatedController[PydanticSerializer]):
         CompanyMembership.objects.create(
             user=self.request.user,
             company=company,
-            role=CompanyMembership.Role.ADMIN,
+            role=get_default_role(company, "admin"),
             created_by=self.request.user,
             updated_by=self.request.user,
         )
-        return _serialize_company(company)
+        return _serialize_company(
+            company, company_permissions(self.request.user, company)
+        )
 
 
 class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
@@ -183,15 +223,21 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[CompanyPath]) -> CompanyOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
-        return _serialize_company(company)
+        return _serialize_company(
+            company, company_permissions(self.request.user, company)
+        )
 
     @modify(
         summary="Update a company",
-        description="Partially update a company. Only fields present are changed.",
+        description=(
+            "Partially update a company. Only fields present are changed. "
+            "Needs the `company.edit` permission."
+        ),
         response_description="The updated company.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Companies"],
     )
@@ -201,6 +247,7 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[CompanyUpdateIn],
     ) -> CompanyOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.COMPANY_EDIT)
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
         if "slug" in update_fields and (new_slug := update_fields["slug"]):
@@ -220,19 +267,26 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
             company.updated_by = self.request.user
             company.save(update_fields=[*update_fields, "updated_by"])
 
-        return _serialize_company(company)
+        return _serialize_company(
+            company, company_permissions(self.request.user, company)
+        )
 
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Delete a company",
-        description="Permanently delete a company and all its memberships.",
+        description=(
+            "Permanently delete a company with everything in it. Needs the "
+            "`company.delete` permission."
+        ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Companies"],
     )
     def delete(self, parsed_path: Path[CompanyPath]) -> None:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.COMPANY_DELETE)
         company.delete()
         return None
 
@@ -251,7 +305,9 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[CompanyPath]) -> CompanyMemberListOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
-        memberships = company.memberships.select_related("user").order_by("user__email")
+        memberships = company.memberships.select_related("user", "role").order_by(
+            "user__email"
+        )
         return CompanyMemberListOut(
             items=[
                 _serialize_member(self.request, membership)
@@ -262,11 +318,15 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.CREATED,
         summary="Add a company member",
-        description="Add an existing user to the company with the given role.",
+        description=(
+            "Add an existing user to the company with the given role. Needs "
+            "the `company.members` permission."
+        ),
         response_description="The created membership.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Companies"],
     )
@@ -276,7 +336,9 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[CompanyMemberCreateIn],
     ) -> CompanyMemberOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         target_user = _get_target_user_or_404(parsed_body.user_id)
+        role = _get_role_or_400(self, company, parsed_body.role_id)
 
         if CompanyMembership.objects.filter(company=company, user=target_user).exists():
             raise APIError(
@@ -291,7 +353,7 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
         membership = CompanyMembership.objects.create(
             user=target_user,
             company=company,
-            role=parsed_body.role,
+            role=role,
             created_by=self.request.user,
             updated_by=self.request.user,
         )
@@ -303,10 +365,16 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
 
     @modify(
         summary="Update a company member's role",
-        description="Change the role of an existing company member.",
+        description=(
+            "Change the role of an existing company member. Needs the "
+            "`company.members` permission."
+        ),
         response_description="The updated membership.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Companies"],
     )
@@ -316,9 +384,14 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         parsed_body: Body[CompanyMemberUpdateIn],
     ) -> CompanyMemberOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         membership = _get_membership_or_404(company, parsed_path.user_id)
+        role = _get_role_or_400(self, company, parsed_body.role_id)
 
-        membership.role = parsed_body.role
+        if role_manager_would_vanish(company, move=(membership.user_id, role)):
+            raise _last_role_manager_error()
+
+        membership.role = role
         membership.updated_by = self.request.user
         membership.save(update_fields=["role", "updated_by"])
 
@@ -327,14 +400,22 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Remove a company member",
-        description="Remove a member from the company.",
+        description=(
+            "Remove a member from the company, and from all of its projects. "
+            "Needs the `company.members` permission."
+        ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Companies"],
     )
     def delete(self, parsed_path: Path[CompanyMemberPath]) -> None:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         membership = _get_membership_or_404(company, parsed_path.user_id)
+        if role_manager_would_vanish(company, remove_user_id=membership.user_id):
+            raise _last_role_manager_error()
         membership.delete()
         return None

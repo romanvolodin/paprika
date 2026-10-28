@@ -16,11 +16,12 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import can_in_project, projects_q, require_project_perm
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.events import record_version_uploaded
 from apps.core.storage import delete_stored_file
 from apps.projects.models import Project
-from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -79,7 +80,7 @@ def _get_version_or_404(user: User, version_id: int) -> Version:
     """
     try:
         return (
-            Version.objects.filter(project__memberships__user=user)
+            Version.objects.filter(projects_q(user, "project"))
             .select_related("created_by", "updated_by")
             .distinct()
             .get(pk=version_id)
@@ -146,8 +147,8 @@ class VersionListController(AuthenticatedController[PydanticSerializer]):
             "without its extension and must be unique within the project "
             "(409 otherwise). Its metadata and thumbnail are produced while "
             "the request is being handled, so the response arrives only "
-            "after the file has been processed. Not available to members "
-            "with the read-only `client` role."
+            "after the file has been processed. Needs the `version.upload` "
+            "permission."
         ),
         response_description="The created version.",
         extra_responses=[
@@ -165,7 +166,7 @@ class VersionListController(AuthenticatedController[PydanticSerializer]):
         parsed_file_metadata: FileMetadata[VersionFiles],
     ) -> VersionOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        require_can_write(self.request.user, shot.project)
+        require_project_perm(self.request.user, shot.project, P.VERSION_UPLOAD)
 
         upload = self.request.FILES["source"]
 
@@ -274,8 +275,9 @@ class VersionDetailController(AuthenticatedController[PydanticSerializer]):
         summary="Delete a version",
         description=(
             "Permanently delete a version and its files. Its name is "
-            "freed up for a new upload. Not available to members with the "
-            "read-only `client` role."
+            "freed up for a new upload. Needs the `version.delete` "
+            "permission, or `version.delete_own` for a version you "
+            "uploaded yourself."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -285,6 +287,11 @@ class VersionDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[VersionPath]) -> None:
         version = _get_version_or_404(self.request.user, parsed_path.version_id)
-        require_can_write(self.request.user, version.project)
+        user = self.request.user
+        own = version.created_by_id == user.id and can_in_project(
+            user, version.project, P.VERSION_DELETE_OWN
+        )
+        if not own:
+            require_project_perm(user, version.project, P.VERSION_DELETE)
         version.delete()
         return None

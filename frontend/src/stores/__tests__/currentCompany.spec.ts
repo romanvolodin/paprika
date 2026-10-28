@@ -12,6 +12,7 @@ function buildCompany(overrides: Partial<CompanyOut> = {}): CompanyOut {
     id: 1,
     name: 'Acme Studio',
     slug: 'acme-studio',
+    my_permissions: [],
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...overrides,

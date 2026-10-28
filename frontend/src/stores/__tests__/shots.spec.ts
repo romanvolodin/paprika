@@ -20,6 +20,7 @@ const company: CompanyOut = {
   id: 7,
   name: 'Acme',
   slug: 'acme',
+  my_permissions: [],
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
 }
@@ -35,6 +36,7 @@ function buildProject(overrides: Partial<ProjectOut> = {}): ProjectOut {
     start_date: null,
     deadline: null,
     is_active: true,
+    my_permissions: [],
     created_by: null,
     updated_by: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -90,7 +92,7 @@ function buildMember(userId: number, firstName: string, lastName: string): Proje
     first_name: firstName,
     last_name: lastName,
     avatar: null,
-    role: 'executor',
+    role: { id: 4, name: 'Исполнитель', color: '#E971B8' },
     created_at: '2026-01-01T00:00:00Z',
   }
 }

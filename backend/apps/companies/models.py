@@ -48,17 +48,11 @@ class CompanyMembership(BaseModel):
     """
     A user's role within a company.
 
-    Acts as the default role for all of the company's projects unless
-    overridden by a project-level membership.
+    The role decides what the person can do in the company itself (manage
+    its members, roles and statuses, create projects). What they can do
+    inside a project comes from their `ProjectMembership`; the company role
+    only reaches into projects through `Role.sees_all_projects`.
     """
-
-    class Role(models.TextChoices):
-        ADMIN = "admin", _("Admin")
-        PRODUCER = "producer", _("Producer")
-        COORDINATOR = "coordinator", _("Coordinator")
-        EXECUTOR = "executor", _("Executor")
-        FREELANCER = "freelancer", _("Freelancer")
-        CLIENT = "client", _("Client")
 
     user = models.ForeignKey(
         "users.User",
@@ -72,8 +66,11 @@ class CompanyMembership(BaseModel):
         on_delete=models.CASCADE,
         related_name="memberships",
     )
-    role = models.CharField(
-        _("role"), max_length=20, choices=Role.choices, default=Role.EXECUTOR
+    role = models.ForeignKey(
+        "access.Role",
+        verbose_name=_("role"),
+        on_delete=models.RESTRICT,
+        related_name="company_memberships",
     )
 
     class Meta:
@@ -87,10 +84,10 @@ class CompanyMembership(BaseModel):
         ordering = ["company", "user"]
 
     def __str__(self):
-        return f"{self.user} — {self.company} ({self.get_role_display()})"
+        return f"{self.user} — {self.company} ({self.role})"
 
     def __repr__(self):
         return (
             f"<CompanyMembership id={self.id} user_id={self.user_id} "
-            f"company_id={self.company_id} role={self.role}>"
+            f"company_id={self.company_id} role_id={self.role_id}>"
         )

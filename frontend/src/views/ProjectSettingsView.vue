@@ -24,16 +24,25 @@ import { AddOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import { useProjectPageStore } from '@/stores/projectPage'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
-import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
-import type { CompanyMemberOut, ProjectMemberOut, ProjectMembershipRole } from '@/types/api'
+import type { CompanyMemberOut, ProjectMemberOut } from '@/types/api'
 
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 const store = useProjectPageStore()
-const { members } = storeToRefs(store)
-const { canEditProject, canManageProject, canManageMembers, canRemoveMember, canChangeMemberRole } =
-  useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const {
+  canEditProject,
+  canDeleteProject,
+  canOpenSettings,
+  canManageMembers,
+  canRemoveMember,
+  canChangeMemberRole,
+} = useProjectPermissions(project)
+
+const roleOptions = computed(() =>
+  store.roles.map((role) => ({ label: role.name, value: role.id })),
+)
 
 onMounted(() => {
   store.loadCompanyMembers()
@@ -128,9 +137,9 @@ function initials(member: { first_name: string; last_name: string }): string {
   return `${member.first_name[0] ?? ''}${member.last_name[0] ?? ''}`.toUpperCase()
 }
 
-async function handleRoleChange(member: ProjectMemberOut, role: ProjectMembershipRole) {
+async function handleRoleChange(member: ProjectMemberOut, roleId: number) {
   try {
-    await store.updateMemberRole(member.user_id, role)
+    await store.updateMemberRole(member.user_id, roleId)
     message.success('Роль обновлена.')
   } catch {
     message.error('Не удалось изменить роль.')
@@ -188,16 +197,12 @@ const columns = computed<DataTableColumns<ProjectMemberOut>>(() => [
     render: (member) =>
       canChangeMemberRole(member.user_id)
         ? h(NSelect, {
-            value: member.role,
-            options: MEMBERSHIP_ROLE_OPTIONS,
+            value: member.role.id,
+            options: roleOptions.value,
             size: 'small',
-            onUpdateValue: (role: ProjectMembershipRole) => handleRoleChange(member, role),
+            onUpdateValue: (roleId: number) => handleRoleChange(member, roleId),
           })
-        : h(
-            NTag,
-            { size: 'small', round: true },
-            { default: () => MEMBERSHIP_ROLE_LABELS[member.role] },
-          ),
+        : h(NTag, { size: 'small', round: true }, { default: () => member.role.name }),
   },
   {
     title: '',
@@ -240,7 +245,7 @@ const memberOptions = computed(() =>
 )
 
 const newMemberUserId = ref<number | null>(null)
-const newMemberRole = ref<ProjectMembershipRole>('executor')
+const newMemberRole = ref<number | null>(null)
 const isAddingMember = ref(false)
 
 function renderMemberOption(option: SelectOption) {
@@ -261,17 +266,17 @@ function renderMemberOption(option: SelectOption) {
 }
 
 async function handleAddMember() {
-  if (!newMemberUserId.value) return
+  if (!newMemberUserId.value || !newMemberRole.value) return
 
   isAddingMember.value = true
   try {
     await store.addMember({
       user_id: newMemberUserId.value,
-      role: newMemberRole.value,
+      role_id: newMemberRole.value,
     })
     message.success('Участник добавлен.')
     newMemberUserId.value = null
-    newMemberRole.value = 'executor'
+    newMemberRole.value = null
   } catch {
     message.error('Не удалось добавить участника.')
   } finally {
@@ -307,8 +312,8 @@ function confirmDeleteProject() {
 </script>
 
 <template>
-  <div v-if="!canManageProject" class="project-settings__message">
-    Настройки проекта доступны только администратору и продюсеру.
+  <div v-if="!canOpenSettings" class="project-settings__message">
+    У вас нет прав на настройки проекта.
   </div>
   <div v-else-if="store.project" class="project-settings">
     <section class="project-settings__section">
@@ -409,12 +414,13 @@ function confirmDeleteProject() {
         />
         <n-select
           v-model:value="newMemberRole"
-          :options="MEMBERSHIP_ROLE_OPTIONS"
+          :options="roleOptions"
+          placeholder="Роль"
           style="max-width: 180px"
         />
         <n-button
           type="primary"
-          :disabled="!newMemberUserId"
+          :disabled="!newMemberUserId || !newMemberRole"
           :loading="isAddingMember"
           @click="handleAddMember"
         >
@@ -424,7 +430,7 @@ function confirmDeleteProject() {
       </div>
     </section>
 
-    <section class="project-settings__section">
+    <section v-if="canDeleteProject" class="project-settings__section">
       <h2 class="project-settings__heading">Удаление проекта</h2>
       <div class="project-settings__danger">
         <p class="project-settings__hint project-settings__hint--plain">

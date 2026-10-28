@@ -14,11 +14,21 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.api.schemas import RoleRefOut
+from apps.access.checks import (
+    companies_q,
+    project_permissions,
+    project_permissions_by_id,
+    projects_q,
+    require_company_perm,
+    require_project_perm,
+)
+from apps.access.models import Role
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
-from apps.companies.models import Company
+from apps.companies.models import Company, CompanyMembership
 from apps.core.storage import delete_stored_file
 from apps.projects.models import Project, ProjectMembership
-from apps.projects.permissions import require_can_manage_project
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
 
@@ -39,7 +49,7 @@ from .schemas import (
 )
 
 
-def _serialize_project(request, project: Project) -> ProjectOut:
+def _serialize_project(request, project: Project, permissions) -> ProjectOut:
     cover_url = request.build_absolute_uri(project.cover.url) if project.cover else None
     return ProjectOut(
         id=project.id,
@@ -51,6 +61,7 @@ def _serialize_project(request, project: Project) -> ProjectOut:
         start_date=project.start_date,
         deadline=project.deadline,
         is_active=project.is_active,
+        my_permissions=sorted(permissions),
         created_by=_serialize_user(request, project.created_by)
         if project.created_by
         else None,
@@ -107,7 +118,11 @@ def _serialize_member(request, membership: ProjectMembership) -> ProjectMemberOu
         first_name=membership.user.first_name,
         last_name=membership.user.last_name,
         avatar=avatar_url,
-        role=ProjectMembership.Role(membership.role),
+        role=RoleRefOut(
+            id=membership.role.id,
+            name=membership.role.name,
+            color=membership.role.color,
+        ),
         created_at=membership.created_at,
     )
 
@@ -119,9 +134,7 @@ def _get_company_or_404(user: User, company_id: int) -> Company:
     doesn't exist at all - membership isn't leaked to non-members.
     """
     try:
-        return (
-            Company.objects.filter(memberships__user=user).distinct().get(pk=company_id)
-        )
+        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
     except Company.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Company with id={company_id} was not found."},
@@ -130,16 +143,14 @@ def _get_company_or_404(user: User, company_id: int) -> Company:
 
 
 def _get_project_or_404(user: User, project_id: int) -> Project:
-    """Look up a project, scoped to projects the user is a member of.
+    """Look up a project, scoped to projects the user can see.
 
-    Company membership alone doesn't grant visibility - only an explicit
-    `ProjectMembership` does. A project the user isn't a member of 404s
+    That is the projects they are a member of, plus all of the company's
+    projects for a company role that sees them all. Any other project 404s
     exactly like one that doesn't exist at all.
     """
     try:
-        return (
-            Project.objects.filter(memberships__user=user).distinct().get(pk=project_id)
-        )
+        return Project.objects.filter(projects_q(user, "pk")).get(pk=project_id)
     except Project.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Project with id={project_id} was not found."},
@@ -149,13 +160,27 @@ def _get_project_or_404(user: User, project_id: int) -> Project:
 
 def _get_membership_or_404(project: Project, user_id: int) -> ProjectMembership:
     try:
-        return ProjectMembership.objects.select_related("user").get(
+        return ProjectMembership.objects.select_related("user", "role").get(
             project=project, user_id=user_id
         )
     except ProjectMembership.DoesNotExist as exc:
         raise APIError(
             {"detail": (f"User with id={user_id} is not a member of this project.")},
             status_code=HTTPStatus.NOT_FOUND,
+        ) from exc
+
+
+def _get_role_or_400(controller, company: Company, role_id: int) -> Role:
+    try:
+        return Role.objects.get(pk=role_id, company=company)
+    except Role.DoesNotExist as exc:
+        raise APIError(
+            controller.format_error(
+                "This role does not belong to the project's company.",
+                loc=["role_id"],
+                error_type=ErrorType.value_error,
+            ),
+            status_code=HTTPStatus.BAD_REQUEST,
         ) from exc
 
 
@@ -183,16 +208,17 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/companies/<company_id>/projects/` - list and create
     projects within a company.
 
-    A user only ever sees projects they're an explicit member of, even
-    within a company they belong to. Creating a project automatically
-    makes the creator an `ADMIN` member of it.
+    A user sees the projects they're a member of, even within a company
+    they belong to, and every project of the company if their company role
+    sees them all. Creating a project needs the `project.create` company
+    permission and makes the creator a member of it with their company role.
     """
 
     @modify(
         summary="List a company's projects",
         description=(
             "Return a paginated list of projects within the given company "
-            "that the current user is a member of, optionally filtered by "
+            "that the current user can see, optionally filtered by "
             "`search` against the name."
         ),
         response_description="A page of projects.",
@@ -209,8 +235,8 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
 
         queryset = Project.objects.filter(
-            company=company, memberships__user=self.request.user
-        ).distinct()
+            projects_q(self.request.user, "pk"), company=company
+        )
 
         if parsed_query.search:
             queryset = queryset.filter(name__icontains=parsed_query.search)
@@ -221,10 +247,12 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
         paginator = Paginator(queryset, parsed_query.page_size)
         page = paginator.get_page(parsed_query.page)
 
+        projects = list(page.object_list)
+        permissions = project_permissions_by_id(self.request.user, projects)
         return ProjectListOut(
             items=[
-                _serialize_project(self.request, project)
-                for project in page.object_list
+                _serialize_project(self.request, project, permissions[project.pk])
+                for project in projects
             ],
             total=paginator.count,
             page=parsed_query.page,
@@ -239,13 +267,15 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
             "Create a new project within the company, optionally with a "
             "cover image. Send as `multipart/form-data`: regular fields "
             "for `name`, `code`, `description`, `start_date`, `deadline`, "
-            "plus an optional `cover` file field. The creator is "
-            "automatically added as an `admin` member."
+            "plus an optional `cover` file field. Needs the "
+            "`project.create` permission. The creator is automatically "
+            "added to the project with their company role."
         ),
         response_description="The created project.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
@@ -256,6 +286,7 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
         parsed_file_metadata: FileMetadata[ProjectCoverFiles],
     ) -> ProjectOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        require_company_perm(self.request.user, company, P.PROJECT_CREATE)
 
         if Project.objects.filter(company=company, code=parsed_body.code).exists():
             raise APIError(
@@ -277,15 +308,21 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
             created_by=self.request.user,
             updated_by=self.request.user,
         )
-        ProjectMembership.objects.create(
-            user=self.request.user,
-            project=project,
-            role=ProjectMembership.Role.ADMIN,
-            created_by=self.request.user,
-            updated_by=self.request.user,
-        )
+        company_membership = CompanyMembership.objects.filter(
+            user=self.request.user, company=company
+        ).first()
+        if company_membership is not None:
+            ProjectMembership.objects.create(
+                user=self.request.user,
+                project=project,
+                role=company_membership.role,
+                created_by=self.request.user,
+                updated_by=self.request.user,
+            )
         _apply_cover(project, parsed_file_metadata, self.request)
-        return _serialize_project(self.request, project)
+        return _serialize_project(
+            self.request, project, project_permissions(self.request.user, project)
+        )
 
 
 class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
@@ -302,7 +339,9 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[ProjectPath]) -> ProjectOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        return _serialize_project(self.request, project)
+        return _serialize_project(
+            self.request, project, project_permissions(self.request.user, project)
+        )
 
     @modify(
         parsers=[MultiPartParser()],
@@ -313,12 +352,14 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
             "any of `name`, `description`, `start_date`, `deadline`, "
             "`is_active`, `remove_cover`, plus an optional `cover` file "
             "field. Only fields actually present are changed. `code` "
-            "cannot be changed - it's immutable once set."
+            "cannot be changed - it's immutable once set. Needs the "
+            "`project.edit` permission."
         ),
         response_description="The updated project.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
@@ -329,6 +370,7 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_file_metadata: FileMetadata[ProjectCoverFiles],
     ) -> ProjectOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_project_perm(self.request.user, project, P.PROJECT_EDIT)
 
         update_fields = parsed_body.model_dump(
             exclude={"remove_cover"},
@@ -345,14 +387,16 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
         elif parsed_body.remove_cover and project.cover:
             _clear_cover(project)
 
-        return _serialize_project(self.request, project)
+        return _serialize_project(
+            self.request, project, project_permissions(self.request.user, project)
+        )
 
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Delete a project",
         description=(
-            "Permanently delete a project and everything in it. Only a "
-            "project admin or producer can do this."
+            "Permanently delete a project and everything in it. Needs the "
+            "`project.delete` permission."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -362,7 +406,7 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[ProjectPath]) -> None:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        require_can_manage_project(self.request.user, project)
+        require_project_perm(self.request.user, project, P.PROJECT_DELETE)
         project.delete()
         return None
 
@@ -381,7 +425,9 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[ProjectPath]) -> ProjectMemberListOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        memberships = project.memberships.select_related("user").order_by("user__email")
+        memberships = project.memberships.select_related("user", "role").order_by(
+            "user__email"
+        )
         return ProjectMemberListOut(
             items=[
                 _serialize_member(self.request, membership)
@@ -395,12 +441,13 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Add an existing company member to the project with the given "
             "role. The target user must already be a member of the "
-            "project's company."
+            "project's company. Needs the `project.members` permission."
         ),
         response_description="The created membership.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
@@ -410,7 +457,9 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ProjectMemberCreateIn],
     ) -> ProjectMemberOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         target_user = _get_company_member_or_404(project.company, parsed_body.user_id)
+        role = _get_role_or_400(self, project.company, parsed_body.role_id)
 
         if ProjectMembership.objects.filter(project=project, user=target_user).exists():
             raise APIError(
@@ -425,7 +474,7 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
         membership = ProjectMembership.objects.create(
             user=target_user,
             project=project,
-            role=parsed_body.role,
+            role=role,
             created_by=self.request.user,
             updated_by=self.request.user,
         )
@@ -437,10 +486,15 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
 
     @modify(
         summary="Update a project member's role",
-        description="Change the role of an existing project member.",
+        description=(
+            "Change the role of an existing project member. Needs the "
+            "`project.members` permission."
+        ),
         response_description="The updated membership.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
@@ -450,9 +504,11 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
         parsed_body: Body[ProjectMemberUpdateIn],
     ) -> ProjectMemberOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         membership = _get_membership_or_404(project, parsed_path.user_id)
+        role = _get_role_or_400(self, project.company, parsed_body.role_id)
 
-        membership.role = parsed_body.role
+        membership.role = role
         membership.updated_by = self.request.user
         membership.save(update_fields=["role", "updated_by"])
 
@@ -461,14 +517,18 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Remove a project member",
-        description="Remove a member from the project.",
+        description=(
+            "Remove a member from the project. Needs the `project.members` permission."
+        ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Projects"],
     )
     def delete(self, parsed_path: Path[ProjectMemberPath]) -> None:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         membership = _get_membership_or_404(project, parsed_path.user_id)
         membership.delete()
         return None

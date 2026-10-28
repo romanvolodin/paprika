@@ -35,12 +35,13 @@ export type CompanyMemberListOut = components['schemas']['CompanyMemberListOut']
 export type CompanyMemberCreateIn = components['schemas']['CompanyMemberCreateIn']
 export type CompanyMemberUpdateIn = components['schemas']['CompanyMemberUpdateIn']
 
-// `CompanyMembership.role` and `ProjectMembership.role` are the exact same
-// Python enum on the backend (the latter aliases the former), so the OpenAPI
-// document only ever generates one `Role` schema - shared here under a
-// name that doesn't imply it belongs to either resource specifically.
-export type MembershipRole = components['schemas']['Role']
-export type CompanyMembershipRole = MembershipRole
+// Roles belong to a company and are shared by its company and project
+// memberships; a member carries a short reference (`RoleRefOut`).
+export type RoleRefOut = components['schemas']['RoleRefOut']
+export type RoleOut = components['schemas']['RoleOut']
+export type RoleListOut = components['schemas']['RoleListOut']
+export type PermissionOut = components['schemas']['PermissionOut']
+export type PermissionListOut = components['schemas']['PermissionListOut']
 
 export type ProjectOut = components['schemas']['ProjectOut']
 export type ProjectListOut = components['schemas']['ProjectListOut']
@@ -55,7 +56,6 @@ export type ProjectMemberOut = components['schemas']['ProjectMemberOut']
 export type ProjectMemberListOut = components['schemas']['ProjectMemberListOut']
 export type ProjectMemberCreateIn = components['schemas']['ProjectMemberCreateIn']
 export type ProjectMemberUpdateIn = components['schemas']['ProjectMemberUpdateIn']
-export type ProjectMembershipRole = MembershipRole
 
 export type ShotOut = components['schemas']['ShotOut']
 export type ShotListOut = components['schemas']['ShotListOut']

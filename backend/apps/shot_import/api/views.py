@@ -6,11 +6,12 @@ from dmr import APIError, Body, Path, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import require_project_perm
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.models import Message
 from apps.projects.api.views import _get_project_or_404
 from apps.projects.models import Project
-from apps.projects.permissions import require_can_write
 from apps.shots.api.schemas import SHOT_NAME_PATTERN
 from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.tasks.models import ShotTask, Task, TaskStatus, TaskType
@@ -195,7 +196,7 @@ class ProjectShotImportController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotImportOut:
         user = self.request.user
         project = _get_project_or_404(user, parsed_path.project_id)
-        require_can_write(user, project)
+        require_project_perm(user, project, P.SHOT_IMPORT)
 
         max_rows = settings.SHOT_IMPORT_MAX_ROWS
         if len(parsed_body.shots) > max_rows:

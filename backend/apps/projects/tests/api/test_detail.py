@@ -62,7 +62,7 @@ class TestGetProject:
         company_membership_factory,
         project_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="executor")
         project = project_factory(company=company)
 
         response = auth_client.get(f"/api/v1/projects/{project.id}/")
@@ -203,9 +203,7 @@ class TestUpdateProject:
 
 
 class TestDeleteProject:
-    @pytest.mark.parametrize(
-        "role", [ProjectMembership.Role.ADMIN, ProjectMembership.Role.PRODUCER]
-    )
+    @pytest.mark.parametrize("role", ["admin", "producer"])
     def test_admin_and_producer_can_delete_the_project(
         self, auth_client, auth_user, project_factory, project_membership_factory, role
     ):
@@ -220,10 +218,10 @@ class TestDeleteProject:
     @pytest.mark.parametrize(
         "role",
         [
-            ProjectMembership.Role.COORDINATOR,
-            ProjectMembership.Role.EXECUTOR,
-            ProjectMembership.Role.FREELANCER,
-            ProjectMembership.Role.CLIENT,
+            "coordinator",
+            "executor",
+            "freelancer",
+            "client",
         ],
     )
     def test_other_roles_get_403(
@@ -242,7 +240,7 @@ class TestDeleteProject:
     ):
         project = project_factory()
         membership = project_membership_factory(
-            user=auth_user, project=project, role=ProjectMembership.Role.ADMIN
+            user=auth_user, project=project, role="admin"
         )
 
         auth_client.delete(f"/api/v1/projects/{project.id}/")

@@ -13,6 +13,7 @@ import tempfile
 from django.test.client import BOUNDARY, encode_multipart
 import pytest
 
+from apps.access.tests.factories import RoleFactory
 from apps.chat.tests.factories import (
     AttachmentFactory,
     MessageFactory,
@@ -113,6 +114,12 @@ def company(company_factory):
 def company_membership_factory():
     """The `CompanyMembershipFactory` class itself."""
     return CompanyMembershipFactory
+
+
+@pytest.fixture
+def role_factory():
+    """The `RoleFactory` class itself, e.g. `role_factory(company=...)`."""
+    return RoleFactory
 
 
 @pytest.fixture

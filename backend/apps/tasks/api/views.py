@@ -7,6 +7,14 @@ from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import (
+    can_in_project,
+    companies_q,
+    projects_q,
+    require_company_perm,
+    require_project_perm,
+)
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.events import (
     record_assignee_changed,
@@ -14,10 +22,8 @@ from apps.chat.events import (
     record_task_added,
 )
 from apps.companies.models import Company
-from apps.companies.permissions import require_company_admin
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project, ProjectMembership
-from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
 from apps.tasks.models import ShotTask, Task, TaskStatus, TaskType
 from apps.users.api.views import _serialize_user
@@ -122,7 +128,7 @@ def _get_task_type_or_404(user: User, task_type_id: int) -> TaskType:
     """Look up a task type, scoped to companies the user is a member of."""
     try:
         return (
-            TaskType.objects.filter(company__memberships__user=user)
+            TaskType.objects.filter(companies_q(user, "company"))
             .select_related("created_by", "updated_by")
             .distinct()
             .get(pk=task_type_id)
@@ -211,7 +217,7 @@ class TaskTypeListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[TaskTypeCreateIn],
     ) -> TaskTypeOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
-        require_company_admin(self.request.user, company)
+        require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         clash = _task_type_clash(
             company, name=parsed_body.name, abbreviation=parsed_body.abbreviation
@@ -269,7 +275,7 @@ class TaskTypeDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[TaskTypeUpdateIn],
     ) -> TaskTypeOut:
         task_type = _get_task_type_or_404(self.request.user, parsed_path.task_type_id)
-        require_company_admin(self.request.user, task_type.company)
+        require_company_perm(self.request.user, task_type.company, P.COMPANY_PIPELINE)
         _reject_explicit_nulls(self, parsed_body, ["name", "abbreviation", "color"])
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
@@ -308,7 +314,7 @@ class TaskTypeDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[TaskTypePath]) -> None:
         task_type = _get_task_type_or_404(self.request.user, parsed_path.task_type_id)
-        require_company_admin(self.request.user, task_type.company)
+        require_company_perm(self.request.user, task_type.company, P.COMPANY_PIPELINE)
         try:
             task_type.delete()
         except ProtectedError as exc:
@@ -338,7 +344,7 @@ def _get_task_status_or_404(user: User, task_status_id: int) -> TaskStatus:
     """Look up a task status, scoped to companies the user is a member of."""
     try:
         return (
-            TaskStatus.objects.filter(company__memberships__user=user)
+            TaskStatus.objects.filter(companies_q(user, "company"))
             .select_related("created_by", "updated_by")
             .distinct()
             .get(pk=task_status_id)
@@ -420,7 +426,7 @@ class TaskStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[TaskStatusCreateIn],
     ) -> TaskStatusOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
-        require_company_admin(self.request.user, company)
+        require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         if TaskStatus.objects.filter(company=company, name=parsed_body.name).exists():
             raise _conflict(
@@ -487,7 +493,7 @@ class TaskStatusDetailController(AuthenticatedController[PydanticSerializer]):
         task_status = _get_task_status_or_404(
             self.request.user, parsed_path.task_status_id
         )
-        require_company_admin(self.request.user, task_status.company)
+        require_company_perm(self.request.user, task_status.company, P.COMPANY_PIPELINE)
         _reject_explicit_nulls(self, parsed_body, ["name", "color", "is_default"])
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
@@ -539,7 +545,7 @@ class TaskStatusDetailController(AuthenticatedController[PydanticSerializer]):
         task_status = _get_task_status_or_404(
             self.request.user, parsed_path.task_status_id
         )
-        require_company_admin(self.request.user, task_status.company)
+        require_company_perm(self.request.user, task_status.company, P.COMPANY_PIPELINE)
         try:
             task_status.delete()
         except ProtectedError as exc:
@@ -575,12 +581,7 @@ def _task_queryset():
 def _get_task_or_404(user: User, task_id: int) -> Task:
     """Look up a task, scoped to projects the user is a member of."""
     try:
-        return (
-            _task_queryset()
-            .filter(project__memberships__user=user)
-            .distinct()
-            .get(pk=task_id)
-        )
+        return _task_queryset().filter(projects_q(user, "project")).get(pk=task_id)
     except Task.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Task with id={task_id} was not found."},
@@ -651,8 +652,8 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
             "Create a new task in the project. It gets a generated "
             "`code` (the type's abbreviation plus four digits) and starts "
             "out standalone - place it on shots with "
-            "`POST /api/v1/shots/<id>/tasks/`. Not available to members "
-            "with the read-only `client` role."
+            "`POST /api/v1/shots/<id>/tasks/`. Needs the `task.create` "
+            "permission."
         ),
         response_description="The created task.",
         extra_responses=[
@@ -668,7 +669,7 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[TaskCreateIn],
     ) -> TaskOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        require_can_write(self.request.user, project)
+        require_project_perm(self.request.user, project, P.TASK_CREATE)
 
         task_type = _resolve_task_type(self, project, parsed_body.type_id)
 
@@ -704,7 +705,7 @@ class TaskDetailController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Partially update a task's name, description or type. The "
             "task's `code` never changes, not even when its type does. "
-            "Not available to members with the read-only `client` role."
+            "Needs the `task.edit` permission."
         ),
         response_description="The updated task.",
         extra_responses=[
@@ -720,7 +721,7 @@ class TaskDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[TaskUpdateIn],
     ) -> TaskOut:
         task = _get_task_or_404(self.request.user, parsed_path.task_id)
-        require_can_write(self.request.user, task.project)
+        require_project_perm(self.request.user, task.project, P.TASK_EDIT)
         _reject_explicit_nulls(self, parsed_body, ["name", "description", "type_id"])
 
         update_fields = parsed_body.model_dump(exclude={"type_id"}, exclude_unset=True)
@@ -743,7 +744,7 @@ class TaskDetailController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Permanently delete a task together with its placements on "
             "shots (and the status, assignee and hours tracked there). "
-            "Not available to members with the read-only `client` role."
+            "Needs the `task.delete` permission."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -753,7 +754,7 @@ class TaskDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[TaskPath]) -> None:
         task = _get_task_or_404(self.request.user, parsed_path.task_id)
-        require_can_write(self.request.user, task.project)
+        require_project_perm(self.request.user, task.project, P.TASK_DELETE)
         task.delete()
         return None
 
@@ -793,8 +794,7 @@ def _get_shot_task_or_404(user: User, shot_task_id: int) -> ShotTask:
     try:
         return (
             _shot_task_queryset()
-            .filter(shot__project__memberships__user=user)
-            .distinct()
+            .filter(projects_q(user, "shot__project"))
             .get(pk=shot_task_id)
         )
     except ShotTask.DoesNotExist as exc:
@@ -851,6 +851,15 @@ def _resolve_assignee(controller, project: Project, assignee_id: int) -> User:
     return User.objects.get(pk=assignee_id)
 
 
+def _is_own_status_change(user: User, project: Project, shot_task, body) -> bool:
+    """Whether this is the assignee changing only the status of their own task."""
+    return (
+        shot_task.assignee_id == user.id
+        and body.model_fields_set == {"status_id"}
+        and can_in_project(user, project, P.TASK_UPDATE_OWN)
+    )
+
+
 class ShotTaskListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/shots/<shot_id>/tasks/` - list the tasks placed on
     a shot and place another one.
@@ -886,8 +895,7 @@ class ShotTaskListController(AuthenticatedController[PydanticSerializer]):
             "the shot. `status_id` defaults to the company's default task "
             "status; `assignee_id` must be a member of the project. A "
             "task can be placed on a given shot only once (409 "
-            "otherwise). Not available to members with the read-only "
-            "`client` role."
+            "otherwise). Needs the `task.create` permission."
         ),
         response_description="The created shot task.",
         extra_responses=[
@@ -905,7 +913,7 @@ class ShotTaskListController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotTaskOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
         project = shot.project
-        require_can_write(self.request.user, project)
+        require_project_perm(self.request.user, project, P.TASK_CREATE)
 
         try:
             task = Task.objects.get(project=project, pk=parsed_body.task_id)
@@ -979,8 +987,9 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Partially update the tracking of a task on a shot: status, "
             "assignee (null to unassign) and estimated/actual hours (null "
-            "to clear). The task and the shot can't be changed. Not "
-            "available to members with the read-only `client` role."
+            "to clear). The task and the shot can't be changed. Needs "
+            "`task.edit`; the assignee can change just the status of "
+            "their own task with `task.update_own`."
         ),
         response_description="The updated shot task.",
         extra_responses=[
@@ -997,7 +1006,10 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotTaskOut:
         shot_task = _get_shot_task_or_404(self.request.user, parsed_path.shot_task_id)
         project = shot_task.shot.project
-        require_can_write(self.request.user, project)
+        if not _is_own_status_change(
+            self.request.user, project, shot_task, parsed_body
+        ):
+            require_project_perm(self.request.user, project, P.TASK_EDIT)
         _reject_explicit_nulls(self, parsed_body, ["status_id"])
 
         old_status = shot_task.status
@@ -1041,8 +1053,8 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
         summary="Remove a task from a shot",
         description=(
             "Remove the task from the shot, discarding the tracking "
-            "recorded for it there. The task itself stays. Not available "
-            "to members with the read-only `client` role."
+            "recorded for it there. The task itself stays. Needs the "
+            "`task.delete` permission."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -1052,6 +1064,6 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[ShotTaskPath]) -> None:
         shot_task = _get_shot_task_or_404(self.request.user, parsed_path.shot_task_id)
-        require_can_write(self.request.user, shot_task.shot.project)
+        require_project_perm(self.request.user, shot_task.shot.project, P.TASK_DELETE)
         shot_task.delete()
         return None

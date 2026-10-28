@@ -29,6 +29,12 @@ GET /api/v1/projects/<id>/              # один проект
 GET/POST         /api/v1/companies/
 GET/PATCH/DELETE /api/v1/companies/<id>/
 
+# Role принадлежит компании
+GET/POST         /api/v1/companies/<id>/roles/
+GET/PATCH/DELETE /api/v1/roles/<id>/
+# Фиксированный список разрешений, из которых собираются роли
+GET              /api/v1/permissions/
+
 # TaskType и TaskStatus принадлежат компании
 GET/POST         /api/v1/companies/<id>/task-types/
 GET/PATCH/DELETE /api/v1/task-types/<id>/

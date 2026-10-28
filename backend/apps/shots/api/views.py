@@ -6,12 +6,17 @@ from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import (
+    companies_q,
+    projects_q,
+    require_company_perm,
+    require_project_perm,
+)
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company
-from apps.companies.permissions import require_company_admin
 from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project
-from apps.projects.permissions import require_can_write
 from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -68,10 +73,8 @@ def _get_shot_group_or_404(user: User, shot_group_id: int) -> ShotGroup:
     membership model for shot groups.
     """
     try:
-        return (
-            ShotGroup.objects.filter(project__memberships__user=user)
-            .distinct()
-            .get(pk=shot_group_id)
+        return ShotGroup.objects.filter(projects_q(user, "project")).get(
+            pk=shot_group_id
         )
     except ShotGroup.DoesNotExist as exc:
         raise APIError(
@@ -140,7 +143,7 @@ class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ShotGroupCreateIn],
     ) -> ShotGroupOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        require_can_write(self.request.user, project)
+        require_project_perm(self.request.user, project, P.GROUP_MANAGE)
 
         if ShotGroup.objects.filter(project=project, name=parsed_body.name).exists():
             raise APIError(
@@ -200,7 +203,7 @@ class ShotGroupDetailController(AuthenticatedController[PydanticSerializer]):
         shot_group = _get_shot_group_or_404(
             self.request.user, parsed_path.shot_group_id
         )
-        require_can_write(self.request.user, shot_group.project)
+        require_project_perm(self.request.user, shot_group.project, P.GROUP_MANAGE)
 
         name_taken = (
             ShotGroup.objects.filter(project=shot_group.project, name=parsed_body.name)
@@ -237,7 +240,7 @@ class ShotGroupDetailController(AuthenticatedController[PydanticSerializer]):
         shot_group = _get_shot_group_or_404(
             self.request.user, parsed_path.shot_group_id
         )
-        require_can_write(self.request.user, shot_group.project)
+        require_project_perm(self.request.user, shot_group.project, P.GROUP_MANAGE)
         shot_group.delete()
         return None
 
@@ -267,10 +270,8 @@ def _get_shot_status_or_404(user: User, shot_status_id: int) -> ShotStatus:
     Mirrors `apps.projects.api.views._get_company_or_404`.
     """
     try:
-        return (
-            ShotStatus.objects.filter(company__memberships__user=user)
-            .distinct()
-            .get(pk=shot_status_id)
+        return ShotStatus.objects.filter(companies_q(user, "company")).get(
+            pk=shot_status_id
         )
     except ShotStatus.DoesNotExist as exc:
         raise APIError(
@@ -348,7 +349,7 @@ class ShotStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ShotStatusCreateIn],
     ) -> ShotStatusOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
-        require_company_admin(self.request.user, company)
+        require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         if ShotStatus.objects.filter(company=company, name=parsed_body.name).exists():
             raise APIError(
@@ -417,7 +418,7 @@ class ShotStatusDetailController(AuthenticatedController[PydanticSerializer]):
         shot_status = _get_shot_status_or_404(
             self.request.user, parsed_path.shot_status_id
         )
-        require_company_admin(self.request.user, shot_status.company)
+        require_company_perm(self.request.user, shot_status.company, P.COMPANY_PIPELINE)
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
 
@@ -471,7 +472,7 @@ class ShotStatusDetailController(AuthenticatedController[PydanticSerializer]):
         shot_status = _get_shot_status_or_404(
             self.request.user, parsed_path.shot_status_id
         )
-        require_company_admin(self.request.user, shot_status.company)
+        require_company_perm(self.request.user, shot_status.company, P.COMPANY_PIPELINE)
         try:
             shot_status.delete()
         except ProtectedError as exc:
@@ -532,11 +533,7 @@ def _get_shot_or_404(user: User, shot_id: int) -> Shot:
     groups the shot belongs to.
     """
     try:
-        return (
-            Shot.objects.filter(project__memberships__user=user)
-            .distinct()
-            .get(pk=shot_id)
-        )
+        return Shot.objects.filter(projects_q(user, "project")).get(pk=shot_id)
     except Shot.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Shot with id={shot_id} was not found."},
@@ -745,7 +742,7 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ShotCreateIn],
     ) -> ShotOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        require_can_write(self.request.user, project)
+        require_project_perm(self.request.user, project, P.SHOT_CREATE)
 
         if Shot.objects.filter(project=project, name=parsed_body.name).exists():
             raise APIError(
@@ -892,7 +889,7 @@ class ShotDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ShotUpdateIn],
     ) -> ShotOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        require_can_write(self.request.user, shot.project)
+        require_project_perm(self.request.user, shot.project, P.SHOT_EDIT)
 
         if (
             "status_id" in parsed_body.model_fields_set
@@ -941,6 +938,6 @@ class ShotDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def delete(self, parsed_path: Path[ShotPath]) -> None:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        require_can_write(self.request.user, shot.project)
+        require_project_perm(self.request.user, shot.project, P.SHOT_DELETE)
         shot.delete()
         return None

@@ -241,8 +241,8 @@ class TestListChat:
 
         assert item["reactions"] == [{"emoji": "👍", "user_ids": [stays.id]}]
 
-    def test_a_client_can_read(self, auth_client, client_shot):
-        response = auth_client.get(_url(client_shot))
+    def test_a_client_can_read(self, auth_client, readonly_shot):
+        response = auth_client.get(_url(readonly_shot))
 
         assert response.status_code == HTTPStatus.OK
 

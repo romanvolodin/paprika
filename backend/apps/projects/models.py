@@ -2,7 +2,7 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from apps.companies.models import Company, CompanyMembership
+from apps.companies.models import Company
 from apps.core.models import BaseModel
 from apps.core.storage import file_with_token, project_dir
 
@@ -80,17 +80,12 @@ class ProjectMembership(BaseModel):
     """
     A user's role within a project.
 
-    Access to a project is granted exclusively through this model.
-    Belonging to the project's company (`CompanyMembership`) is a
-    prerequisite for being added here, but does not by itself grant
-    visibility into the project - a company member who isn't also a
-    project member can't see the project at all.
+    Access to a project is granted through this model. Belonging to the
+    project's company (`CompanyMembership`) is a prerequisite for being
+    added here, but does not by itself grant visibility into the project:
+    a company member who isn't also a project member can't see it, unless
+    their company role has `sees_all_projects`.
     """
-
-    # Reuse the company's role enum wholesale rather than defining a
-    # parallel one - `Role` is aliased here so callers can write
-    # `ProjectMembership.Role.ADMIN` without reaching into `companies`.
-    Role = CompanyMembership.Role
 
     user = models.ForeignKey(
         "users.User",
@@ -104,11 +99,11 @@ class ProjectMembership(BaseModel):
         on_delete=models.CASCADE,
         related_name="memberships",
     )
-    role = models.CharField(
-        _("role"),
-        max_length=20,
-        choices=Role.choices,
-        default=Role.EXECUTOR,
+    role = models.ForeignKey(
+        "access.Role",
+        verbose_name=_("role"),
+        on_delete=models.RESTRICT,
+        related_name="project_memberships",
     )
 
     class Meta:
@@ -122,10 +117,10 @@ class ProjectMembership(BaseModel):
         ordering = ["project", "user"]
 
     def __str__(self):
-        return f"{self.user} — {self.project} ({self.get_role_display()})"
+        return f"{self.user} — {self.project} ({self.role})"
 
     def __repr__(self):
         return (
             f"<ProjectMembership id={self.id} user_id={self.user_id} "
-            f"project_id={self.project_id} role={self.role}>"
+            f"project_id={self.project_id} role_id={self.role_id}>"
         )

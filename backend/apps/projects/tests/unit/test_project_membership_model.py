@@ -1,7 +1,7 @@
 from django.db import IntegrityError
+from django.db.models import RestrictedError
 import pytest
 
-from apps.companies.models import CompanyMembership
 from apps.projects.models import ProjectMembership
 
 
@@ -9,23 +9,20 @@ pytestmark = pytest.mark.django_db
 
 
 class TestProjectMembershipModel:
-    def test_role_reuses_company_membership_role_enum(self):
-        assert ProjectMembership.Role is CompanyMembership.Role
-
     def test_str_contains_user_project_and_role(
         self, project_membership_factory, user_factory, project_factory
     ):
         user = user_factory(email="someone@example.com")
         project = project_factory(name="Acme Feature")
         membership = project_membership_factory(
-            user=user, project=project, role=ProjectMembership.Role.ADMIN
+            user=user, project=project, role="admin"
         )
 
         text = str(membership)
 
         assert "someone@example.com" in text
         assert "Acme Feature" in text
-        assert "Admin" in text
+        assert "Админ" in text
 
     def test_repr_contains_id_user_id_project_id_and_role(
         self, project_membership_factory
@@ -37,12 +34,19 @@ class TestProjectMembershipModel:
         assert f"id={membership.id}" in text
         assert f"user_id={membership.user_id}" in text
         assert f"project_id={membership.project_id}" in text
-        assert f"role={membership.role}" in text
+        assert f"role_id={membership.role_id}" in text
 
-    def test_role_defaults_to_executor(self, project_membership_factory):
+    def test_role_is_a_role_of_the_projects_company(self, project_membership_factory):
+        membership = project_membership_factory(role="executor")
+
+        assert membership.role.company_id == membership.project.company_id
+        assert membership.role.name == "Исполнитель"
+
+    def test_a_role_that_is_in_use_cannot_be_deleted(self, project_membership_factory):
         membership = project_membership_factory()
 
-        assert membership.role == ProjectMembership.Role.EXECUTOR
+        with pytest.raises(RestrictedError):
+            membership.role.delete()
 
     def test_user_and_project_pair_must_be_unique(
         self, project_membership_factory, user_factory, project_factory

@@ -7,46 +7,29 @@ import ProjectLayoutView from '@/views/ProjectLayoutView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import * as projectsApi from '@/api/projects'
-import type { ProjectMemberOut, ProjectMembershipRole, ProjectOut } from '@/types/api'
+import type { ProjectMemberOut, ProjectOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/projects')
 
 const Empty = defineComponent({ render: () => h('div', { 'data-test': 'child' }) })
 
-function buildProject(): ProjectOut {
-  return {
-    id: 1,
-    company_id: 7,
-    name: 'Feature Film',
-    code: 'PRJ',
-    description: '',
-    cover: null,
-    start_date: null,
-    deadline: null,
-    is_active: true,
-    created_by: null,
-    updated_by: null,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  }
-}
-
-function buildMember(role: ProjectMembershipRole): ProjectMemberOut {
+function buildMember(role: StarterRole): ProjectMemberOut {
   return {
     id: 1,
     user_id: 1,
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role,
+    role: roleRefOf(role),
     created_at: '2026-01-01T00:00:00Z',
   }
 }
 
 async function mountLayout(
-  role: ProjectMembershipRole,
+  role: StarterRole,
   path = '/acme/PRJ/shots',
-  projects: ProjectOut[] = [buildProject()],
+  projects: ProjectOut[] = [buildProjectFor(role)],
 ) {
   vi.mocked(projectsApi.listProjects).mockResolvedValue({
     items: projects,
@@ -111,6 +94,7 @@ describe('ProjectLayoutView', () => {
         id: 7,
         name: 'Acme',
         slug: 'acme',
+        my_permissions: [],
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
       },
@@ -144,13 +128,16 @@ describe('ProjectLayoutView', () => {
     ])
   })
 
-  it.each(['admin', 'producer'] as const)('shows the settings link to a %s', async (role) => {
-    const wrapper = await mountLayout(role)
+  it.each(['admin', 'producer', 'coordinator'] as const)(
+    'shows the settings link to a %s',
+    async (role) => {
+      const wrapper = await mountLayout(role)
 
-    expect(wrapper.findAll('a').map((link) => link.text())).toContain('Настройки')
-  })
+      expect(wrapper.findAll('a').map((link) => link.text())).toContain('Настройки')
+    },
+  )
 
-  it.each(['coordinator', 'executor', 'freelancer', 'client'] as const)(
+  it.each(['executor', 'freelancer', 'client'] as const)(
     'hides the settings link from a %s',
     async (role) => {
       const wrapper = await mountLayout(role)

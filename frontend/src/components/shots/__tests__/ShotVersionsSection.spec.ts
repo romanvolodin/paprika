@@ -5,13 +5,14 @@ import { createPinia, setActivePinia } from 'pinia'
 import { NDialogProvider, NMessageProvider } from 'naive-ui'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import ShotVersionsSection from '@/components/shots/ShotVersionsSection.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useVersionsStore } from '@/stores/versions'
 import * as versionsApi from '@/api/versions'
 import type { VersionOut } from '@/types/api'
 
 vi.mock('@/api/versions')
 
-function buildVersion(shotId: number): VersionOut {
+function buildVersion(shotId: number, uploaderId: number | null = null): VersionOut {
   return {
     id: shotId * 10,
     project_id: 1,
@@ -27,7 +28,10 @@ function buildVersion(shotId: number): VersionOut {
     fps: 24,
     codec: 'h264',
     file_size: 1024,
-    created_by: null,
+    created_by:
+      uploaderId === null
+        ? null
+        : ({ id: uploaderId, first_name: 'A', last_name: 'One' } as VersionOut['created_by']),
     updated_by: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
@@ -39,6 +43,8 @@ const Host = defineComponent({
   props: {
     shotId: { type: Number, required: true },
     canWrite: { type: Boolean, default: true },
+    // Only the right to delete one's own versions.
+    onlyDeleteOwn: { type: Boolean, default: false },
   },
   setup(props) {
     return () =>
@@ -48,7 +54,9 @@ const Host = defineComponent({
             default: () =>
               h(ShotVersionsSection, {
                 shotId: props.shotId,
-                canWrite: props.canWrite,
+                canUpload: props.canWrite,
+                canDelete: props.canWrite && !props.onlyDeleteOwn,
+                canDeleteOwn: props.canWrite || props.onlyDeleteOwn,
                 uploadTo: { name: 'shot-upload' },
               }),
           }),
@@ -64,7 +72,7 @@ const router = createRouter({
   ],
 })
 
-function mountSection(props: { shotId: number; canWrite?: boolean }) {
+function mountSection(props: { shotId: number; canWrite?: boolean; onlyDeleteOwn?: boolean }) {
   return mount(Host, { props, global: { plugins: [router] } })
 }
 
@@ -116,6 +124,46 @@ describe('ShotVersionsSection', () => {
     expect(wrapper.text()).not.toContain('Загрузить версию')
     expect(wrapper.text()).not.toContain('Удалить')
     expect(wrapper.text()).toContain('PRJ_10_v01')
+  })
+
+  describe('when the user may only delete their own versions', () => {
+    beforeEach(() => {
+      useAuthStore().currentUser = {
+        id: 5,
+        email: 'me@paprika.dev',
+        first_name: 'Me',
+        last_name: 'Myself',
+        avatar: null,
+        is_active: true,
+        date_joined: '2026-01-01T00:00:00Z',
+      }
+    })
+
+    it('offers the delete button for a version they uploaded', async () => {
+      vi.mocked(versionsApi.listVersions).mockResolvedValue({
+        items: [buildVersion(10, 5)],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      })
+      const wrapper = mountSection({ shotId: 10, canWrite: false, onlyDeleteOwn: true })
+      await flushPromises()
+
+      expect(wrapper.findAll('button').map((button) => button.text())).toContain('Удалить')
+    })
+
+    it("hides it for someone else's version", async () => {
+      vi.mocked(versionsApi.listVersions).mockResolvedValue({
+        items: [buildVersion(10, 6)],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      })
+      const wrapper = mountSection({ shotId: 10, canWrite: false, onlyDeleteOwn: true })
+      await flushPromises()
+
+      expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('Удалить')
+    })
   })
 
   it('leads the upload button to the upload page', async () => {

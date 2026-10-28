@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import ShotVersionUpload from '@/components/shots/ShotVersionUpload.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import type { VersionOut } from '@/types/api'
 
@@ -11,8 +13,9 @@ const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const store = useShotDetailStore()
-const { members } = storeToRefs(store)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { can } = useProjectPermissions(project)
+const canUpload = computed(() => can(PERMISSION.versionUpload))
 
 // After an upload the new version is what the reader wants to see.
 function handleUploaded(version: VersionOut) {
@@ -28,7 +31,7 @@ function handleUploaded(version: VersionOut) {
 <template>
   <div v-if="store.shot && store.project" class="shot-upload">
     <shot-version-upload
-      v-if="canWrite"
+      v-if="canUpload"
       :shot-id="store.shot.id"
       :project-id="store.project.id"
       :company-id="store.project.company_id"

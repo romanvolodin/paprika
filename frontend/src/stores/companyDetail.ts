@@ -1,28 +1,32 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as companiesApi from '@/api/companies'
+import * as rolesApi from '@/api/roles'
 import type {
   CompanyMemberCreateIn,
   CompanyMemberOut,
-  CompanyMembershipRole,
   CompanyOut,
   CompanyUpdateIn,
+  RoleOut,
 } from '@/types/api'
 
 export const useCompanyDetailStore = defineStore('companyDetail', () => {
   const company = ref<CompanyOut | null>(null)
   const members = ref<CompanyMemberOut[]>([])
+  const roles = ref<RoleOut[]>([])
   const isLoading = ref(false)
 
   async function fetch(companyId: number) {
     isLoading.value = true
     try {
-      const [companyResult, membersResult] = await Promise.all([
+      const [companyResult, membersResult, rolesResult] = await Promise.all([
         companiesApi.getCompany(companyId),
         companiesApi.listCompanyMembers(companyId),
+        rolesApi.listCompanyRoles(companyId),
       ])
       company.value = companyResult
       members.value = membersResult.items
+      roles.value = rolesResult.items
     } finally {
       isLoading.value = false
     }
@@ -41,8 +45,8 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     await refetchMembers(companyId)
   }
 
-  async function updateMemberRole(companyId: number, userId: number, role: CompanyMembershipRole) {
-    await companiesApi.updateCompanyMember(companyId, userId, { role })
+  async function updateMemberRole(companyId: number, userId: number, roleId: number) {
+    await companiesApi.updateCompanyMember(companyId, userId, { role_id: roleId })
     await refetchMembers(companyId)
   }
 
@@ -54,6 +58,7 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
   return {
     company,
     members,
+    roles,
     isLoading,
     fetch,
     updateCompany,

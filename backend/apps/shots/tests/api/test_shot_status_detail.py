@@ -232,7 +232,7 @@ class TestShotStatusEditAndDeleteAreCompanyAdminOnly:
         self, auth_client, auth_user, shot_status, company_membership_factory
     ):
         company_membership_factory(
-            user=auth_user, company=shot_status.company, role="producer"
+            user=auth_user, company=shot_status.company, role="coordinator"
         )
         original_name = shot_status.name
 

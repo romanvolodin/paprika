@@ -2,15 +2,38 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
 import * as companiesApi from '@/api/companies'
-import type { CompanyMemberOut, CompanyOut } from '@/types/api'
+import * as rolesApi from '@/api/roles'
+import type { CompanyMemberOut, CompanyOut, RoleOut, RoleRefOut } from '@/types/api'
 
 vi.mock('@/api/companies')
+vi.mock('@/api/roles')
+
+function buildRole(overrides: Partial<RoleRefOut> = {}): RoleRefOut {
+  return { id: 1, name: 'Админ', color: '#00A64F', ...overrides }
+}
+
+function buildRoleOut(overrides: Partial<RoleOut> = {}): RoleOut {
+  return {
+    id: 1,
+    company_id: 1,
+    name: 'Админ',
+    color: '#00A64F',
+    permissions: [],
+    sees_all_projects: true,
+    company_members_count: 0,
+    project_members_count: 0,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
 
 function buildCompany(overrides: Partial<CompanyOut> = {}): CompanyOut {
   return {
     id: 1,
     name: 'Acme Studio',
     slug: 'acme-studio',
+    my_permissions: [],
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
     ...overrides,
@@ -24,7 +47,7 @@ function buildMember(overrides: Partial<CompanyMemberOut> = {}): CompanyMemberOu
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role: 'admin',
+    role: buildRole(),
     created_at: '2026-01-01T00:00:00Z',
     ...overrides,
   }
@@ -34,10 +57,12 @@ describe('useCompanyDetailStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
   })
 
   describe('fetch', () => {
-    it('loads the company and its members together', async () => {
+    it('loads the company, its members and its roles together', async () => {
+      vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [buildRoleOut()] })
       vi.mocked(companiesApi.getCompany).mockResolvedValue(buildCompany())
       vi.mocked(companiesApi.listCompanyMembers).mockResolvedValue({
         items: [buildMember()],
@@ -50,6 +75,8 @@ describe('useCompanyDetailStore', () => {
       expect(companiesApi.listCompanyMembers).toHaveBeenCalledWith(1)
       expect(store.company).toEqual(buildCompany())
       expect(store.members).toHaveLength(1)
+      expect(rolesApi.listCompanyRoles).toHaveBeenCalledWith(1)
+      expect(store.roles).toHaveLength(1)
       expect(store.isLoading).toBe(false)
     })
 
@@ -93,11 +120,11 @@ describe('useCompanyDetailStore', () => {
       })
 
       const store = useCompanyDetailStore()
-      await store.addMember(1, { user_id: 1, role: 'executor' })
+      await store.addMember(1, { user_id: 1, role_id: 4 })
 
       expect(companiesApi.addCompanyMember).toHaveBeenCalledWith(1, {
         user_id: 1,
-        role: 'executor',
+        role_id: 4,
       })
       expect(companiesApi.listCompanyMembers).toHaveBeenCalledWith(1)
       expect(store.members).toHaveLength(1)
@@ -107,19 +134,19 @@ describe('useCompanyDetailStore', () => {
   describe('updateMemberRole', () => {
     it('updates the role then refetches the members list', async () => {
       vi.mocked(companiesApi.updateCompanyMember).mockResolvedValue(
-        buildMember({ role: 'coordinator' }),
+        buildMember({ role: buildRole({ id: 3, name: 'Координатор' }) }),
       )
       vi.mocked(companiesApi.listCompanyMembers).mockResolvedValue({
-        items: [buildMember({ role: 'coordinator' })],
+        items: [buildMember({ role: buildRole({ id: 3, name: 'Координатор' }) })],
       })
 
       const store = useCompanyDetailStore()
-      await store.updateMemberRole(1, 1, 'coordinator')
+      await store.updateMemberRole(1, 1, 3)
 
       expect(companiesApi.updateCompanyMember).toHaveBeenCalledWith(1, 1, {
-        role: 'coordinator',
+        role_id: 3,
       })
-      expect(store.members[0]?.role).toBe('coordinator')
+      expect(store.members[0]?.role.name).toBe('Координатор')
     })
   })
 

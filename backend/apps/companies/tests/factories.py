@@ -1,6 +1,7 @@
 import factory
 from factory.django import DjangoModelFactory
 
+from apps.access.tests.factories import resolve_role
 from apps.companies.models import Company, CompanyMembership
 
 
@@ -25,7 +26,11 @@ class CompanyMembershipFactory(DjangoModelFactory):
 
     Usage:
         company_membership_factory()                       # random user + company
-        company_membership_factory(user=user, company=company, role=Role.ADMIN)
+        company_membership_factory(user=user, company=company, role="admin")
+
+    `role` is a `Role` of the company or the key of one of its starter roles
+    (`"admin"`, `"producer"`, `"coordinator"`, `"executor"`, `"freelancer"`,
+    `"client"`); it defaults to `"admin"`, who can do anything in the company.
     """
 
     class Meta:
@@ -33,4 +38,9 @@ class CompanyMembershipFactory(DjangoModelFactory):
 
     user = factory.SubFactory("apps.users.tests.factories.UserFactory")
     company = factory.SubFactory(CompanyFactory)
-    role = CompanyMembership.Role.EXECUTOR
+    role = "admin"
+
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs):
+        kwargs["role"] = resolve_role(kwargs["role"], kwargs["company"])
+        return kwargs

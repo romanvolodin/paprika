@@ -20,6 +20,7 @@ import ShotFilterSection from '@/components/shots/ShotFilterSection.vue'
 import ShotFormModal, { type ShotFormValues } from '@/components/shots/ShotFormModal.vue'
 import ShotStatusTag from '@/components/shots/ShotStatusTag.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { PAGE_SIZE_OPTIONS } from '@/composables/usePageSize'
 import { useViewMode } from '@/composables/useViewMode'
 import { firstValidationMessage } from '@/utils/apiError'
@@ -34,8 +35,8 @@ const shots = useShotsStore()
 const currentCompany = useCurrentCompanyStore()
 
 const message = useMessage()
-const { members } = storeToRefs(shots)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(shots)
+const { can } = useProjectPermissions(project)
 
 const viewMode = useViewMode('shots')
 const pageSizeOptions = PAGE_SIZE_OPTIONS.map((size) => ({
@@ -181,9 +182,21 @@ watch(
     <template v-else-if="shots.project">
       <div class="shots-page__heading-row">
         <h2 class="shots-page__title">Кадры</h2>
-        <div v-if="canWrite" class="shots-page__actions">
-          <n-button size="small" @click="goToImport">Импорт из таблицы</n-button>
-          <n-button type="primary" size="small" @click="isFormOpen = true">Новый кадр</n-button>
+        <div
+          v-if="can(PERMISSION.shotImport) || can(PERMISSION.shotCreate)"
+          class="shots-page__actions"
+        >
+          <n-button v-if="can(PERMISSION.shotImport)" size="small" @click="goToImport">
+            Импорт из таблицы
+          </n-button>
+          <n-button
+            v-if="can(PERMISSION.shotCreate)"
+            type="primary"
+            size="small"
+            @click="isFormOpen = true"
+          >
+            Новый кадр
+          </n-button>
         </div>
       </div>
 

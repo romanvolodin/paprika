@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NIcon, NSpin, useMessage } from 'naive-ui'
 import { ArrowBackOutline, DocumentTextOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import ShotImportPreview from '@/components/shots/ShotImportPreview.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import { useShotImportStore } from '@/stores/shotImport'
 
@@ -16,8 +17,9 @@ const message = useMessage()
 const currentCompany = useCurrentCompanyStore()
 const store = useShotImportStore()
 
-const { members } = storeToRefs(store)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { can } = useProjectPermissions(project)
+const canImport = computed(() => can(PERMISSION.shotImport))
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
@@ -113,7 +115,7 @@ async function handleSubmit() {
         <span class="mono import-page__code">{{ store.project.code }}</span>
       </div>
 
-      <p v-if="!canWrite" class="import-page__message">
+      <p v-if="!canImport" class="import-page__message">
         Ваша роль в этом проекте не позволяет создавать кадры.
       </p>
 

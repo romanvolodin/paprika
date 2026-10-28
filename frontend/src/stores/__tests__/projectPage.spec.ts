@@ -4,17 +4,47 @@ import { AxiosError } from 'axios'
 import { useProjectPageStore } from '@/stores/projectPage'
 import * as companiesApi from '@/api/companies'
 import * as projectsApi from '@/api/projects'
-import type { CompanyMemberOut, CompanyOut, ProjectMemberOut, ProjectOut } from '@/types/api'
+import * as rolesApi from '@/api/roles'
+import type {
+  CompanyMemberOut,
+  CompanyOut,
+  ProjectMemberOut,
+  ProjectOut,
+  RoleOut,
+  RoleRefOut,
+} from '@/types/api'
 
 vi.mock('@/api/projects')
 vi.mock('@/api/companies')
+vi.mock('@/api/roles')
 
 const company: CompanyOut = {
   id: 7,
   name: 'Acme',
   slug: 'acme',
+  my_permissions: [],
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
+}
+
+function buildRole(overrides: Partial<RoleRefOut> = {}): RoleRefOut {
+  return { id: 1, name: 'Админ', color: '#00A64F', ...overrides }
+}
+
+function buildRoleOut(overrides: Partial<RoleOut> = {}): RoleOut {
+  return {
+    id: 1,
+    company_id: 7,
+    name: 'Админ',
+    color: '#00A64F',
+    permissions: [],
+    sees_all_projects: true,
+    company_members_count: 0,
+    project_members_count: 0,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
 }
 
 function buildProject(overrides: Partial<ProjectOut> = {}): ProjectOut {
@@ -28,6 +58,7 @@ function buildProject(overrides: Partial<ProjectOut> = {}): ProjectOut {
     start_date: null,
     deadline: null,
     is_active: true,
+    my_permissions: [],
     created_by: null,
     updated_by: null,
     created_at: '2026-01-01T00:00:00Z',
@@ -43,7 +74,7 @@ function buildMember(overrides: Partial<ProjectMemberOut> = {}): ProjectMemberOu
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role: 'admin',
+    role: buildRole(),
     created_at: '2026-01-01T00:00:00Z',
     ...overrides,
   }
@@ -56,7 +87,7 @@ function buildCompanyMember(overrides: Partial<CompanyMemberOut> = {}): CompanyM
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role: 'admin',
+    role: buildRole(),
     created_at: '2026-01-01T00:00:00Z',
     ...overrides,
   }
@@ -78,6 +109,7 @@ describe('useProjectPageStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
   })
 
   describe('open', () => {
@@ -165,10 +197,16 @@ describe('useProjectPageStore', () => {
         items: [buildCompanyMember(), buildCompanyMember({ user_id: 2 })],
       })
 
+      vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({
+        items: [buildRoleOut(), buildRoleOut({ id: 4, name: 'Исполнитель' })],
+      })
+
       await store.loadCompanyMembers()
 
       expect(companiesApi.listCompanyMembers).toHaveBeenCalledWith(7)
+      expect(rolesApi.listCompanyRoles).toHaveBeenCalledWith(7)
       expect(store.companyMembers).toHaveLength(2)
+      expect(store.roles.map((role) => role.name)).toEqual(['Админ', 'Исполнитель'])
       expect(store.isLoading).toBe(false)
     })
   })
@@ -213,11 +251,11 @@ describe('useProjectPageStore', () => {
         items: [buildMember(), buildMember({ user_id: 2 })],
       })
 
-      await store.addMember({ user_id: 2, role: 'executor' })
+      await store.addMember({ user_id: 2, role_id: 4 })
 
       expect(projectsApi.addProjectMember).toHaveBeenCalledWith(1, {
         user_id: 2,
-        role: 'executor',
+        role_id: 4,
       })
       expect(store.members).toHaveLength(2)
     })
@@ -227,16 +265,16 @@ describe('useProjectPageStore', () => {
     it('updates the role then refetches the members list', async () => {
       const store = await openedStore()
       vi.mocked(projectsApi.updateProjectMember).mockResolvedValue(
-        buildMember({ role: 'coordinator' }),
+        buildMember({ role: buildRole({ id: 3, name: 'Координатор' }) }),
       )
       vi.mocked(projectsApi.listProjectMembers).mockResolvedValue({
-        items: [buildMember({ role: 'coordinator' })],
+        items: [buildMember({ role: buildRole({ id: 3, name: 'Координатор' }) })],
       })
 
-      await store.updateMemberRole(1, 'coordinator')
+      await store.updateMemberRole(1, 3)
 
-      expect(projectsApi.updateProjectMember).toHaveBeenCalledWith(1, 1, { role: 'coordinator' })
-      expect(store.members[0]?.role).toBe('coordinator')
+      expect(projectsApi.updateProjectMember).toHaveBeenCalledWith(1, 1, { role_id: 3 })
+      expect(store.members[0]?.role.name).toBe('Координатор')
     })
   })
 

@@ -101,8 +101,10 @@ class TestPutReaction:
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_client_role_cannot_react(self, auth_client, client_shot, message_factory):
-        message = message_factory(shot=client_shot)
+    def test_role_without_permission_cannot_react(
+        self, auth_client, readonly_shot, message_factory
+    ):
+        message = message_factory(shot=readonly_shot)
 
         response = put_json(auth_client, _url(message), {"emoji": "👍"})
 
@@ -161,8 +163,10 @@ class TestRemoveReaction:
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_client_role_cannot_remove(self, auth_client, client_shot, message_factory):
-        message = message_factory(shot=client_shot)
+    def test_role_without_permission_cannot_remove(
+        self, auth_client, readonly_shot, message_factory
+    ):
+        message = message_factory(shot=readonly_shot)
 
         response = auth_client.delete(_remove_url(message, "👍"))
 

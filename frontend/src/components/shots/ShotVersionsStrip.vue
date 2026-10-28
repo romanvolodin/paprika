@@ -7,7 +7,7 @@ const props = defineProps<{
   versions: VersionOut[]
   // The version being played, framed in the strip.
   currentId: number | null
-  canWrite: boolean
+  canUpload: boolean
   uploadTo: RouteLocationRaw
 }>()
 
@@ -34,7 +34,7 @@ watch(
 
 <template>
   <nav ref="stripRef" class="versions-strip" aria-label="Версии кадра">
-    <RouterLink v-if="canWrite" class="versions-strip__upload" :to="uploadTo">
+    <RouterLink v-if="canUpload" class="versions-strip__upload" :to="uploadTo">
       Загрузить версию
     </RouterLink>
 

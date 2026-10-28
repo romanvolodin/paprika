@@ -19,7 +19,12 @@ import { formatFileSize } from '@/utils/format'
 import { firstValidationMessage } from '@/utils/apiError'
 import type { MessageOut } from '@/types/api'
 
-const props = defineProps<{ shotId: number; canWrite: boolean }>()
+const props = defineProps<{
+  shotId: number
+  canWrite: boolean
+  // May edit and delete other people's messages too.
+  canModerate: boolean
+}>()
 
 // There is no push channel, so the chat asks for fresh messages itself,
 // but only while the page is visible.
@@ -259,7 +264,7 @@ const menuOptions = computed(() => {
   if (!target) return []
   return [
     { label: 'Ответить', key: 'reply' },
-    ...(isOwn(target)
+    ...(canChange(target)
       ? [
           { label: 'Изменить', key: 'edit' },
           {
@@ -298,6 +303,11 @@ function handleMenuSelect(key: string) {
 
 function isOwn(target: MessageOut): boolean {
   return target.type === 'user' && target.created_by?.id === currentUserId.value
+}
+
+// Your own messages, or anyone's for a moderator.
+function canChange(target: MessageOut): boolean {
+  return target.type === 'user' && (isOwn(target) || props.canModerate)
 }
 
 function formatTime(value: string): string {

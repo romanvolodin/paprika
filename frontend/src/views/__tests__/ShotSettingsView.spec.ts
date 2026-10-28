@@ -7,7 +7,8 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import ShotSettingsView from '@/views/ShotSettingsView.vue'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import * as shotsApi from '@/api/shots'
-import type { ProjectMembershipRole, ShotOut } from '@/types/api'
+import type { ShotOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/shots')
 
@@ -25,8 +26,9 @@ const shot: ShotOut = {
   updated_at: '2026-01-01T00:00:00Z',
 }
 
-function mountSettings(role: ProjectMembershipRole) {
+function mountSettings(role: StarterRole) {
   const store = useShotDetailStore()
+  store.project = buildProjectFor(role)
   store.shot = shot
   store.groups = [
     {
@@ -46,7 +48,7 @@ function mountSettings(role: ProjectMembershipRole) {
       email: 'a@paprika.dev',
       first_name: 'A',
       last_name: 'One',
-      role,
+      role: roleRefOf(role),
       created_at: '2026-01-01T00:00:00Z',
     },
   ]
@@ -90,7 +92,7 @@ describe('ShotSettingsView', () => {
   })
 
   it('shows the shot name as a disabled field and the current values', async () => {
-    const wrapper = await mountSettings('executor')
+    const wrapper = await mountSettings('coordinator')
 
     const inputs = wrapper.findAll('input')
     expect((inputs[0].element as HTMLInputElement).value).toBe('0010')
@@ -100,7 +102,7 @@ describe('ShotSettingsView', () => {
 
   it('saves groups and timings without touching the status', async () => {
     vi.mocked(shotsApi.updateShot).mockResolvedValue(shot)
-    const wrapper = await mountSettings('executor')
+    const wrapper = await mountSettings('coordinator')
 
     const save = wrapper.findAll('button').find((button) => button.text() === 'Сохранить')
     await save!.trigger('click')
@@ -114,7 +116,7 @@ describe('ShotSettingsView', () => {
   })
 
   it('shows the save button and the delete zone to a member who can write', async () => {
-    const wrapper = await mountSettings('executor')
+    const wrapper = await mountSettings('coordinator')
 
     const buttons = wrapper.findAll('button').map((button) => button.text())
     expect(buttons).toContain('Сохранить')
@@ -122,7 +124,7 @@ describe('ShotSettingsView', () => {
   })
 
   it('shows the fields read-only to a client, without save or delete', async () => {
-    const wrapper = await mountSettings('client')
+    const wrapper = await mountSettings('readonly')
 
     const buttons = wrapper.findAll('button').map((button) => button.text())
     expect(buttons).not.toContain('Сохранить')

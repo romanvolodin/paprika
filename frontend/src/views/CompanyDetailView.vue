@@ -26,9 +26,8 @@ import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
 import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
-import { MEMBERSHIP_ROLE_LABELS, MEMBERSHIP_ROLE_OPTIONS } from '@/constants/membershipRoles'
 import { slugify } from '@/utils/slugify'
-import type { CompanyMemberOut, CompanyMembershipRole, UserOut } from '@/types/api'
+import type { CompanyMemberOut, UserOut } from '@/types/api'
 
 const props = defineProps<{ companyId: number }>()
 
@@ -36,8 +35,17 @@ const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
 const store = useCompanyDetailStore()
-const { canEditCompany, canManageMembers, canRemoveMember, canChangeMemberRole } =
-  useCompanyPermissions(computed(() => store.members))
+const {
+  canEditCompany,
+  canManagePipeline,
+  canManageMembers,
+  canRemoveMember,
+  canChangeMemberRole,
+} = useCompanyPermissions(computed(() => store.company))
+
+const roleOptions = computed(() =>
+  store.roles.map((role) => ({ label: role.name, value: role.id })),
+)
 
 useDynamicPageTitle(() => (store.company?.id === props.companyId ? store.company.name : null))
 
@@ -111,9 +119,9 @@ function initials(member: CompanyMemberOut): string {
   return `${member.first_name[0] ?? ''}${member.last_name[0] ?? ''}`.toUpperCase()
 }
 
-async function handleRoleChange(member: CompanyMemberOut, role: CompanyMembershipRole) {
+async function handleRoleChange(member: CompanyMemberOut, roleId: number) {
   try {
-    await store.updateMemberRole(props.companyId, member.user_id, role)
+    await store.updateMemberRole(props.companyId, member.user_id, roleId)
     message.success('Роль обновлена.')
   } catch {
     message.error('Не удалось изменить роль.')
@@ -171,16 +179,12 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
     render: (member) =>
       canChangeMemberRole(member.user_id)
         ? h(NSelect, {
-            value: member.role,
-            options: MEMBERSHIP_ROLE_OPTIONS,
+            value: member.role.id,
+            options: roleOptions.value,
             size: 'small',
-            onUpdateValue: (role: CompanyMembershipRole) => handleRoleChange(member, role),
+            onUpdateValue: (roleId: number) => handleRoleChange(member, roleId),
           })
-        : h(
-            NTag,
-            { size: 'small', round: true },
-            { default: () => MEMBERSHIP_ROLE_LABELS[member.role] },
-          ),
+        : h(NTag, { size: 'small', round: true }, { default: () => member.role.name }),
   },
   {
     title: '',
@@ -206,7 +210,7 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
 
 const userSearch = useUserSearchOptions()
 const newMemberUserId = ref<number | null>(null)
-const newMemberRole = ref<CompanyMembershipRole>('executor')
+const newMemberRole = ref<number | null>(null)
 const isAddingMember = ref(false)
 
 function renderUserOption(option: SelectOption) {
@@ -232,17 +236,17 @@ function renderUserOption(option: SelectOption) {
 }
 
 async function handleAddMember() {
-  if (!newMemberUserId.value) return
+  if (!newMemberUserId.value || !newMemberRole.value) return
 
   isAddingMember.value = true
   try {
     await store.addMember(props.companyId, {
       user_id: newMemberUserId.value,
-      role: newMemberRole.value,
+      role_id: newMemberRole.value,
     })
     message.success('Участник добавлен.')
     newMemberUserId.value = null
-    newMemberRole.value = 'executor'
+    newMemberRole.value = null
   } catch {
     message.error('Не удалось добавить участника. Возможно, он уже состоит в компании.')
   } finally {
@@ -313,12 +317,13 @@ async function handleAddMember() {
         />
         <n-select
           v-model:value="newMemberRole"
-          :options="MEMBERSHIP_ROLE_OPTIONS"
+          :options="roleOptions"
+          placeholder="Роль"
           style="max-width: 180px"
         />
         <n-button
           type="primary"
-          :disabled="!newMemberUserId"
+          :disabled="!newMemberUserId || !newMemberRole"
           :loading="isAddingMember"
           @click="handleAddMember"
         >
@@ -330,17 +335,17 @@ async function handleAddMember() {
 
     <section class="company-detail__section">
       <h2 class="company-detail__heading">Статусы кадров</h2>
-      <shot-statuses-section :company-id="props.companyId" :can-edit="canEditCompany" />
+      <shot-statuses-section :company-id="props.companyId" :can-edit="canManagePipeline" />
     </section>
 
     <section class="company-detail__section">
       <h2 class="company-detail__heading">Типы задач</h2>
-      <task-types-section :company-id="props.companyId" :can-edit="canEditCompany" />
+      <task-types-section :company-id="props.companyId" :can-edit="canManagePipeline" />
     </section>
 
     <section class="company-detail__section">
       <h2 class="company-detail__heading">Статусы задач</h2>
-      <task-statuses-section :company-id="props.companyId" :can-edit="canEditCompany" />
+      <task-statuses-section :company-id="props.companyId" :can-edit="canManagePipeline" />
     </section>
   </div>
   <p v-else-if="store.isLoading" class="company-detail__loading">Загрузка…</p>

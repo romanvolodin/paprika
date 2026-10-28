@@ -323,7 +323,7 @@ class TestTaskTypeWritesAreCompanyAdminOnly:
         company_membership_factory,
         task_type_factory,
     ):
-        company_membership_factory(user=auth_user, company=company, role="producer")
+        company_membership_factory(user=auth_user, company=company, role="coordinator")
         task_type = task_type_factory(company=company, name="Roto", abbreviation="RTO")
 
         listed = auth_client.get(f"/api/v1/companies/{company.id}/task-types/")

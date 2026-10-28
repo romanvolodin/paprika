@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "dmr.security.jwt.blocklist",
     #
     "apps.core",
+    "apps.access",
     "apps.chat",
     "apps.companies",
     "apps.feed",

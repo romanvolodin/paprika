@@ -3,14 +3,15 @@ import { defineStore } from 'pinia'
 import { isAxiosError } from 'axios'
 import * as companiesApi from '@/api/companies'
 import * as projectsApi from '@/api/projects'
+import * as rolesApi from '@/api/roles'
 import type { UpdateProjectInput } from '@/api/projects'
 import type {
   CompanyMemberOut,
   CompanyOut,
   ProjectMemberCreateIn,
   ProjectMemberOut,
-  ProjectMembershipRole,
   ProjectOut,
+  RoleOut,
 } from '@/types/api'
 
 export type ProjectPageState = 'loading' | 'ready' | 'not-found' | 'error'
@@ -24,6 +25,8 @@ export const useProjectPageStore = defineStore('projectPage', () => {
   // apps/projects/api/views.py), so the settings page builds its "add
   // member" picker from this list instead of a system-wide user search.
   const companyMembers = ref<CompanyMemberOut[]>([])
+  // The company's roles, for the role pickers of the members list.
+  const roles = ref<RoleOut[]>([])
   const isLoading = ref(false)
 
   // `open` can be called again (another project, another company) while
@@ -42,6 +45,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     project.value = null
     members.value = []
     companyMembers.value = []
+    roles.value = []
 
     try {
       const candidates = await projectsApi.listProjects(target.id, {
@@ -72,6 +76,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     project.value = null
     members.value = []
     companyMembers.value = []
+    roles.value = []
     state.value = 'not-found'
   }
 
@@ -79,8 +84,12 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     if (!project.value) return
     isLoading.value = true
     try {
-      const result = await companiesApi.listCompanyMembers(project.value.company_id)
-      companyMembers.value = result.items
+      const [membersResult, rolesResult] = await Promise.all([
+        companiesApi.listCompanyMembers(project.value.company_id),
+        rolesApi.listCompanyRoles(project.value.company_id),
+      ])
+      companyMembers.value = membersResult.items
+      roles.value = rolesResult.items
     } finally {
       isLoading.value = false
     }
@@ -107,9 +116,9 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     await refetchMembers()
   }
 
-  async function updateMemberRole(userId: number, role: ProjectMembershipRole) {
+  async function updateMemberRole(userId: number, roleId: number) {
     if (!project.value) return
-    await projectsApi.updateProjectMember(project.value.id, userId, { role })
+    await projectsApi.updateProjectMember(project.value.id, userId, { role_id: roleId })
     await refetchMembers()
   }
 
@@ -125,6 +134,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     project,
     members,
     companyMembers,
+    roles,
     isLoading,
     open,
     setNotFound,

@@ -75,6 +75,41 @@ class TestDeleteVersion:
             project=version.project, name="PRJ_0010_v01"
         ).exists()
 
+    @pytest.mark.parametrize("role", ["executor", "freelancer"])
+    def test_deletes_their_own_version_with_the_own_permission(
+        self, auth_client, auth_user, version_factory, project_membership_factory, role
+    ):
+        version = version_factory(created_by=auth_user)
+        project_membership_factory(user=auth_user, project=version.project, role=role)
+
+        response = auth_client.delete(f"/api/v1/versions/{version.id}/")
+
+        assert response.status_code == HTTPStatus.NO_CONTENT
+        assert not Version.objects.filter(pk=version.pk).exists()
+
+    @pytest.mark.parametrize("role", ["executor", "freelancer"])
+    def test_cannot_delete_someone_elses_version_with_only_the_own_permission(
+        self, auth_client, auth_user, version, project_membership_factory, role
+    ):
+        project_membership_factory(user=auth_user, project=version.project, role=role)
+
+        response = auth_client.delete(f"/api/v1/versions/{version.id}/")
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert Version.objects.filter(pk=version.pk).exists()
+
+    def test_a_role_without_either_permission_cannot_delete_its_own_version(
+        self, auth_client, auth_user, version_factory, project_membership_factory
+    ):
+        version = version_factory(created_by=auth_user)
+        project_membership_factory(
+            user=auth_user, project=version.project, role="client"
+        )
+
+        response = auth_client.delete(f"/api/v1/versions/{version.id}/")
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
     def test_read_only_client_gets_a_403(
         self, auth_client, auth_user, version, project_membership_factory
     ):

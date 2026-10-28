@@ -23,7 +23,19 @@ def member_shot(auth_user, shot, project_membership_factory):
 
 
 @pytest.fixture
-def client_shot(auth_user, shot, project_membership_factory):
-    """A shot in a project where the logged-in user is a read-only `client`."""
-    project_membership_factory(user=auth_user, project=shot.project, role="client")
+def executor_shot(auth_user, shot, project_membership_factory):
+    """A shot in a project where the logged-in user is an executor.
+
+    An executor can write in the chat but can't moderate other people's
+    messages.
+    """
+    project_membership_factory(user=auth_user, project=shot.project, role="executor")
+    return shot
+
+
+@pytest.fixture
+def readonly_shot(auth_user, shot, project_membership_factory, role_factory):
+    """A shot in a project where the logged-in user's role has no permissions."""
+    role = role_factory(company=shot.project.company, name="Только просмотр")
+    project_membership_factory(user=auth_user, project=shot.project, role=role)
     return shot

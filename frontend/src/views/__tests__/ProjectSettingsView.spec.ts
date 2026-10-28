@@ -9,35 +9,20 @@ import { useAuthStore } from '@/stores/auth'
 import { useProjectPageStore } from '@/stores/projectPage'
 import * as companiesApi from '@/api/companies'
 import * as projectsApi from '@/api/projects'
-import type { ProjectMemberOut, ProjectMembershipRole, ProjectOut } from '@/types/api'
+import type { ProjectMemberOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/projects')
 vi.mock('@/api/companies')
 
-const project: ProjectOut = {
-  id: 1,
-  company_id: 7,
-  name: 'Feature Film',
-  code: 'PRJ',
-  description: '',
-  cover: null,
-  start_date: null,
-  deadline: null,
-  is_active: true,
-  created_by: null,
-  updated_by: null,
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
-}
-
-function buildMember(role: ProjectMembershipRole): ProjectMemberOut {
+function buildMember(role: StarterRole): ProjectMemberOut {
   return {
     id: 1,
     user_id: 1,
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role,
+    role: roleRefOf(role),
     created_at: '2026-01-01T00:00:00Z',
   }
 }
@@ -51,7 +36,7 @@ const Host = defineComponent({
   },
 })
 
-async function mountSettings(role: ProjectMembershipRole) {
+async function mountSettings(role: StarterRole) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/projects', name: 'project-list', component: { render: () => null } }],
@@ -68,7 +53,7 @@ async function mountSettings(role: ProjectMembershipRole) {
     date_joined: '2026-01-01T00:00:00Z',
   }
   const store = useProjectPageStore()
-  store.project = project
+  store.project = buildProjectFor(role)
   store.members = [buildMember(role)]
 
   const wrapper = mount(Host, { global: { plugins: [router] } })
@@ -89,12 +74,19 @@ describe('ProjectSettingsView', () => {
     expect(wrapper.text()).toContain('Удалить проект')
   })
 
-  it.each(['coordinator', 'executor', 'freelancer', 'client'] as const)(
+  it('hides the delete button from a coordinator, who can still change the settings', async () => {
+    const wrapper = await mountSettings('coordinator')
+
+    expect(wrapper.text()).not.toContain('Удалить проект')
+    expect(wrapper.text()).not.toContain('У вас нет прав')
+  })
+
+  it.each(['executor', 'freelancer', 'client', 'readonly'] as const)(
     'shows only a no-access note to a %s who opens the address directly',
     async (role) => {
       const wrapper = await mountSettings(role)
 
-      expect(wrapper.text()).toContain('доступны только администратору и продюсеру')
+      expect(wrapper.text()).toContain('У вас нет прав на настройки проекта')
       expect(wrapper.text()).not.toContain('Удалить проект')
       expect(projectsApi.deleteProject).not.toHaveBeenCalled()
     },

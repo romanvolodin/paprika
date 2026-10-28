@@ -115,7 +115,9 @@ describe('setupAuthGuard', () => {
 
   it('resolves the active company for an authenticated visitor without redirecting anywhere', async () => {
     vi.mocked(companiesApi.listCompanies).mockResolvedValue({
-      items: [{ id: 1, name: 'Acme', slug: 'acme', created_at: '', updated_at: '' }],
+      items: [
+        { id: 1, name: 'Acme', slug: 'acme', my_permissions: [], created_at: '', updated_at: '' },
+      ],
       total: 1,
       page: 1,
       page_size: 100,

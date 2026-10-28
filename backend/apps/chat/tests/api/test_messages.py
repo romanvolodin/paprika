@@ -60,8 +60,8 @@ class TestCreateMessage:
         assert too_long.status_code == HTTPStatus.BAD_REQUEST
         assert fits.status_code == HTTPStatus.CREATED
 
-    def test_client_role_cannot_write(self, auth_client, client_shot):
-        response = post_json(auth_client, _list_url(client_shot), {"text": "hi"})
+    def test_role_without_permission_cannot_write(self, auth_client, readonly_shot):
+        response = post_json(auth_client, _list_url(readonly_shot), {"text": "hi"})
 
         assert response.status_code == HTTPStatus.FORBIDDEN
 
@@ -406,15 +406,27 @@ class TestEditMessage:
         assert not message.versions.exists()
 
     def test_cannot_edit_someone_elses_message(
-        self, auth_client, member_shot, message_factory
+        self, auth_client, executor_shot, message_factory
     ):
-        message = message_factory(shot=member_shot, text="old")  # another author
+        message = message_factory(shot=executor_shot, text="old")  # another author
 
         response = patch_json(auth_client, _detail_url(message), {"text": "new"})
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         message.refresh_from_db()
         assert message.text == "old"
+
+    def test_moderator_can_edit_someone_elses_message(
+        self, auth_client, member_shot, message_factory
+    ):
+        message = message_factory(shot=member_shot, text="old")  # another author
+
+        response = patch_json(auth_client, _detail_url(message), {"text": "new"})
+
+        assert response.status_code == HTTPStatus.OK
+        message.refresh_from_db()
+        assert message.text == "new"
+        assert message.edited_at is not None
 
     def test_cannot_edit_a_system_message(self, auth_client, auth_user, member_shot):
         system = Message.objects.create(
@@ -428,10 +440,10 @@ class TestEditMessage:
 
         assert response.status_code == HTTPStatus.FORBIDDEN
 
-    def test_client_role_cannot_edit(
-        self, auth_client, auth_user, client_shot, message_factory
+    def test_role_without_permission_cannot_edit(
+        self, auth_client, auth_user, readonly_shot, message_factory
     ):
-        message = message_factory(shot=client_shot, created_by=auth_user)
+        message = message_factory(shot=readonly_shot, created_by=auth_user)
 
         response = patch_json(auth_client, _detail_url(message), {"text": "new"})
 
@@ -485,15 +497,26 @@ class TestDeleteMessage:
         assert reply.reply_to_id == message.id
 
     def test_cannot_delete_someone_elses_message(
-        self, auth_client, member_shot, message_factory
+        self, auth_client, executor_shot, message_factory
     ):
-        message = message_factory(shot=member_shot)
+        message = message_factory(shot=executor_shot)
 
         response = auth_client.delete(_detail_url(message))
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         message.refresh_from_db()
         assert message.deleted_at is None
+
+    def test_moderator_can_delete_someone_elses_message(
+        self, auth_client, member_shot, message_factory
+    ):
+        message = message_factory(shot=member_shot)
+
+        response = auth_client.delete(_detail_url(message))
+
+        assert response.status_code == HTTPStatus.NO_CONTENT
+        message.refresh_from_db()
+        assert message.deleted_at is not None
 
     def test_cannot_delete_a_system_message(self, auth_client, auth_user, member_shot):
         system = Message.objects.create(
@@ -517,10 +540,10 @@ class TestDeleteMessage:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-    def test_client_role_cannot_delete(
-        self, auth_client, auth_user, client_shot, message_factory
+    def test_role_without_permission_cannot_delete(
+        self, auth_client, auth_user, readonly_shot, message_factory
     ):
-        message = message_factory(shot=client_shot, created_by=auth_user)
+        message = message_factory(shot=readonly_shot, created_by=auth_user)
 
         response = auth_client.delete(_detail_url(message))
 

@@ -75,13 +75,19 @@ const Host = defineComponent({
   props: {
     shotId: { type: Number, required: true },
     canWrite: { type: Boolean, default: true },
+    canModerate: { type: Boolean, default: false },
   },
   setup(props) {
     return () =>
       h(NMessageProvider, null, {
         default: () =>
           h(NDialogProvider, null, {
-            default: () => h(ShotChatSection, { shotId: props.shotId, canWrite: props.canWrite }),
+            default: () =>
+              h(ShotChatSection, {
+                shotId: props.shotId,
+                canWrite: props.canWrite,
+                canModerate: props.canModerate,
+              }),
           }),
       })
   },

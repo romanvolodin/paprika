@@ -1,15 +1,26 @@
-import type { Ref } from 'vue'
+import { computed, type Ref } from 'vue'
 import { useMembershipPermissions } from './useMembershipPermissions'
-import type { CompanyMemberOut } from '@/types/api'
+import { PERMISSION, type PermissionCode } from '@/constants/permissions'
+import type { CompanyOut } from '@/types/api'
 
 /**
- * Company-flavored view over `useMembershipPermissions` - see there for
- * the shared rules. Kept as its own named export (rather than having
- * call sites use the generic composable directly) so `canEditCompany`
- * reads clearly at each call site.
+ * What the current user may do in the company, from the `my_permissions`
+ * the API sends with it. See `useMembershipPermissions` for the members
+ * list rules.
  */
-export function useCompanyPermissions(members: Ref<CompanyMemberOut[]>) {
-  const { canEdit, ...rest } = useMembershipPermissions(members)
+export function useCompanyPermissions(company: Ref<CompanyOut | null>) {
+  function can(code: PermissionCode): boolean {
+    return company.value?.my_permissions?.includes(code) ?? false
+  }
 
-  return { canEditCompany: canEdit, ...rest }
+  const canEditCompany = computed(() => can(PERMISSION.companyEdit))
+  const canManagePipeline = computed(() => can(PERMISSION.companyPipeline))
+  const canManageMembers = computed(() => can(PERMISSION.companyMembers))
+
+  return {
+    can,
+    canEditCompany,
+    canManagePipeline,
+    ...useMembershipPermissions(canManageMembers),
+  }
 }

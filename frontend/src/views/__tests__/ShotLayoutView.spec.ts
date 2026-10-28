@@ -9,28 +9,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import * as projectsApi from '@/api/projects'
 import * as shotsApi from '@/api/shots'
-import type { ProjectMemberOut, ProjectMembershipRole, ProjectOut, ShotOut } from '@/types/api'
+import type { ProjectMemberOut, ShotOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/projects')
 vi.mock('@/api/shots')
 
 const Empty = defineComponent({ render: () => h('div', { 'data-test': 'child' }) })
-
-const project: ProjectOut = {
-  id: 1,
-  company_id: 7,
-  name: 'Feature Film',
-  code: 'PRJ',
-  description: '',
-  cover: null,
-  start_date: null,
-  deadline: null,
-  is_active: true,
-  created_by: null,
-  updated_by: null,
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
-}
 
 const shot: ShotOut = {
   id: 5,
@@ -46,21 +31,21 @@ const shot: ShotOut = {
   updated_at: '2026-01-01T00:00:00Z',
 }
 
-function buildMember(role: ProjectMembershipRole): ProjectMemberOut {
+function buildMember(role: StarterRole): ProjectMemberOut {
   return {
     id: 1,
     user_id: 1,
     email: 'a@paprika.dev',
     first_name: 'A',
     last_name: 'One',
-    role,
+    role: roleRefOf(role),
     created_at: '2026-01-01T00:00:00Z',
   }
 }
 
-async function mountShot(role: ProjectMembershipRole, path = '/acme/PRJ/shots/0010') {
+async function mountShot(role: StarterRole, path = '/acme/PRJ/shots/0010') {
   vi.mocked(projectsApi.listProjects).mockResolvedValue({
-    items: [project],
+    items: [buildProjectFor(role)],
     total: 1,
     page: 1,
     page_size: 1,
@@ -162,6 +147,7 @@ describe('ShotLayoutView', () => {
         id: 7,
         name: 'Acme',
         slug: 'acme',
+        my_permissions: [],
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
       },
@@ -170,7 +156,7 @@ describe('ShotLayoutView', () => {
   })
 
   it('shows the shot name, project code and the four section tabs', async () => {
-    const wrapper = await mountShot('executor')
+    const wrapper = await mountShot('coordinator')
 
     expect(wrapper.find('h1').text()).toBe('0010')
     expect(wrapper.text()).toContain('PRJ')
@@ -180,7 +166,7 @@ describe('ShotLayoutView', () => {
   })
 
   it('has the project code as a link back to the shot list in the same strip', async () => {
-    const wrapper = await mountShot('executor')
+    const wrapper = await mountShot('coordinator')
 
     const crumb = wrapper.find('a.shot-page__crumb')
     expect(crumb.text()).toBe('PRJ')
@@ -195,14 +181,14 @@ describe('ShotLayoutView', () => {
     ['/acme/PRJ/shots/0010/versions', 'Версии'],
     ['/acme/PRJ/shots/0010/settings', 'Настройки'],
   ])('highlights only the current tab on %s', async (path, label) => {
-    const wrapper = await mountShot('executor', path)
+    const wrapper = await mountShot('coordinator', path)
 
     const active = wrapper.findAll('a.shot-page__link--active').map((link) => link.text())
     expect(active).toEqual([label])
   })
 
   it('highlights no tab on the upload page', async () => {
-    const wrapper = await mountShot('executor', '/acme/PRJ/shots/0010/upload')
+    const wrapper = await mountShot('coordinator', '/acme/PRJ/shots/0010/upload')
 
     expect(wrapper.find('a.shot-page__link--active').exists()).toBe(false)
     expect(wrapper.find('h1').text()).toBe('0010')
@@ -210,7 +196,7 @@ describe('ShotLayoutView', () => {
 
   it('lets a member who can write change the status from the header', async () => {
     vi.mocked(shotsApi.updateShot).mockResolvedValue({ ...shot, status_id: 2 })
-    const wrapper = await mountShot('executor')
+    const wrapper = await mountShot('coordinator')
 
     expect(wrapper.find('.shot-page__status-select').exists()).toBe(true)
     const select = wrapper.findComponent({ name: 'Select' })
@@ -221,14 +207,14 @@ describe('ShotLayoutView', () => {
   })
 
   it('shows the status read-only to a client', async () => {
-    const wrapper = await mountShot('client')
+    const wrapper = await mountShot('readonly')
 
     expect(wrapper.find('.shot-page__status-select').exists()).toBe(false)
     expect(wrapper.text()).toContain('Не начат')
   })
 
   it('says the shot is not found for an unknown company slug', async () => {
-    const wrapper = await mountShot('executor', '/nope/PRJ/shots/0010')
+    const wrapper = await mountShot('coordinator', '/nope/PRJ/shots/0010')
 
     expect(wrapper.text()).toContain('Кадр не найден')
     expect(wrapper.find('nav').exists()).toBe(false)

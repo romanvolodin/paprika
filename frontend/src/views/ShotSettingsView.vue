@@ -13,6 +13,7 @@ import {
 } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
 
 const props = defineProps<{ companySlug: string; projectCode: string }>()
@@ -21,8 +22,10 @@ const router = useRouter()
 const store = useShotDetailStore()
 const message = useMessage()
 const dialog = useDialog()
-const { members } = storeToRefs(store)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { can } = useProjectPermissions(project)
+const canEditShot = computed(() => can(PERMISSION.shotEdit))
+const canDeleteShot = computed(() => can(PERMISSION.shotDelete))
 
 const groupIds = ref<number[]>([])
 const recTimecode = ref<number | null>(null)
@@ -97,7 +100,7 @@ function confirmDelete() {
           <n-select
             v-model:value="groupIds"
             :options="groupOptions"
-            :disabled="!canWrite"
+            :disabled="!canEditShot"
             multiple
             clearable
             placeholder="Без группы"
@@ -107,7 +110,7 @@ function confirmDelete() {
         <n-form-item label="Начало в монтаже, кадры">
           <n-input-number
             v-model:value="recTimecode"
-            :disabled="!canWrite"
+            :disabled="!canEditShot"
             :min="0"
             :precision="0"
             clearable
@@ -117,20 +120,20 @@ function confirmDelete() {
         <n-form-item label="Длительность, кадры">
           <n-input-number
             v-model:value="duration"
-            :disabled="!canWrite"
+            :disabled="!canEditShot"
             :min="1"
             :precision="0"
             clearable
           />
         </n-form-item>
 
-        <n-button v-if="canWrite" type="primary" :loading="isSaving" @click="handleSave">
+        <n-button v-if="canEditShot" type="primary" :loading="isSaving" @click="handleSave">
           Сохранить
         </n-button>
       </n-form>
     </section>
 
-    <section v-if="canWrite" class="shot-settings__section">
+    <section v-if="canDeleteShot" class="shot-settings__section">
       <h2 class="shot-settings__heading">Удаление кадра</h2>
       <div class="shot-settings__danger">
         <p class="shot-settings__hint shot-settings__hint--plain">

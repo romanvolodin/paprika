@@ -9,7 +9,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import * as tasksApi from '@/api/tasks'
 import * as versionsApi from '@/api/versions'
-import type { ProjectMembershipRole, VersionOut } from '@/types/api'
+import type { VersionOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/versions')
 vi.mock('@/api/tasks')
@@ -35,7 +36,7 @@ const created: VersionOut = {
   updated_at: '2026-01-01T00:00:00Z',
 }
 
-async function mountUpload(role: ProjectMembershipRole) {
+async function mountUpload(role: StarterRole) {
   useAuthStore().currentUser = {
     id: 1,
     email: 'a@paprika.dev',
@@ -46,21 +47,7 @@ async function mountUpload(role: ProjectMembershipRole) {
     date_joined: '2026-01-01T00:00:00Z',
   }
   const store = useShotDetailStore()
-  store.project = {
-    id: 1,
-    company_id: 7,
-    name: 'Feature Film',
-    code: 'PRJ',
-    description: '',
-    cover: null,
-    start_date: null,
-    deadline: null,
-    is_active: true,
-    created_by: null,
-    updated_by: null,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  }
+  store.project = buildProjectFor(role)
   store.shot = {
     id: 5,
     project_id: 1,
@@ -81,7 +68,7 @@ async function mountUpload(role: ProjectMembershipRole) {
       email: 'a@paprika.dev',
       first_name: 'A',
       last_name: 'One',
-      role,
+      role: roleRefOf(role),
       created_at: '2026-01-01T00:00:00Z',
     },
   ]

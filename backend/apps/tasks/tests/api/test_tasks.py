@@ -226,9 +226,21 @@ class TestCreateTask:
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert not Task.objects.exists()
 
-    @pytest.mark.parametrize(
-        "role", ["admin", "producer", "coordinator", "executor", "freelancer"]
-    )
+    @pytest.mark.parametrize("role", ["executor", "freelancer"])
+    def test_roles_without_the_permission_cannot_create(
+        self, auth_client, auth_user, project, project_membership_factory, role
+    ):
+        project_membership_factory(user=auth_user, project=project, role=role)
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/tasks/",
+            {"name": "X", "type_id": _type_id(project)},
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    @pytest.mark.parametrize("role", ["admin", "producer", "coordinator"])
     def test_other_roles_can_create(
         self, auth_client, auth_user, project, project_membership_factory, role
     ):

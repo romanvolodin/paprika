@@ -53,7 +53,7 @@ async function mountStrip(
     props: {
       versions,
       currentId: 3,
-      canWrite: true,
+      canUpload: true,
       uploadTo: { name: 'shot-versions' },
       ...props,
     },
@@ -117,7 +117,7 @@ describe('ShotVersionsStrip', () => {
   })
 
   it('has no upload link for a client', async () => {
-    const wrapper = await mountStrip({ canWrite: false })
+    const wrapper = await mountStrip({ canUpload: false })
 
     expect(wrapper.find('.versions-strip__upload').exists()).toBe(false)
   })

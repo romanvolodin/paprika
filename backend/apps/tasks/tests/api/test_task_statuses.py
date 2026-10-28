@@ -288,7 +288,7 @@ class TestTaskStatusWritesAreCompanyAdminOnly:
         company_membership_factory,
         task_status_factory,
     ):
-        company_membership_factory(user=auth_user, company=company, role="producer")
+        company_membership_factory(user=auth_user, company=company, role="coordinator")
         task_status = task_status_factory(company=company, name="In progress")
 
         listed = auth_client.get(f"/api/v1/companies/{company.id}/task-statuses/")

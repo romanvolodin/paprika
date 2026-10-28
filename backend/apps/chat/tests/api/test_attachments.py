@@ -92,8 +92,8 @@ class TestUploadAttachment:
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_client_role_cannot_upload(self, auth_client, client_shot):
-        response = _upload(auth_client, client_shot)
+    def test_role_without_permission_cannot_upload(self, auth_client, readonly_shot):
+        response = _upload(auth_client, readonly_shot)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
 
@@ -152,10 +152,10 @@ class TestRemoveAttachment:
 
         assert response.status_code == HTTPStatus.FORBIDDEN
 
-    def test_client_role_cannot_remove(
-        self, auth_client, auth_user, client_shot, attachment_factory
+    def test_role_without_permission_cannot_remove(
+        self, auth_client, auth_user, readonly_shot, attachment_factory
     ):
-        attachment = attachment_factory(shot=client_shot, created_by=auth_user)
+        attachment = attachment_factory(shot=readonly_shot, created_by=auth_user)
 
         response = auth_client.delete(_detail_url(attachment))
 

@@ -29,7 +29,7 @@ class TestListProjects:
         project_factory,
         project_membership_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="executor")
         my_project = project_factory(company=company, name="Mine")
         project_membership_factory(user=auth_user, project=my_project)
         other_project = project_factory(company=company, name="Someone Else's")
@@ -52,7 +52,7 @@ class TestListProjects:
     ):
         # Belonging to the company isn't enough - an explicit
         # `ProjectMembership` is required to see a project.
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="executor")
         project_factory(company=company)
 
         response = auth_client.get(f"/api/v1/companies/{company.id}/projects/")
@@ -114,7 +114,7 @@ class TestListProjects:
         company_membership_factory,
         project_factory,
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="executor")
         project_factory(company=company, code="VRG")  # no membership for the user
 
         response = auth_client.get(f"/api/v1/companies/{company.id}/projects/?code=VRG")
@@ -172,10 +172,10 @@ class TestCreateProject:
         assert body["created_by"]["email"] == auth_user.email
         assert body["updated_by"]["id"] == auth_user.id
 
-    def test_creator_becomes_an_admin_member(
+    def test_creator_becomes_a_member_with_their_company_role(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company)
+        company_membership_factory(user=auth_user, company=company, role="producer")
 
         response = _post_multipart(
             auth_client,
@@ -185,7 +185,8 @@ class TestCreateProject:
 
         project = Project.objects.get(id=response.json()["id"])
         membership = ProjectMembership.objects.get(project=project, user=auth_user)
-        assert membership.role == ProjectMembership.Role.ADMIN
+        assert membership.role.name == "Продюсер"
+        assert membership.role.company_id == company.id
 
     def test_creator_can_immediately_see_their_new_project(
         self, auth_client, auth_user, company, company_membership_factory

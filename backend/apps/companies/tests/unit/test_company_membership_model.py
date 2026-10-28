@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import RestrictedError
 import pytest
 
 from apps.companies.models import CompanyMembership
@@ -14,14 +15,14 @@ class TestCompanyMembershipModel:
         user = user_factory(email="someone@example.com")
         company = company_factory(name="Acme Studio")
         membership = company_membership_factory(
-            user=user, company=company, role=CompanyMembership.Role.ADMIN
+            user=user, company=company, role="admin"
         )
 
         text = str(membership)
 
         assert "someone@example.com" in text
         assert "Acme Studio" in text
-        assert "Admin" in text
+        assert "Админ" in text
 
     def test_repr_contains_id_user_id_company_id_and_role(
         self, company_membership_factory
@@ -33,12 +34,19 @@ class TestCompanyMembershipModel:
         assert f"id={membership.id}" in text
         assert f"user_id={membership.user_id}" in text
         assert f"company_id={membership.company_id}" in text
-        assert f"role={membership.role}" in text
+        assert f"role_id={membership.role_id}" in text
 
-    def test_role_defaults_to_executor(self, company_membership_factory):
+    def test_role_is_a_role_of_the_same_company(self, company_membership_factory):
+        membership = company_membership_factory(role="executor")
+
+        assert membership.role.company_id == membership.company_id
+        assert membership.role.name == "Исполнитель"
+
+    def test_a_role_that_is_in_use_cannot_be_deleted(self, company_membership_factory):
         membership = company_membership_factory()
 
-        assert membership.role == CompanyMembership.Role.EXECUTOR
+        with pytest.raises(RestrictedError):
+            membership.role.delete()
 
     def test_user_and_company_pair_must_be_unique(
         self, company_membership_factory, user_factory, company_factory

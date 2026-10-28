@@ -183,7 +183,7 @@ class TestShotStatusWritesAreCompanyAdminOnly:
     def test_non_admin_member_can_list_but_not_create(
         self, auth_client, auth_user, company, company_membership_factory
     ):
-        company_membership_factory(user=auth_user, company=company, role="producer")
+        company_membership_factory(user=auth_user, company=company, role="coordinator")
 
         listed = auth_client.get(f"/api/v1/companies/{company.id}/shot-statuses/")
         created = auth_client.post(

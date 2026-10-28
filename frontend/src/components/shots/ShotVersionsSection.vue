@@ -12,12 +12,21 @@ import {
   type DataTableColumns,
 } from 'naive-ui'
 import { CloudUploadOutline, ImageOutline } from '@vicons/ionicons5'
+import { useAuthStore } from '@/stores/auth'
 import { useVersionsStore } from '@/stores/versions'
 import { formatFileSize, formatVideoTiming } from '@/utils/format'
 import type { VersionOut } from '@/types/api'
 
-const props = defineProps<{ shotId: number; canWrite: boolean; uploadTo: RouteLocationRaw }>()
+const props = defineProps<{
+  shotId: number
+  canUpload: boolean
+  canDelete: boolean
+  // Lets the uploader delete their own versions only.
+  canDeleteOwn: boolean
+  uploadTo: RouteLocationRaw
+}>()
 
+const auth = useAuthStore()
 const store = useVersionsStore()
 const message = useMessage()
 const dialog = useDialog()
@@ -48,6 +57,10 @@ function confirmDelete(version: VersionOut) {
 function authorName(version: VersionOut): string {
   const author = version.created_by
   return author ? `${author.first_name} ${author.last_name}`.trim() : '—'
+}
+
+function canDeleteVersion(version: VersionOut): boolean {
+  return props.canDelete || (props.canDeleteOwn && version.created_by?.id === auth.currentUser?.id)
 }
 
 const columns = computed<DataTableColumns<VersionOut>>(() => [
@@ -115,23 +128,25 @@ const columns = computed<DataTableColumns<VersionOut>>(() => [
         timeStyle: 'short',
       }),
   },
-  ...(props.canWrite
+  ...(props.canDelete || props.canDeleteOwn
     ? [
         {
           title: '',
           key: 'actions',
           width: 100,
           render: (version: VersionOut) =>
-            h(
-              NButton,
-              {
-                size: 'small',
-                quaternary: true,
-                type: 'error',
-                onClick: () => confirmDelete(version),
-              },
-              { default: () => 'Удалить' },
-            ),
+            canDeleteVersion(version)
+              ? h(
+                  NButton,
+                  {
+                    size: 'small',
+                    quaternary: true,
+                    type: 'error',
+                    onClick: () => confirmDelete(version),
+                  },
+                  { default: () => 'Удалить' },
+                )
+              : null,
         },
       ]
     : []),
@@ -140,7 +155,7 @@ const columns = computed<DataTableColumns<VersionOut>>(() => [
 
 <template>
   <div class="shot-versions">
-    <RouterLink v-if="canWrite" v-slot="{ href, navigate }" :to="uploadTo" custom>
+    <RouterLink v-if="canUpload" v-slot="{ href, navigate }" :to="uploadTo" custom>
       <n-button class="shot-versions__upload" type="primary" tag="a" :href="href" @click="navigate">
         <template #icon><n-icon :component="CloudUploadOutline" /></template>
         Загрузить версию

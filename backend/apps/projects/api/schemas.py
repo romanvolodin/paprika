@@ -3,7 +3,7 @@ import re
 
 import pydantic
 
-from apps.projects.models import ProjectMembership
+from apps.access.api.schemas import RoleRefOut
 from apps.projects.validators import COVER_ALLOWED_EXTENSIONS, COVER_MAX_SIZE_MB
 from apps.users.api.schemas import UserOut
 
@@ -67,6 +67,9 @@ class ProjectOut(pydantic.BaseModel):
     updated_by: UserOut | None = pydantic.Field(
         description="The user who last updated the project, or null if "
         "that user has since been deleted."
+    )
+    my_permissions: list[str] = pydantic.Field(
+        description="Codes of the project permissions the current user has."
     )
     created_at: dt.datetime
     updated_at: dt.datetime
@@ -184,7 +187,7 @@ class ProjectMemberOut(pydantic.BaseModel):
         default=None,
         description="Absolute URL of the member's avatar image, or null if none.",
     )
-    role: ProjectMembership.Role
+    role: RoleRefOut
     created_at: dt.datetime
 
 
@@ -209,10 +212,10 @@ class ProjectMemberCreateIn(pydantic.BaseModel):
     """
 
     user_id: int = pydantic.Field(gt=0)
-    role: ProjectMembership.Role = ProjectMembership.Role.EXECUTOR
+    role_id: int = pydantic.Field(gt=0, description="A role of the project's company.")
 
 
 class ProjectMemberUpdateIn(pydantic.BaseModel):
     """Payload for `PATCH /api/v1/projects/<id>/members/<user_id>/`."""
 
-    role: ProjectMembership.Role
+    role_id: int = pydantic.Field(gt=0, description="A role of the project's company.")

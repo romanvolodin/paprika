@@ -4,6 +4,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import { NSelect, NTag, useMessage, type SelectOption } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import AppHeaderContent from '@/components/layout/AppHeaderContent.vue'
@@ -13,8 +14,9 @@ const props = defineProps<{ companySlug: string; projectCode: string; shotName: 
 const store = useShotDetailStore()
 const currentCompany = useCurrentCompanyStore()
 const message = useMessage()
-const { members } = storeToRefs(store)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { can } = useProjectPermissions(project)
+const canEditShot = computed(() => can(PERMISSION.shotEdit))
 
 const routeParams = computed(() => ({
   companySlug: props.companySlug,
@@ -86,7 +88,7 @@ watch(
         <span class="shot-page__separator" aria-hidden="true">/</span>
         <h1 class="shot-page__title mono">{{ store.shot.name }}</h1>
         <n-select
-          v-if="canWrite"
+          v-if="canEditShot"
           class="shot-page__status-select"
           size="small"
           :value="store.shot.status_id"

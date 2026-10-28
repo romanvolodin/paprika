@@ -6,7 +6,8 @@ import ShotReviewView from '@/views/ShotReviewView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useShotDetailStore } from '@/stores/shotDetail'
 import * as versionsApi from '@/api/versions'
-import type { ProjectMembershipRole, VersionOut } from '@/types/api'
+import type { VersionOut } from '@/types/api'
+import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/versions')
 
@@ -41,7 +42,7 @@ const ChatStub = {
   template: '<div data-test="chat-section" :data-shot-id="shotId" :data-can-write="canWrite" />',
 }
 
-async function mountReview(role: ProjectMembershipRole, path = '/shot') {
+async function mountReview(role: StarterRole, path = '/shot') {
   const auth = useAuthStore()
   auth.currentUser = {
     id: 1,
@@ -53,6 +54,7 @@ async function mountReview(role: ProjectMembershipRole, path = '/shot') {
     date_joined: '2026-01-01T00:00:00Z',
   }
   const store = useShotDetailStore()
+  store.project = buildProjectFor(role)
   store.shot = {
     id: 5,
     project_id: 1,
@@ -73,7 +75,7 @@ async function mountReview(role: ProjectMembershipRole, path = '/shot') {
       email: 'a@paprika.dev',
       first_name: 'A',
       last_name: 'One',
-      role,
+      role: roleRefOf(role),
       created_at: '2026-01-01T00:00:00Z',
     },
   ]
@@ -122,7 +124,7 @@ describe('ShotReviewView', () => {
   })
 
   it('makes the chat read-only for a client', async () => {
-    const chat = (await mountReview('client')).wrapper.find('[data-test="chat-section"]')
+    const chat = (await mountReview('readonly')).wrapper.find('[data-test="chat-section"]')
 
     expect(chat.attributes('data-can-write')).toBe('false')
   })

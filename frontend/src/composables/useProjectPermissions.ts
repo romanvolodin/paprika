@@ -1,27 +1,32 @@
 import { computed, type Ref } from 'vue'
 import { useMembershipPermissions } from './useMembershipPermissions'
-import type { ProjectMemberOut } from '@/types/api'
+import { PERMISSION, type PermissionCode } from '@/constants/permissions'
+import type { ProjectOut } from '@/types/api'
 
 /**
- * Project-flavored view over `useMembershipPermissions` - see there for
- * the shared rules, and `useCompanyPermissions` for the company-side
- * equivalent.
- *
- * `canWrite` mirrors the backend's `require_can_write`: every project
- * member except the read-only `client` role may change shots (and,
- * later, versions, tasks and chat).
- *
- * `canManageProject` mirrors `require_can_manage_project`: only admins
- * and producers see the project settings and may delete the project.
+ * What the current user may do in the project, from the `my_permissions`
+ * the API sends with it - one `can(code)` for any permission, plus a few
+ * shortcuts for the ones several screens ask about. See
+ * `useMembershipPermissions` for the members list rules.
  */
-export function useProjectPermissions(members: Ref<ProjectMemberOut[]>) {
-  const { canEdit, currentRole, ...rest } = useMembershipPermissions(members)
+export function useProjectPermissions(project: Ref<ProjectOut | null>) {
+  function can(code: PermissionCode): boolean {
+    return project.value?.my_permissions?.includes(code) ?? false
+  }
 
-  const canWrite = computed(() => currentRole.value !== null && currentRole.value !== 'client')
-
-  const canManageProject = computed(
-    () => currentRole.value === 'admin' || currentRole.value === 'producer',
+  const canEditProject = computed(() => can(PERMISSION.projectEdit))
+  const canDeleteProject = computed(() => can(PERMISSION.projectDelete))
+  const canManageMembers = computed(() => can(PERMISSION.projectMembers))
+  // The project settings page is for anyone who can change something there.
+  const canOpenSettings = computed(
+    () => canEditProject.value || canDeleteProject.value || canManageMembers.value,
   )
 
-  return { canEditProject: canEdit, currentRole, canWrite, canManageProject, ...rest }
+  return {
+    can,
+    canEditProject,
+    canDeleteProject,
+    canOpenSettings,
+    ...useMembershipPermissions(canManageMembers),
+  }
 }

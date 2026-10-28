@@ -18,9 +18,10 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import can_in_project, projects_q, require_project_perm
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.models import Attachment, Message, Reaction
-from apps.projects.permissions import require_can_write
 from apps.shots.api.views import _get_shot_or_404
 from apps.users.api.views import _serialize_user
 from apps.users.models import User
@@ -150,11 +151,7 @@ def _get_message_or_404(user: User, message_id: int) -> Message:
     try:
         return (
             _message_queryset()
-            .filter(
-                shot__project__memberships__user=user,
-                deleted_at__isnull=True,
-            )
-            .distinct()
+            .filter(projects_q(user, "shot__project"), deleted_at__isnull=True)
             .get(pk=message_id)
         )
     except Message.DoesNotExist as exc:
@@ -176,13 +173,21 @@ def _clean_text(controller, text: str) -> str:
     return text
 
 
-def _require_own_user_message(controller, message: Message, user: User) -> None:
+def _require_can_change_message(message: Message, user: User) -> None:
+    """403 unless the user may edit or delete this message.
+
+    Your own messages need the chat permission; other people's need the
+    moderation one. System messages can't be changed by anyone.
+    """
     if message.type == Message.Type.SYSTEM:
         raise APIError(
             {"detail": "System messages can't be changed."},
             status_code=HTTPStatus.FORBIDDEN,
         )
-    if message.created_by_id != user.id:
+    project = message.shot.project
+    if message.created_by_id == user.id:
+        require_project_perm(user, project, P.CHAT_WRITE)
+    elif not can_in_project(user, project, P.CHAT_EDIT_ANY):
         raise APIError(
             {"detail": "You can only change your own messages."},
             status_code=HTTPStatus.FORBIDDEN,
@@ -266,7 +271,7 @@ class ChatListController(AuthenticatedController[PydanticSerializer]):
             "uploaded beforehand via `POST /shots/<id>/chat/attachments/` "
             "and passed by id. `reply_to_id` must be a user message of the "
             "same shot. `version_ids` must be versions of the same shot. "
-            "Not available to members with the read-only `client` role."
+            "Needs the `chat.write` permission."
         ),
         response_description="The created message.",
         extra_responses=[
@@ -282,7 +287,7 @@ class ChatListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[MessageCreateIn],
     ) -> MessageOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        require_can_write(self.request.user, shot.project)
+        require_project_perm(self.request.user, shot.project, P.CHAT_WRITE)
         user = self.request.user
 
         text = _clean_text(self, parsed_body.text)
@@ -373,8 +378,8 @@ class ChatAttachmentUploadController(AuthenticatedController[PydanticSerializer]
             "is configurable (`PAPRIKA_CHAT_ATTACHMENT_MAX_FILE_SIZE_MB`, "
             "100 by default, 413 otherwise). The returned `id` goes into "
             "`attachment_ids` of a new message. Until then the file can "
-            "be removed with `DELETE /chat/attachments/<id>/`. Not "
-            "available to members with the read-only `client` role."
+            "be removed with `DELETE /chat/attachments/<id>/`. Needs the "
+            "`chat.write` permission."
         ),
         response_description="The uploaded attachment.",
         extra_responses=[
@@ -391,7 +396,7 @@ class ChatAttachmentUploadController(AuthenticatedController[PydanticSerializer]
         parsed_file_metadata: FileMetadata[ChatAttachmentFiles],
     ) -> AttachmentOut:
         shot = _get_shot_or_404(self.request.user, parsed_path.shot_id)
-        require_can_write(self.request.user, shot.project)
+        require_project_perm(self.request.user, shot.project, P.CHAT_WRITE)
 
         upload = self.request.FILES["file"]
 
@@ -438,7 +443,7 @@ class ChatAttachmentDetailController(AuthenticatedController[PydanticSerializer]
         user = self.request.user
         try:
             attachment = (
-                Attachment.objects.filter(shot__project__memberships__user=user)
+                Attachment.objects.filter(projects_q(user, "shot__project"))
                 .select_related("shot__project")
                 .distinct()
                 .get(pk=parsed_path.attachment_id)
@@ -452,7 +457,7 @@ class ChatAttachmentDetailController(AuthenticatedController[PydanticSerializer]
                 status_code=HTTPStatus.NOT_FOUND,
             ) from exc
 
-        require_can_write(user, attachment.shot.project)
+        require_project_perm(user, attachment.shot.project, P.CHAT_WRITE)
         if attachment.created_by_id != user.id:
             raise APIError(
                 {"detail": "You can only remove files you uploaded."},
@@ -491,8 +496,8 @@ class ChatMessageDetailController(AuthenticatedController[PydanticSerializer]):
             "versions and the quoted message can't be changed. The text "
             "can only become empty if the message has an attachment or a "
             "version. `edited_at` is set when the text actually changed. "
-            "System messages can't be edited. Not available to members "
-            "with the read-only `client` role."
+            "System messages can't be edited. Your own messages need "
+            "`chat.write`, other people's `chat.edit_any`."
         ),
         response_description="The updated message.",
         extra_responses=[
@@ -509,8 +514,7 @@ class ChatMessageDetailController(AuthenticatedController[PydanticSerializer]):
     ) -> MessageOut:
         user = self.request.user
         message = _get_message_or_404(user, parsed_path.message_id)
-        require_can_write(user, message.shot.project)
-        _require_own_user_message(self, message, user)
+        _require_can_change_message(message, user)
 
         text = _clean_text(self, parsed_body.text)
         if not (text or message.attachments.all() or message.versions.all()):
@@ -534,11 +538,11 @@ class ChatMessageDetailController(AuthenticatedController[PydanticSerializer]):
         status_code=HTTPStatus.NO_CONTENT,
         summary="Delete a chat message",
         description=(
-            "Delete your own user message. The message disappears from "
+            "Delete a user message: your own, or anyone's with the "
+            "`chat.edit_any` permission. The message disappears from "
             "the chat; its text, files, version links and reactions are "
             "removed. Replies to it stay and show it as deleted. System "
-            "messages can't be deleted. Not available to members with "
-            "the read-only `client` role."
+            "messages can't be deleted."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -549,8 +553,7 @@ class ChatMessageDetailController(AuthenticatedController[PydanticSerializer]):
     def delete(self, parsed_path: Path[MessagePath]) -> None:
         user = self.request.user
         message = _get_message_or_404(user, parsed_path.message_id)
-        require_can_write(user, message.shot.project)
-        _require_own_user_message(self, message, user)
+        _require_can_change_message(message, user)
         with transaction.atomic():
             message.mark_deleted(user)
         return None
@@ -564,7 +567,7 @@ class ChatReactionController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Put an emoji on a message (a user or a system one, not a "
             "deleted one). Putting the same emoji again changes nothing. "
-            "Not available to members with the read-only `client` role."
+            "Needs the `chat.write` permission."
         ),
         response_description="All reactions of the message.",
         extra_responses=[
@@ -580,7 +583,7 @@ class ChatReactionController(AuthenticatedController[PydanticSerializer]):
     ) -> ReactionsOut:
         user = self.request.user
         message = _get_message_or_404(user, parsed_path.message_id)
-        require_can_write(user, message.shot.project)
+        require_project_perm(user, message.shot.project, P.CHAT_WRITE)
         Reaction.objects.get_or_create(
             message=message,
             created_by=user,
@@ -595,8 +598,8 @@ class ChatReactionController(AuthenticatedController[PydanticSerializer]):
             "Remove your own emoji from a message; the emoji goes in the "
             "`emoji` query param (a DELETE request has no body). Removing "
             "a reaction "
-            "that isn't there changes nothing. Not available to members "
-            "with the read-only `client` role."
+            "that isn't there changes nothing. Needs the `chat.write` "
+            "permission."
         ),
         response_description="All reactions of the message.",
         extra_responses=[
@@ -612,7 +615,7 @@ class ChatReactionController(AuthenticatedController[PydanticSerializer]):
     ) -> ReactionsOut:
         user = self.request.user
         message = _get_message_or_404(user, parsed_path.message_id)
-        require_can_write(user, message.shot.project)
+        require_project_perm(user, message.shot.project, P.CHAT_WRITE)
         Reaction.objects.filter(
             message=message, created_by=user, emoji=parsed_query.emoji
         ).delete()

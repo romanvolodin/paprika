@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import ShotChatSection from '@/components/shots/ShotChatSection.vue'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import ShotPlayer from '@/components/shots/ShotPlayer.vue'
 import ShotVersionsStrip from '@/components/shots/ShotVersionsStrip.vue'
 import { useShotDetailStore } from '@/stores/shotDetail'
@@ -12,8 +13,8 @@ import { useShotReviewStore } from '@/stores/shotReview'
 const route = useRoute()
 const store = useShotDetailStore()
 const review = useShotReviewStore()
-const { members } = storeToRefs(store)
-const { canWrite } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { can } = useProjectPermissions(project)
 
 // The version to play lives in the address: `?version=<name>`.
 const requestedName = computed(() => {
@@ -52,14 +53,18 @@ watch(requestedName, (name) => {
         <shot-versions-strip
           :versions="review.versions"
           :current-id="review.current?.id ?? null"
-          :can-write="canWrite"
+          :can-upload="can(PERMISSION.versionUpload)"
           :upload-to="uploadTo"
         />
       </div>
     </div>
 
     <aside class="shot-review__chat" data-test="chat">
-      <shot-chat-section :shot-id="store.shot.id" :can-write="canWrite" />
+      <shot-chat-section
+        :shot-id="store.shot.id"
+        :can-write="can(PERMISSION.chatWrite)"
+        :can-moderate="can(PERMISSION.chatEditAny)"
+      />
     </aside>
   </div>
 </template>

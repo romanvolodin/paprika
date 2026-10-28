@@ -2,7 +2,7 @@ import datetime as dt
 
 import pydantic
 
-from apps.companies.models import CompanyMembership
+from apps.access.api.schemas import RoleRefOut
 
 
 class CompanyOut(pydantic.BaseModel):
@@ -11,6 +11,9 @@ class CompanyOut(pydantic.BaseModel):
     id: int = pydantic.Field(description="Internal numeric company identifier.")
     name: str = pydantic.Field(description="Company name.")
     slug: str = pydantic.Field(description="URL-friendly identifier for the company.")
+    my_permissions: list[str] = pydantic.Field(
+        description="Codes of the company permissions the current user has."
+    )
     created_at: dt.datetime
     updated_at: dt.datetime
 
@@ -80,7 +83,7 @@ class CompanyMemberOut(pydantic.BaseModel):
         default=None,
         description="Absolute URL of the member's avatar image, or null if none.",
     )
-    role: CompanyMembership.Role
+    role: RoleRefOut
     created_at: dt.datetime
 
 
@@ -101,10 +104,10 @@ class CompanyMemberCreateIn(pydantic.BaseModel):
     """Payload for `POST /api/v1/companies/<id>/members/`."""
 
     user_id: int = pydantic.Field(gt=0)
-    role: CompanyMembership.Role = CompanyMembership.Role.EXECUTOR
+    role_id: int = pydantic.Field(gt=0, description="A role of this company.")
 
 
 class CompanyMemberUpdateIn(pydantic.BaseModel):
     """Payload for `PATCH /api/v1/companies/<id>/members/<user_id>/`."""
 
-    role: CompanyMembership.Role
+    role_id: int = pydantic.Field(gt=0, description="A role of this company.")

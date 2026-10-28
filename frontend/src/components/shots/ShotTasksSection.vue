@@ -20,6 +20,7 @@ import {
 import { AddOutline } from '@vicons/ionicons5'
 import * as tasksApi from '@/api/tasks'
 import { useRemoteSearchOptions } from '@/composables/useRemoteSearchOptions'
+import { useAuthStore } from '@/stores/auth'
 import { TaskNotPlacedError, useShotTasksStore } from '@/stores/shotTasks'
 import { describeShotTaskError } from '@/utils/apiError'
 import { tagColor } from '@/utils/color'
@@ -31,9 +32,14 @@ const props = defineProps<{
   projectId: number
   companyId: number
   members: ProjectMemberOut[]
-  canWrite: boolean
+  canCreate: boolean
+  canEdit: boolean
+  canDelete: boolean
+  // Lets an assignee change the status of their own tasks only.
+  canUpdateOwn: boolean
 }>()
 
+const auth = useAuthStore()
 const store = useShotTasksStore()
 const message = useMessage()
 const dialog = useDialog()
@@ -186,6 +192,10 @@ async function handleAdd() {
 
 // --- Table ---------------------------------------------------------------
 
+function canChangeStatus(shotTask: ShotTaskOut): boolean {
+  return props.canEdit || (props.canUpdateOwn && shotTask.assignee?.id === auth.currentUser?.id)
+}
+
 const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
   {
     title: 'Задача',
@@ -216,7 +226,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
     key: 'status',
     width: 170,
     render: (shotTask) => {
-      if (props.canWrite) {
+      if (canChangeStatus(shotTask)) {
         return h(NSelect, {
           size: 'small',
           value: shotTask.status_id,
@@ -239,7 +249,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
     key: 'assignee',
     width: 200,
     render: (shotTask) => {
-      if (props.canWrite) {
+      if (props.canEdit) {
         return h(NSelect, {
           size: 'small',
           clearable: true,
@@ -259,7 +269,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
     width: 150,
     render: (shotTask) => formatHours(shotTask.estimated_hours, shotTask.actual_hours),
   },
-  ...(props.canWrite
+  ...(props.canEdit || props.canDelete
     ? [
         {
           title: '',
@@ -267,21 +277,25 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
           width: 190,
           render: (shotTask: ShotTaskOut) =>
             h('div', { class: 'shot-tasks__actions' }, [
-              h(
-                NButton,
-                { size: 'small', quaternary: true, onClick: () => startEditHours(shotTask) },
-                { default: () => 'Часы' },
-              ),
-              h(
-                NButton,
-                {
-                  size: 'small',
-                  quaternary: true,
-                  type: 'error',
-                  onClick: () => confirmRemove(shotTask),
-                },
-                { default: () => 'Снять' },
-              ),
+              props.canEdit
+                ? h(
+                    NButton,
+                    { size: 'small', quaternary: true, onClick: () => startEditHours(shotTask) },
+                    { default: () => 'Часы' },
+                  )
+                : null,
+              props.canDelete
+                ? h(
+                    NButton,
+                    {
+                      size: 'small',
+                      quaternary: true,
+                      type: 'error',
+                      onClick: () => confirmRemove(shotTask),
+                    },
+                    { default: () => 'Снять' },
+                  )
+                : null,
             ]),
         },
       ]
@@ -300,7 +314,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
       :row-key="(row: ShotTaskOut) => row.id"
     />
 
-    <div v-if="canWrite">
+    <div v-if="canCreate">
       <n-button type="primary" @click="openAdd">
         <template #icon><n-icon :component="AddOutline" /></template>
         Добавить задачу

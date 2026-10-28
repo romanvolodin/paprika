@@ -86,7 +86,8 @@ class TestCreateCompany:
 
         company = Company.objects.get(id=response.json()["id"])
         membership = CompanyMembership.objects.get(company=company, user=auth_user)
-        assert membership.role == CompanyMembership.Role.ADMIN
+        assert membership.role.name == "Админ"
+        assert membership.role.company_id == company.id
 
     def test_creator_can_immediately_see_their_new_company(self, auth_client):
         create_response = _post_json(

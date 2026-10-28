@@ -103,14 +103,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a chat message
-         * @description Delete your own user message. The message disappears from the chat; its text, files, version links and reactions are removed. Replies to it stay and show it as deleted. System messages can't be deleted. Not available to members with the read-only `client` role.
+         * @description Delete a user message: your own, or anyone's with the `chat.edit_any` permission. The message disappears from the chat; its text, files, version links and reactions are removed. Replies to it stay and show it as deleted. System messages can't be deleted.
          */
         delete: operations["deleteChatMessageDetailControllerApiV1ChatMessageId"];
         options?: never;
         head?: never;
         /**
          * Edit a chat message
-         * @description Change the text of your own user message. Attachments, versions and the quoted message can't be changed. The text can only become empty if the message has an attachment or a version. `edited_at` is set when the text actually changed. System messages can't be edited. Not available to members with the read-only `client` role.
+         * @description Change the text of your own user message. Attachments, versions and the quoted message can't be changed. The text can only become empty if the message has an attachment or a version. `edited_at` is set when the text actually changed. System messages can't be edited. Your own messages need `chat.write`, other people's `chat.edit_any`.
          */
         patch: operations["patchChatMessageDetailControllerApiV1ChatMessageId"];
         trace?: never;
@@ -125,13 +125,13 @@ export interface paths {
         get?: never;
         /**
          * Put a reaction on a message
-         * @description Put an emoji on a message (a user or a system one, not a deleted one). Putting the same emoji again changes nothing. Not available to members with the read-only `client` role.
+         * @description Put an emoji on a message (a user or a system one, not a deleted one). Putting the same emoji again changes nothing. Needs the `chat.write` permission.
          */
         put: operations["putChatReactionControllerApiV1ChatMessageIdReactions"];
         post?: never;
         /**
          * Remove your reaction from a message
-         * @description Remove your own emoji from a message; the emoji goes in the `emoji` query param (a DELETE request has no body). Removing a reaction that isn't there changes nothing. Not available to members with the read-only `client` role.
+         * @description Remove your own emoji from a message; the emoji goes in the `emoji` query param (a DELETE request has no body). Removing a reaction that isn't there changes nothing. Needs the `chat.write` permission.
          */
         delete: operations["deleteChatReactionControllerApiV1ChatMessageIdReactions"];
         options?: never;
@@ -154,7 +154,7 @@ export interface paths {
         put?: never;
         /**
          * Create a company
-         * @description Create a new company. The creator is automatically added as an `admin` member.
+         * @description Create a new company. The creator is automatically added as its admin and the company gets the starter set of roles.
          */
         post: operations["postCompanyListControllerApiV1Companies"];
         delete?: never;
@@ -179,14 +179,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a company
-         * @description Permanently delete a company and all its memberships.
+         * @description Permanently delete a company with everything in it. Needs the `company.delete` permission.
          */
         delete: operations["deleteCompanyDetailControllerApiV1CompaniesCompanyId"];
         options?: never;
         head?: never;
         /**
          * Update a company
-         * @description Partially update a company. Only fields present are changed.
+         * @description Partially update a company. Only fields present are changed. Needs the `company.edit` permission.
          */
         patch: operations["patchCompanyDetailControllerApiV1CompaniesCompanyId"];
         trace?: never;
@@ -206,7 +206,7 @@ export interface paths {
         put?: never;
         /**
          * Add a company member
-         * @description Add an existing user to the company with the given role.
+         * @description Add an existing user to the company with the given role. Needs the `company.members` permission.
          */
         post: operations["postCompanyMemberListControllerApiV1CompaniesCompanyIdMembers"];
         delete?: never;
@@ -227,14 +227,14 @@ export interface paths {
         post?: never;
         /**
          * Remove a company member
-         * @description Remove a member from the company.
+         * @description Remove a member from the company, and from all of its projects. Needs the `company.members` permission.
          */
         delete: operations["deleteCompanyMemberDetailControllerApiV1CompaniesCompanyIdMembersUserId"];
         options?: never;
         head?: never;
         /**
          * Update a company member's role
-         * @description Change the role of an existing company member.
+         * @description Change the role of an existing company member. Needs the `company.members` permission.
          */
         patch: operations["patchCompanyMemberDetailControllerApiV1CompaniesCompanyIdMembersUserId"];
         trace?: never;
@@ -248,15 +248,39 @@ export interface paths {
         };
         /**
          * List a company's projects
-         * @description Return a paginated list of projects within the given company that the current user is a member of, optionally filtered by `search` against the name.
+         * @description Return a paginated list of projects within the given company that the current user can see, optionally filtered by `search` against the name.
          */
         get: operations["getProjectListControllerApiV1CompaniesCompanyIdProjects"];
         put?: never;
         /**
          * Create a project
-         * @description Create a new project within the company, optionally with a cover image. Send as `multipart/form-data`: regular fields for `name`, `code`, `description`, `start_date`, `deadline`, plus an optional `cover` file field. The creator is automatically added as an `admin` member.
+         * @description Create a new project within the company, optionally with a cover image. Send as `multipart/form-data`: regular fields for `name`, `code`, `description`, `start_date`, `deadline`, plus an optional `cover` file field. Needs the `project.create` permission. The creator is automatically added to the project with their company role.
          */
         post: operations["postProjectListControllerApiV1CompaniesCompanyIdProjects"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a company's roles
+         * @description Return every role of the company (not paginated). Any member of the company can read them.
+         */
+        get: operations["getRoleListControllerApiV1CompaniesCompanyIdRoles"];
+        put?: never;
+        /**
+         * Create a role
+         * @description Create a role in the company. The name must be unique within the company (409 otherwise). Needs the `company.roles` permission.
+         */
+        post: operations["postRoleListControllerApiV1CompaniesCompanyIdRoles"];
         delete?: never;
         options?: never;
         head?: never;
@@ -335,6 +359,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/permissions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List permissions
+         * @description Return every permission a role can be made of, in display order. The list is fixed: new permissions come with new features, roles only choose among them.
+         */
+        get: operations["getPermissionListControllerApiV1Permissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/": {
         parameters: {
             query?: never;
@@ -351,14 +395,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a project
-         * @description Permanently delete a project and everything in it. Only a project admin or producer can do this.
+         * @description Permanently delete a project and everything in it. Needs the `project.delete` permission.
          */
         delete: operations["deleteProjectDetailControllerApiV1ProjectsProjectId"];
         options?: never;
         head?: never;
         /**
          * Update a project
-         * @description Partially update a project, optionally replacing or removing its cover in the same request. Send as `multipart/form-data`: any of `name`, `description`, `start_date`, `deadline`, `is_active`, `remove_cover`, plus an optional `cover` file field. Only fields actually present are changed. `code` cannot be changed - it's immutable once set.
+         * @description Partially update a project, optionally replacing or removing its cover in the same request. Send as `multipart/form-data`: any of `name`, `description`, `start_date`, `deadline`, `is_active`, `remove_cover`, plus an optional `cover` file field. Only fields actually present are changed. `code` cannot be changed - it's immutable once set. Needs the `project.edit` permission.
          */
         patch: operations["patchProjectDetailControllerApiV1ProjectsProjectId"];
         trace?: never;
@@ -398,7 +442,7 @@ export interface paths {
         put?: never;
         /**
          * Add a project member
-         * @description Add an existing company member to the project with the given role. The target user must already be a member of the project's company.
+         * @description Add an existing company member to the project with the given role. The target user must already be a member of the project's company. Needs the `project.members` permission.
          */
         post: operations["postProjectMemberListControllerApiV1ProjectsProjectIdMembers"];
         delete?: never;
@@ -419,14 +463,14 @@ export interface paths {
         post?: never;
         /**
          * Remove a project member
-         * @description Remove a member from the project.
+         * @description Remove a member from the project. Needs the `project.members` permission.
          */
         delete: operations["deleteProjectMemberDetailControllerApiV1ProjectsProjectIdMembersUserId"];
         options?: never;
         head?: never;
         /**
          * Update a project member's role
-         * @description Change the role of an existing project member.
+         * @description Change the role of an existing project member. Needs the `project.members` permission.
          */
         patch: operations["patchProjectMemberDetailControllerApiV1ProjectsProjectIdMembersUserId"];
         trace?: never;
@@ -534,13 +578,41 @@ export interface paths {
         put?: never;
         /**
          * Create a task
-         * @description Create a new task in the project. It gets a generated `code` (the type's abbreviation plus four digits) and starts out standalone - place it on shots with `POST /api/v1/shots/<id>/tasks/`. Not available to members with the read-only `client` role.
+         * @description Create a new task in the project. It gets a generated `code` (the type's abbreviation plus four digits) and starts out standalone - place it on shots with `POST /api/v1/shots/<id>/tasks/`. Needs the `task.create` permission.
          */
         post: operations["postTaskListControllerApiV1ProjectsProjectIdTasks"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/roles/{role_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a role
+         * @description Return a single role by id.
+         */
+        get: operations["getRoleDetailControllerApiV1RolesRoleId"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a role
+         * @description Permanently delete a role. Rejected with a 409 while anyone still has it, in the company or in a project. Needs the `company.roles` permission.
+         */
+        delete: operations["deleteRoleDetailControllerApiV1RolesRoleId"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a role
+         * @description Partially update a role. A change that would leave the company with nobody who can edit roles is rejected with a 409. Needs the `company.roles` permission.
+         */
+        patch: operations["patchRoleDetailControllerApiV1RolesRoleId"];
         trace?: never;
     };
     "/api/v1/shot-groups/{shot_group_id}/": {
@@ -635,14 +707,14 @@ export interface paths {
         post?: never;
         /**
          * Remove a task from a shot
-         * @description Remove the task from the shot, discarding the tracking recorded for it there. The task itself stays. Not available to members with the read-only `client` role.
+         * @description Remove the task from the shot, discarding the tracking recorded for it there. The task itself stays. Needs the `task.delete` permission.
          */
         delete: operations["deleteShotTaskDetailControllerApiV1ShotTasksShotTaskId"];
         options?: never;
         head?: never;
         /**
          * Update a shot task
-         * @description Partially update the tracking of a task on a shot: status, assignee (null to unassign) and estimated/actual hours (null to clear). The task and the shot can't be changed. Not available to members with the read-only `client` role.
+         * @description Partially update the tracking of a task on a shot: status, assignee (null to unassign) and estimated/actual hours (null to clear). The task and the shot can't be changed. Needs `task.edit`; the assignee can change just the status of their own task with `task.update_own`.
          */
         patch: operations["patchShotTaskDetailControllerApiV1ShotTasksShotTaskId"];
         trace?: never;
@@ -690,7 +762,7 @@ export interface paths {
         put?: never;
         /**
          * Send a chat message
-         * @description Create a user message. It needs text, at least one attachment or at least one version (or several). Files are uploaded beforehand via `POST /shots/<id>/chat/attachments/` and passed by id. `reply_to_id` must be a user message of the same shot. `version_ids` must be versions of the same shot. Not available to members with the read-only `client` role.
+         * @description Create a user message. It needs text, at least one attachment or at least one version (or several). Files are uploaded beforehand via `POST /shots/<id>/chat/attachments/` and passed by id. `reply_to_id` must be a user message of the same shot. `version_ids` must be versions of the same shot. Needs the `chat.write` permission.
          */
         post: operations["postChatListControllerApiV1ShotsShotIdChat"];
         delete?: never;
@@ -710,7 +782,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a chat attachment
-         * @description Upload a file as `multipart/form-data` with a single required file field `file`. Any file type is accepted; the size limit is configurable (`PAPRIKA_CHAT_ATTACHMENT_MAX_FILE_SIZE_MB`, 100 by default, 413 otherwise). The returned `id` goes into `attachment_ids` of a new message. Until then the file can be removed with `DELETE /chat/attachments/<id>/`. Not available to members with the read-only `client` role.
+         * @description Upload a file as `multipart/form-data` with a single required file field `file`. Any file type is accepted; the size limit is configurable (`PAPRIKA_CHAT_ATTACHMENT_MAX_FILE_SIZE_MB`, 100 by default, 413 otherwise). The returned `id` goes into `attachment_ids` of a new message. Until then the file can be removed with `DELETE /chat/attachments/<id>/`. Needs the `chat.write` permission.
          */
         post: operations["postChatAttachmentUploadControllerApiV1ShotsShotIdChatAttachments"];
         delete?: never;
@@ -734,7 +806,7 @@ export interface paths {
         put?: never;
         /**
          * Place a task on a shot
-         * @description Place an existing task (`task_id`) of the shot's project on the shot. `status_id` defaults to the company's default task status; `assignee_id` must be a member of the project. A task can be placed on a given shot only once (409 otherwise). Not available to members with the read-only `client` role.
+         * @description Place an existing task (`task_id`) of the shot's project on the shot. `status_id` defaults to the company's default task status; `assignee_id` must be a member of the project. A task can be placed on a given shot only once (409 otherwise). Needs the `task.create` permission.
          */
         post: operations["postShotTaskListControllerApiV1ShotsShotIdTasks"];
         delete?: never;
@@ -758,7 +830,7 @@ export interface paths {
         put?: never;
         /**
          * Upload a version
-         * @description Upload a new version of the shot as `multipart/form-data` with a single required file field `source` (`.mp4` with h264 video, `.jpg` or `.png`). The version's `name` is the file name without its extension and must be unique within the project (409 otherwise). Its metadata and thumbnail are produced while the request is being handled, so the response arrives only after the file has been processed. Not available to members with the read-only `client` role.
+         * @description Upload a new version of the shot as `multipart/form-data` with a single required file field `source` (`.mp4` with h264 video, `.jpg` or `.png`). The version's `name` is the file name without its extension and must be unique within the project (409 otherwise). Its metadata and thumbnail are produced while the request is being handled, so the response arrives only after the file has been processed. Needs the `version.upload` permission.
          */
         post: operations["postVersionListControllerApiV1ShotsShotIdVersions"];
         delete?: never;
@@ -839,14 +911,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a task
-         * @description Permanently delete a task together with its placements on shots (and the status, assignee and hours tracked there). Not available to members with the read-only `client` role.
+         * @description Permanently delete a task together with its placements on shots (and the status, assignee and hours tracked there). Needs the `task.delete` permission.
          */
         delete: operations["deleteTaskDetailControllerApiV1TasksTaskId"];
         options?: never;
         head?: never;
         /**
          * Update a task
-         * @description Partially update a task's name, description or type. The task's `code` never changes, not even when its type does. Not available to members with the read-only `client` role.
+         * @description Partially update a task's name, description or type. The task's `code` never changes, not even when its type does. Needs the `task.edit` permission.
          */
         patch: operations["patchTaskDetailControllerApiV1TasksTaskId"];
         trace?: never;
@@ -911,14 +983,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a user
-         * @description Permanently delete a user account.
+         * @description Permanently delete a user account: your own, or any one for the server superuser.
          */
         delete: operations["deleteUserDetailControllerApiV1UsersUserId"];
         options?: never;
         head?: never;
         /**
          * Update a user
-         * @description Partially update a user, optionally replacing or removing their avatar in the same request. Send as `multipart/form-data`: any of `first_name`, `last_name`, `is_active`, `remove_avatar`, plus an optional `avatar` file field. Only fields actually present are changed.
+         * @description Partially update a user, optionally replacing or removing their avatar in the same request. Send as `multipart/form-data`: any of `first_name`, `last_name`, `is_active`, `remove_avatar`, plus an optional `avatar` file field. Only fields actually present are changed. You can change your own account; changing someone else's, or `is_active`, is for the server superuser.
          */
         patch: operations["patchUserDetailControllerApiV1UsersUserId"];
         trace?: never;
@@ -939,7 +1011,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a version
-         * @description Permanently delete a version and its files. Its name is freed up for a new upload. Not available to members with the read-only `client` role.
+         * @description Permanently delete a version and its files. Its name is freed up for a new upload. Needs the `version.delete` permission, or `version.delete_own` for a version you uploaded yourself.
          */
         delete: operations["deleteVersionDetailControllerApiV1VersionsVersionId"];
         options?: never;
@@ -1029,8 +1101,11 @@ export interface components {
         CompanyMemberCreateIn: {
             /** User Id */
             user_id: number;
-            /** @default executor */
-            role?: components["schemas"]["Role"];
+            /**
+             * Role Id
+             * @description A role of this company.
+             */
+            role_id: number;
         };
         /**
          * CompanyMemberListOut
@@ -1064,7 +1139,7 @@ export interface components {
              * @default null
              */
             avatar?: string | null;
-            role: components["schemas"]["Role"];
+            role: components["schemas"]["RoleRefOut"];
             /**
              * Created At
              * Format: date-time
@@ -1076,7 +1151,11 @@ export interface components {
          * @description Payload for `PATCH /api/v1/companies/<id>/members/<user_id>/`.
          */
         CompanyMemberUpdateIn: {
-            role: components["schemas"]["Role"];
+            /**
+             * Role Id
+             * @description A role of this company.
+             */
+            role_id: number;
         };
         /**
          * CompanyOut
@@ -1098,6 +1177,11 @@ export interface components {
              * @description URL-friendly identifier for the company.
              */
             slug: string;
+            /**
+             * My Permissions
+             * @description Codes of the company permissions the current user has.
+             */
+            my_permissions: string[];
             /**
              * Created At
              * Format: date-time
@@ -1368,6 +1452,39 @@ export interface components {
             text: string;
         };
         /**
+         * PermissionListOut
+         * @description The fixed list of permissions, in display order.
+         */
+        PermissionListOut: {
+            /** Items */
+            items: components["schemas"]["PermissionOut"][];
+        };
+        /**
+         * PermissionOut
+         * @description One of the permissions a role can be made of.
+         */
+        PermissionOut: {
+            /**
+             * Code
+             * @description Stable code, e.g. `shot.create`.
+             */
+            code: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /**
+             * Group
+             * @description Section the permission is shown in.
+             */
+            group: string;
+            /**
+             * Level
+             * @description `company` permissions act through the role in the company, `project` ones through the role in the project.
+             */
+            level: string;
+        };
+        /**
          * ProjectCreateIn
          * @description Payload for `POST /api/v1/companies/<company_id>/projects/`.
          */
@@ -1422,8 +1539,11 @@ export interface components {
         ProjectMemberCreateIn: {
             /** User Id */
             user_id: number;
-            /** @default executor */
-            role?: components["schemas"]["Role"];
+            /**
+             * Role Id
+             * @description A role of the project's company.
+             */
+            role_id: number;
         };
         /**
          * ProjectMemberListOut
@@ -1457,7 +1577,7 @@ export interface components {
              * @default null
              */
             avatar?: string | null;
-            role: components["schemas"]["Role"];
+            role: components["schemas"]["RoleRefOut"];
             /**
              * Created At
              * Format: date-time
@@ -1469,7 +1589,11 @@ export interface components {
          * @description Payload for `PATCH /api/v1/projects/<id>/members/<user_id>/`.
          */
         ProjectMemberUpdateIn: {
-            role: components["schemas"]["Role"];
+            /**
+             * Role Id
+             * @description A role of the project's company.
+             */
+            role_id: number;
         };
         /**
          * ProjectOut
@@ -1511,6 +1635,11 @@ export interface components {
             created_by: components["schemas"]["UserOut"] | null;
             /** @description The user who last updated the project, or null if that user has since been deleted. */
             updated_by: components["schemas"]["UserOut"] | null;
+            /**
+             * My Permissions
+             * @description Codes of the project permissions the current user has.
+             */
+            my_permissions: string[];
             /**
              * Created At
              * Format: date-time
@@ -1610,10 +1739,118 @@ export interface components {
             deleted: boolean;
         };
         /**
-         * Role
-         * @enum {string}
+         * RoleCreateIn
+         * @description Payload for `POST /api/v1/companies/<company_id>/roles/`.
          */
-        Role: "admin" | "producer" | "coordinator" | "executor" | "freelancer" | "client";
+        RoleCreateIn: {
+            /** Name */
+            name: string;
+            /** Color */
+            color: string;
+            /** Permissions */
+            permissions?: string[];
+            /**
+             * Sees All Projects
+             * @default false
+             */
+            sees_all_projects?: boolean;
+        };
+        /**
+         * RoleListOut
+         * @description All roles of a company (not paginated: the list is short).
+         */
+        RoleListOut: {
+            /** Items */
+            items: components["schemas"]["RoleOut"][];
+        };
+        /**
+         * RoleOut
+         * @description Public representation of a role.
+         */
+        RoleOut: {
+            /** Id */
+            id: number;
+            /** Company Id */
+            company_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Color
+             * @description Hex color, e.g. `#FF5733`.
+             */
+            color: string;
+            /**
+             * Permissions
+             * @description Codes of the permissions the role gives.
+             */
+            permissions: string[];
+            /**
+             * Sees All Projects
+             * @description Whether a company member with this role sees every project of the company, not only those they were added to.
+             */
+            sees_all_projects: boolean;
+            /**
+             * Company Members Count
+             * @description How many people have this role in the company.
+             */
+            company_members_count: number;
+            /**
+             * Project Members Count
+             * @description How many project memberships use this role.
+             */
+            project_members_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * RoleRefOut
+         * @description A role as shown next to a member.
+         */
+        RoleRefOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Color
+             * @description Hex color, e.g. `#FF5733`.
+             */
+            color: string;
+        };
+        /**
+         * RoleUpdateIn
+         * @description Payload for `PATCH /api/v1/roles/<id>/`. All fields are optional.
+         */
+        RoleUpdateIn: {
+            /**
+             * Name
+             * @default null
+             */
+            name?: string | null;
+            /**
+             * Color
+             * @default null
+             */
+            color?: string | null;
+            /**
+             * Permissions
+             * @default null
+             */
+            permissions?: string[] | null;
+            /**
+             * Sees All Projects
+             * @default null
+             */
+            sees_all_projects?: boolean | null;
+        };
         /**
          * ShotCreateIn
          * @description Payload for `POST /api/v1/projects/<project_id>/shots/`.
@@ -3562,13 +3799,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -3648,13 +3887,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -3804,13 +4045,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -3885,13 +4128,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -3912,6 +4157,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */
@@ -3953,13 +4209,15 @@ export interface operations {
                     "application/json": components["schemas"]["CompanyMemberOut"];
                 };
             };
-            /** @description Raised when request components cannot be parsed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when auth was not successful */
@@ -3971,13 +4229,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -3998,6 +4258,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */
@@ -4144,8 +4415,79 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getRoleListControllerApiV1CompaniesCompanyIdRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The company's roles. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleListOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4171,6 +4513,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    postRoleListControllerApiV1CompaniesCompanyIdRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/companies/<company_id>/roles/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleCreateIn"];
+            };
+        };
+        responses: {
+            /** @description The created role. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */
@@ -4698,6 +5136,53 @@ export interface operations {
             };
         };
     };
+    getPermissionListControllerApiV1Permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All permissions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionListOut"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getProjectDetailControllerApiV1ProjectsProjectId: {
         parameters: {
             query?: never;
@@ -4906,13 +5391,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -4992,6 +5479,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5146,13 +5644,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5227,13 +5727,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -5295,13 +5797,15 @@ export interface operations {
                     "application/json": components["schemas"]["ProjectMemberOut"];
                 };
             };
-            /** @description Raised when request components cannot be parsed */
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when auth was not successful */
@@ -5313,13 +5817,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -6026,6 +6532,264 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getRoleDetailControllerApiV1RolesRoleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested role. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteRoleDetailControllerApiV1RolesRoleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Raised when request components cannot be parsed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    patchRoleDetailControllerApiV1RolesRoleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Payload for `PATCH /api/v1/roles/<id>/`. All fields are optional. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description The updated role. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */
@@ -8791,13 +9555,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */
@@ -8883,13 +9649,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Not Found */

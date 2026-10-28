@@ -12,8 +12,8 @@ const props = defineProps<{ companySlug: string; projectCode: string }>()
 const route = useRoute()
 const store = useProjectPageStore()
 const currentCompany = useCurrentCompanyStore()
-const { members } = storeToRefs(store)
-const { canManageProject } = useProjectPermissions(members)
+const { project } = storeToRefs(store)
+const { canOpenSettings } = useProjectPermissions(project)
 
 // A link is highlighted by section, not by router-link matching: the
 // import page is a sibling of the shot list in the route tree, yet it
@@ -115,7 +115,7 @@ watch(
             Группы
           </RouterLink>
           <RouterLink
-            v-if="canManageProject"
+            v-if="canOpenSettings"
             class="project-page__link"
             :class="{ 'project-page__link--active': isActive('settings') }"
             :to="{ name: 'project-settings', params: routeParams }"

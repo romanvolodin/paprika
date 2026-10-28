@@ -4,6 +4,7 @@ import json
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 
+from apps.access.defaults import get_default_role
 from apps.companies.models import CompanyMembership
 
 
@@ -11,6 +12,10 @@ pytestmark = pytest.mark.django_db
 
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 100
+
+
+def _role_id(company, key):
+    return get_default_role(company, key).id
 
 
 def _post_json(client, path, payload):
@@ -111,18 +116,18 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id, "role": "producer"},
+            {"user_id": new_member.id, "role_id": _role_id(company, "producer")},
         )
 
         assert response.status_code == HTTPStatus.CREATED
         body = response.json()
         assert body["email"] == "newmember@example.com"
-        assert body["role"] == "producer"
+        assert body["role"]["name"] == "Продюсер"
         assert CompanyMembership.objects.filter(
-            company=company, user=new_member, role="producer"
+            company=company, user=new_member, role__name="Продюсер"
         ).exists()
 
-    def test_defaults_to_executor_role(
+    def test_adds_a_member_with_the_executor_role(
         self,
         auth_client,
         auth_user,
@@ -137,10 +142,10 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id},
+            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
         )
 
-        assert response.json()["role"] == "executor"
+        assert response.json()["role"]["name"] == "Исполнитель"
 
     def test_rejects_a_user_who_is_already_a_member(
         self,
@@ -158,7 +163,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": existing_member.id},
+            {"user_id": existing_member.id, "role_id": _role_id(company, "executor")},
         )
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -172,7 +177,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": 999999},
+            {"user_id": 999999, "role_id": _role_id(company, "executor")},
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
@@ -191,7 +196,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id},
+            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
@@ -203,7 +208,7 @@ class TestAddMember:
         response = _post_json(
             client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id},
+            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
         )
 
         assert response.status_code == 401
@@ -221,18 +226,16 @@ class TestUpdateMember:
         company = company_factory()
         company_membership_factory(user=auth_user, company=company)
         member = user_factory()
-        company_membership_factory(
-            user=member, company=company, role=CompanyMembership.Role.EXECUTOR
-        )
+        company_membership_factory(user=member, company=company, role="executor")
 
         response = _patch_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/{member.id}/",
-            {"role": "coordinator"},
+            {"role_id": _role_id(company, "coordinator")},
         )
 
         assert response.status_code == 200
-        assert response.json()["role"] == "coordinator"
+        assert response.json()["role"]["name"] == "Координатор"
 
     def test_unknown_member_returns_404(
         self, auth_client, auth_user, company_factory, company_membership_factory
@@ -243,7 +246,7 @@ class TestUpdateMember:
         response = _patch_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/999999/",
-            {"role": "coordinator"},
+            {"role_id": _role_id(company, "coordinator")},
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
@@ -262,7 +265,7 @@ class TestUpdateMember:
         response = _patch_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/{member.id}/",
-            {"role": "coordinator"},
+            {"role_id": _role_id(company, "coordinator")},
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
@@ -277,7 +280,7 @@ class TestUpdateMember:
         response = _patch_json(
             client,
             f"/api/v1/companies/{company.id}/members/{member.id}/",
-            {"role": "coordinator"},
+            {"role_id": _role_id(company, "coordinator")},
         )
 
         assert response.status_code == 401
@@ -326,3 +329,111 @@ class TestRemoveMember:
         response = client.delete(f"/api/v1/companies/{company.id}/members/{member.id}/")
 
         assert response.status_code == 401
+
+
+class TestMemberPermissions:
+    def test_a_role_without_the_permission_cannot_manage_members(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        user_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company, role="coordinator")
+        member = user_factory()
+        company_membership_factory(user=member, company=company)
+        new_user = user_factory()
+        role_id = _role_id(company, "executor")
+
+        added = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            {"user_id": new_user.id, "role_id": role_id},
+        )
+        changed = _patch_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/{member.id}/",
+            {"role_id": role_id},
+        )
+        removed = auth_client.delete(
+            f"/api/v1/companies/{company.id}/members/{member.id}/"
+        )
+
+        assert added.status_code == HTTPStatus.FORBIDDEN
+        assert changed.status_code == HTTPStatus.FORBIDDEN
+        assert removed.status_code == HTTPStatus.FORBIDDEN
+
+    def test_a_role_of_another_company_is_rejected(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_factory,
+        company_membership_factory,
+        user_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        foreign_role_id = _role_id(company_factory(), "executor")
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            {"user_id": user_factory().id, "role_id": foreign_role_id},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+    def test_the_last_person_who_can_edit_roles_cannot_be_removed_or_demoted(
+        self, auth_client, auth_user, company, company_membership_factory
+    ):
+        company_membership_factory(user=auth_user, company=company, role="admin")
+
+        removed = auth_client.delete(
+            f"/api/v1/companies/{company.id}/members/{auth_user.id}/"
+        )
+        demoted = _patch_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/{auth_user.id}/",
+            {"role_id": _role_id(company, "producer")},
+        )
+
+        assert removed.status_code == HTTPStatus.CONFLICT
+        assert demoted.status_code == HTTPStatus.CONFLICT
+
+    def test_an_admin_can_be_demoted_while_another_one_remains(
+        self, auth_client, auth_user, company, company_membership_factory, user_factory
+    ):
+        company_membership_factory(user=auth_user, company=company, role="admin")
+        company_membership_factory(user=user_factory(), company=company, role="admin")
+
+        response = _patch_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/{auth_user.id}/",
+            {"role_id": _role_id(company, "producer")},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+
+    def test_removing_a_member_removes_them_from_the_companys_projects(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        project_factory,
+        project_membership_factory,
+        user_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        member = user_factory()
+        company_membership_factory(user=member, company=company)
+        project = project_factory(company=company)
+        project_membership_factory(user=member, project=project)
+
+        response = auth_client.delete(
+            f"/api/v1/companies/{company.id}/members/{member.id}/"
+        )
+
+        assert response.status_code == HTTPStatus.NO_CONTENT
+        assert not project.memberships.filter(user=member).exists()

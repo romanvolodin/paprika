@@ -4,13 +4,14 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { NDialogProvider, NMessageProvider } from 'naive-ui'
 import ShotTasksSection from '@/components/shots/ShotTasksSection.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useShotTasksStore } from '@/stores/shotTasks'
 import * as tasksApi from '@/api/tasks'
 import type { ProjectMemberOut, ShotTaskOut } from '@/types/api'
 
 vi.mock('@/api/tasks')
 
-function buildShotTask(shotId: number): ShotTaskOut {
+function buildShotTask(shotId: number, assigneeId: number | null = null): ShotTaskOut {
   return {
     id: shotId * 10,
     shot_id: shotId,
@@ -28,7 +29,10 @@ function buildShotTask(shotId: number): ShotTaskOut {
       updated_at: '2026-01-01T00:00:00Z',
     },
     status_id: 2,
-    assignee: null,
+    assignee:
+      assigneeId === null
+        ? null
+        : ({ id: assigneeId, first_name: 'A', last_name: 'One' } as ShotTaskOut['assignee']),
     estimated_hours: 8,
     actual_hours: null,
     created_by: null,
@@ -45,6 +49,8 @@ const Host = defineComponent({
   props: {
     shotId: { type: Number, required: true },
     canWrite: { type: Boolean, default: true },
+    // Only the right to change the status of one's own tasks.
+    onlyOwnStatus: { type: Boolean, default: false },
   },
   setup(props) {
     return () =>
@@ -57,7 +63,10 @@ const Host = defineComponent({
                 projectId: 1,
                 companyId: 7,
                 members,
-                canWrite: props.canWrite,
+                canCreate: props.canWrite && !props.onlyOwnStatus,
+                canEdit: props.canWrite && !props.onlyOwnStatus,
+                canDelete: props.canWrite && !props.onlyOwnStatus,
+                canUpdateOwn: props.canWrite || props.onlyOwnStatus,
               }),
           }),
       })
@@ -113,5 +122,39 @@ describe('ShotTasksSection', () => {
     expect(wrapper.text()).not.toContain('Добавить задачу')
     expect(wrapper.text()).not.toContain('Снять')
     expect(wrapper.text()).toContain('PRJ10')
+  })
+
+  describe('when the user may only change the status of their own tasks', () => {
+    beforeEach(() => {
+      useAuthStore().currentUser = {
+        id: 5,
+        email: 'me@paprika.dev',
+        first_name: 'Me',
+        last_name: 'Myself',
+        avatar: null,
+        is_active: true,
+        date_joined: '2026-01-01T00:00:00Z',
+      }
+    })
+
+    it('offers the status of a task assigned to them, but nothing else', async () => {
+      vi.mocked(tasksApi.listShotTasks).mockResolvedValue({ items: [buildShotTask(10, 5)] })
+      const wrapper = mount(Host, { props: { shotId: 10, onlyOwnStatus: true } })
+      await flushPromises()
+
+      expect(wrapper.findAll('.n-select')).toHaveLength(1)
+      const buttons = wrapper.findAll('button').map((button) => button.text())
+      expect(buttons).not.toContain('Добавить задачу')
+      expect(buttons).not.toContain('Часы')
+      expect(buttons).not.toContain('Снять')
+    })
+
+    it("shows the status of someone else's task as plain text", async () => {
+      vi.mocked(tasksApi.listShotTasks).mockResolvedValue({ items: [buildShotTask(10, 6)] })
+      const wrapper = mount(Host, { props: { shotId: 10, onlyOwnStatus: true } })
+      await flushPromises()
+
+      expect(wrapper.findAll('.n-select')).toHaveLength(0)
+    })
   })
 })

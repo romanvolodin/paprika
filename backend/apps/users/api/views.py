@@ -15,6 +15,7 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 
+from apps.access.checks import require_superuser
 from apps.auth.api.controllers import AuthenticatedController
 from apps.core.storage import delete_stored_file
 from apps.users.models import User
@@ -212,11 +213,14 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
             "their avatar in the same request. Send as "
             "`multipart/form-data`: any of `first_name`, `last_name`, "
             "`is_active`, `remove_avatar`, plus an optional `avatar` "
-            "file field. Only fields actually present are changed."
+            "file field. Only fields actually present are changed. You can "
+            "change your own account; changing someone else's, or "
+            "`is_active`, is for the server superuser."
         ),
         response_description="The updated user.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Users"],
     )
@@ -227,6 +231,11 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_file_metadata: FileMetadata[UserAvatarFiles],
     ) -> UserOut:
         user = _get_user_or_404(parsed_path.user_id)
+        if (
+            user.pk != self.request.user.pk
+            or "is_active" in parsed_body.model_fields_set
+        ):
+            require_superuser(self.request.user)
 
         update_fields = parsed_body.model_dump(
             exclude={"remove_avatar"},
@@ -247,13 +256,19 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
     @modify(
         status_code=HTTPStatus.NO_CONTENT,
         summary="Delete a user",
-        description="Permanently delete a user account.",
+        description=(
+            "Permanently delete a user account: your own, or any one for "
+            "the server superuser."
+        ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Users"],
     )
     def delete(self, parsed_path: Path[UserPath]) -> None:
         user = _get_user_or_404(parsed_path.user_id)
+        if user.pk != self.request.user.pk:
+            require_superuser(self.request.user)
         user.delete()
         return None

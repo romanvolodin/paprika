@@ -1,6 +1,7 @@
 import factory
 from factory.django import DjangoModelFactory
 
+from apps.access.tests.factories import resolve_role
 from apps.projects.models import Project, ProjectMembership
 
 
@@ -26,7 +27,11 @@ class ProjectMembershipFactory(DjangoModelFactory):
 
     Usage:
         project_membership_factory()                       # random user + project
-        project_membership_factory(user=user, project=project, role=Role.ADMIN)
+        project_membership_factory(user=user, project=project, role="admin")
+
+    `role` is a `Role` of the project's company or the key of one of its
+    starter roles (see `CompanyMembershipFactory`); it defaults to
+    `"coordinator"`, a role that can do all the work in a project.
     """
 
     class Meta:
@@ -34,4 +39,9 @@ class ProjectMembershipFactory(DjangoModelFactory):
 
     user = factory.SubFactory("apps.users.tests.factories.UserFactory")
     project = factory.SubFactory(ProjectFactory)
-    role = ProjectMembership.Role.EXECUTOR
+    role = "coordinator"
+
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs):
+        kwargs["role"] = resolve_role(kwargs["role"], kwargs["project"].company)
+        return kwargs

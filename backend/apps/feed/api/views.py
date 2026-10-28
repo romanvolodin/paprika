@@ -6,6 +6,8 @@ from dmr import APIError, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
+from apps.access.checks import require_project_perm
+from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.api.views import _serialize_attachment
 from apps.chat.models import Message
@@ -142,6 +144,7 @@ class ProjectFeedController(AuthenticatedController[PydanticSerializer]):
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Feed"],
     )
@@ -152,6 +155,7 @@ class ProjectFeedController(AuthenticatedController[PydanticSerializer]):
     ) -> FeedOut:
         user = self.request.user
         project = _get_project_or_404(user, parsed_path.project_id)
+        require_project_perm(user, project, P.FEED_VIEW)
         types = _parse_types(self, parsed_query.type)
         sources = _sources(project, user, types, parsed_query.mine)
 
