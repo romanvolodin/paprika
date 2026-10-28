@@ -7,13 +7,18 @@ import type {
   CompanyMemberOut,
   CompanyOut,
   CompanyUpdateIn,
+  PermissionOut,
+  RoleCreateIn,
   RoleOut,
+  RoleUpdateIn,
 } from '@/types/api'
 
 export const useCompanyDetailStore = defineStore('companyDetail', () => {
   const company = ref<CompanyOut | null>(null)
   const members = ref<CompanyMemberOut[]>([])
   const roles = ref<RoleOut[]>([])
+  // The fixed list of permissions a role is made of, the same for every company.
+  const permissionCatalog = ref<PermissionOut[]>([])
   const isLoading = ref(false)
 
   async function fetch(companyId: number) {
@@ -30,6 +35,31 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     } finally {
       isLoading.value = false
     }
+  }
+
+  async function loadPermissionCatalog() {
+    if (permissionCatalog.value.length > 0) return
+    permissionCatalog.value = (await rolesApi.listPermissions()).items
+  }
+
+  async function refetchRoles(companyId: number) {
+    roles.value = (await rolesApi.listCompanyRoles(companyId)).items
+  }
+
+  async function createRole(companyId: number, input: RoleCreateIn): Promise<RoleOut> {
+    const role = await rolesApi.createRole(companyId, input)
+    await refetchRoles(companyId)
+    return role
+  }
+
+  async function updateRole(companyId: number, roleId: number, input: RoleUpdateIn) {
+    await rolesApi.updateRole(roleId, input)
+    await refetchRoles(companyId)
+  }
+
+  async function removeRole(companyId: number, roleId: number) {
+    await rolesApi.deleteRole(roleId)
+    await refetchRoles(companyId)
   }
 
   async function updateCompany(companyId: number, input: CompanyUpdateIn) {
@@ -59,8 +89,13 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     company,
     members,
     roles,
+    permissionCatalog,
     isLoading,
     fetch,
+    loadPermissionCatalog,
+    createRole,
+    updateRole,
+    removeRole,
     updateCompany,
     addMember,
     updateMemberRole,

@@ -48,6 +48,14 @@ describe('useCompanyPermissions', () => {
     expect(canManagePipeline.value).toBe(false)
   })
 
+  it('lets only a role with company.roles manage roles', () => {
+    const managers = useCompanyPermissions(ref(buildCompany([PERMISSION.companyRoles])))
+    const others = useCompanyPermissions(ref(buildCompany([PERMISSION.companyEdit])))
+
+    expect(managers.canManageRoles.value).toBe(true)
+    expect(others.canManageRoles.value).toBe(false)
+  })
+
   it('treats the pipeline separately from editing the company', () => {
     const { canEditCompany, canManagePipeline } = useCompanyPermissions(
       ref(buildCompany([PERMISSION.companyPipeline])),

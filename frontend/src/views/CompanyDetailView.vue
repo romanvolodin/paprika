@@ -26,6 +26,7 @@ import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
 import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
+import { tagColor } from '@/utils/color'
 import { slugify } from '@/utils/slugify'
 import type { CompanyMemberOut, UserOut } from '@/types/api'
 
@@ -38,6 +39,7 @@ const store = useCompanyDetailStore()
 const {
   canEditCompany,
   canManagePipeline,
+  canManageRoles,
   canManageMembers,
   canRemoveMember,
   canChangeMemberRole,
@@ -334,6 +336,23 @@ async function handleAddMember() {
     </section>
 
     <section class="company-detail__section">
+      <h2 class="company-detail__heading">Роли</h2>
+      <div class="company-detail__roles">
+        <n-tag v-for="role in store.roles" :key="role.id" :color="tagColor(role.color)" round>
+          {{ role.name }}
+        </n-tag>
+      </div>
+      <div>
+        <n-button
+          size="small"
+          @click="router.push({ name: 'company-roles', params: { id: props.companyId } })"
+        >
+          {{ canManageRoles ? 'Настроить роли' : 'Посмотреть роли' }}
+        </n-button>
+      </div>
+    </section>
+
+    <section class="company-detail__section">
       <h2 class="company-detail__heading">Статусы кадров</h2>
       <shot-statuses-section :company-id="props.companyId" :can-edit="canManagePipeline" />
     </section>
@@ -396,6 +415,12 @@ async function handleAddMember() {
 
 .company-detail__loading {
   color: var(--color-text-secondary);
+}
+
+.company-detail__roles {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .company-detail__add-member {

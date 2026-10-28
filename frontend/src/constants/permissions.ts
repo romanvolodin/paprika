@@ -4,6 +4,7 @@
 export const PERMISSION = {
   companyEdit: 'company.edit',
   companyMembers: 'company.members',
+  companyRoles: 'company.roles',
   companyPipeline: 'company.pipeline',
   projectCreate: 'project.create',
 

@@ -9,11 +9,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useProjectPageStore } from '@/stores/projectPage'
 import * as companiesApi from '@/api/companies'
 import * as projectsApi from '@/api/projects'
+import * as rolesApi from '@/api/roles'
 import type { ProjectMemberOut } from '@/types/api'
 import { buildProjectFor, roleRefOf, type StarterRole } from './starterRoles'
 
 vi.mock('@/api/projects')
 vi.mock('@/api/companies')
+vi.mock('@/api/roles')
 
 function buildMember(role: StarterRole): ProjectMemberOut {
   return {
@@ -66,6 +68,7 @@ describe('ProjectSettingsView', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(companiesApi.listCompanyMembers).mockResolvedValue({ items: [] })
+    vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
   })
 
   it.each(['admin', 'producer'] as const)('shows the delete button to a %s', async (role) => {

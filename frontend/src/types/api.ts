@@ -40,6 +40,8 @@ export type CompanyMemberUpdateIn = components['schemas']['CompanyMemberUpdateIn
 export type RoleRefOut = components['schemas']['RoleRefOut']
 export type RoleOut = components['schemas']['RoleOut']
 export type RoleListOut = components['schemas']['RoleListOut']
+export type RoleCreateIn = components['schemas']['RoleCreateIn']
+export type RoleUpdateIn = components['schemas']['RoleUpdateIn']
 export type PermissionOut = components['schemas']['PermissionOut']
 export type PermissionListOut = components['schemas']['PermissionListOut']
 

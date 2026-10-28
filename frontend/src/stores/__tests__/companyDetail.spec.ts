@@ -164,4 +164,71 @@ describe('useCompanyDetailStore', () => {
       expect(store.members).toHaveLength(0)
     })
   })
+
+  describe('roles', () => {
+    it('loads the fixed list of permissions once', async () => {
+      vi.mocked(rolesApi.listPermissions).mockResolvedValue({
+        items: [
+          {
+            code: 'shot.create',
+            label: 'Создание кадров',
+            description: '',
+            group: 'Кадры',
+            level: 'project',
+          },
+        ],
+      })
+      const store = useCompanyDetailStore()
+
+      await store.loadPermissionCatalog()
+      await store.loadPermissionCatalog()
+
+      expect(rolesApi.listPermissions).toHaveBeenCalledTimes(1)
+      expect(store.permissionCatalog).toHaveLength(1)
+    })
+
+    it('creates a role and refreshes the list', async () => {
+      const created = buildRoleOut({ id: 5, name: 'Монтажёр' })
+      vi.mocked(rolesApi.createRole).mockResolvedValue(created)
+      vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [buildRoleOut(), created] })
+      const store = useCompanyDetailStore()
+      const input = {
+        name: 'Монтажёр',
+        color: '#112233',
+        permissions: [],
+        sees_all_projects: false,
+      }
+
+      const result = await store.createRole(1, input)
+
+      expect(rolesApi.createRole).toHaveBeenCalledWith(1, input)
+      expect(result).toEqual(created)
+      expect(store.roles).toHaveLength(2)
+    })
+
+    it('updates a role and refreshes the list', async () => {
+      vi.mocked(rolesApi.updateRole).mockResolvedValue(buildRoleOut())
+      vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({
+        items: [buildRoleOut({ name: 'Новое' })],
+      })
+      const store = useCompanyDetailStore()
+
+      await store.updateRole(1, 1, { name: 'Новое' })
+
+      expect(rolesApi.updateRole).toHaveBeenCalledWith(1, { name: 'Новое' })
+      expect(store.roles[0]?.name).toBe('Новое')
+    })
+
+    it('removes a role and refreshes the list', async () => {
+      vi.mocked(rolesApi.deleteRole).mockResolvedValue({} as never)
+      vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
+      const store = useCompanyDetailStore()
+      store.roles = [buildRoleOut()]
+
+      await store.removeRole(1, 1)
+
+      expect(rolesApi.deleteRole).toHaveBeenCalledWith(1)
+      expect(store.roles).toEqual([])
+    })
+  })
 })

@@ -64,6 +64,13 @@ const router = createRouter({
       meta: { title: 'Компания', requiresAuth: true },
     },
     {
+      path: '/companies/:id(\\d+)/roles',
+      name: 'company-roles',
+      component: () => import('@/views/CompanyRolesView.vue'),
+      props: (route) => ({ companyId: Number(route.params.id) }),
+      meta: { title: 'Роли', requiresAuth: true },
+    },
+    {
       path: '/projects',
       name: 'project-list',
       component: () => import('@/views/ProjectsListView.vue'),

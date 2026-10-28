@@ -16,11 +16,13 @@ export function useCompanyPermissions(company: Ref<CompanyOut | null>) {
   const canEditCompany = computed(() => can(PERMISSION.companyEdit))
   const canManagePipeline = computed(() => can(PERMISSION.companyPipeline))
   const canManageMembers = computed(() => can(PERMISSION.companyMembers))
+  const canManageRoles = computed(() => can(PERMISSION.companyRoles))
 
   return {
     can,
     canEditCompany,
     canManagePipeline,
+    canManageRoles,
     ...useMembershipPermissions(canManageMembers),
   }
 }
