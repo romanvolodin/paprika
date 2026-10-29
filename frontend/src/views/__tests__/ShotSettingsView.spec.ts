@@ -88,6 +88,8 @@ describe('ShotSettingsView', () => {
       avatar: null,
       is_active: true,
       date_joined: '2026-01-01T00:00:00Z',
+      is_superuser: false,
+      must_change_password: false,
     }
   })
 

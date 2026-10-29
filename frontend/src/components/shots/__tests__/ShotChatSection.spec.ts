@@ -9,7 +9,7 @@ import UserAvatar from '@/components/common/UserAvatar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import * as chatApi from '@/api/chat'
-import type { AttachmentOut, MessageOut, UserOut, VersionOut } from '@/types/api'
+import type { AttachmentOut, MeOut, MessageOut, UserOut, VersionOut } from '@/types/api'
 
 vi.mock('@/api/chat')
 vi.mock('@/api/versions')
@@ -96,7 +96,11 @@ const Host = defineComponent({
 describe('ShotChatSection', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    useAuthStore().currentUser = me
+    useAuthStore().currentUser = {
+      ...me,
+      is_superuser: false,
+      must_change_password: false,
+    } as MeOut
     vi.clearAllMocks()
     vi.mocked(chatApi.listMessages).mockResolvedValue(
       chatList([

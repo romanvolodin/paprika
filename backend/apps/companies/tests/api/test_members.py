@@ -6,12 +6,25 @@ import pytest
 
 from apps.access.defaults import get_default_role
 from apps.companies.models import CompanyMembership
+from apps.users.models import User
 
 
 pytestmark = pytest.mark.django_db
 
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 100
+
+
+def _account(email, role_id, **overrides):
+    """A request body that adds `email` to the company."""
+    return {
+        "email": email,
+        "first_name": "New",
+        "last_name": "Person",
+        "password": "temporary-passphrase-77",
+        "role_id": role_id,
+        **overrides,
+    }
 
 
 def _role_id(company, key):
@@ -116,7 +129,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id, "role_id": _role_id(company, "producer")},
+            _account(new_member.email, _role_id(company, "producer")),
         )
 
         assert response.status_code == HTTPStatus.CREATED
@@ -142,7 +155,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
+            _account(new_member.email, _role_id(company, "executor")),
         )
 
         assert response.json()["role"]["name"] == "Исполнитель"
@@ -163,12 +176,12 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": existing_member.id, "role_id": _role_id(company, "executor")},
+            _account(existing_member.email, _role_id(company, "executor")),
         )
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_rejects_an_unknown_user_id(
+    def test_creates_an_account_for_a_new_email(
         self, auth_client, auth_user, company_factory, company_membership_factory
     ):
         company = company_factory()
@@ -177,10 +190,99 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": 999999, "role_id": _role_id(company, "executor")},
+            _account("fresh@example.com", _role_id(company, "freelancer")),
         )
 
-        assert response.status_code == HTTPStatus.NOT_FOUND
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["role"]["name"] == "Фрилансер"
+        created = User.objects.get(email="fresh@example.com")
+        assert (created.first_name, created.last_name) == ("New", "Person")
+        assert created.check_password("temporary-passphrase-77")
+        assert created.must_change_password is True
+        assert CompanyMembership.objects.filter(company=company, user=created).exists()
+
+    def test_the_email_is_matched_without_regard_to_case(
+        self,
+        auth_client,
+        auth_user,
+        company_factory,
+        company_membership_factory,
+        user_factory,
+    ):
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+        existing = user_factory(email="mixed@example.com")
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            _account("MIXED@example.com", _role_id(company, "executor")),
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert User.objects.filter(email__iexact="mixed@example.com").count() == 1
+        assert CompanyMembership.objects.filter(company=company, user=existing).exists()
+
+    def test_an_existing_account_is_added_as_is(
+        self,
+        auth_client,
+        auth_user,
+        company_factory,
+        company_membership_factory,
+        user_factory,
+    ):
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+        existing = user_factory(first_name="Kept")
+        old_hash = existing.password
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            _account(
+                existing.email,
+                _role_id(company, "executor"),
+                first_name="Changed",
+                password="another-passphrase-88",
+            ),
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        existing.refresh_from_db()
+        assert existing.first_name == "Kept"
+        assert existing.password == old_hash
+        assert existing.must_change_password is False
+
+    def test_a_weak_temporary_password_is_rejected(
+        self, auth_client, auth_user, company_factory, company_membership_factory
+    ):
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            _account(
+                "weak@example.com", _role_id(company, "executor"), password="12345678"
+            ),
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert not User.objects.filter(email="weak@example.com").exists()
+
+    def test_an_invalid_email_is_rejected(
+        self, auth_client, auth_user, company_factory, company_membership_factory
+    ):
+        company = company_factory()
+        company_membership_factory(user=auth_user, company=company)
+
+        response = _post_json(
+            auth_client,
+            f"/api/v1/companies/{company.id}/members/",
+            _account("not-an-email", _role_id(company, "executor")),
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
 
     def test_non_member_cannot_add_members(
         self,
@@ -196,7 +298,7 @@ class TestAddMember:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
+            _account(new_member.email, _role_id(company, "executor")),
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
@@ -208,7 +310,7 @@ class TestAddMember:
         response = _post_json(
             client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_member.id, "role_id": _role_id(company, "executor")},
+            _account(new_member.email, _role_id(company, "executor")),
         )
 
         assert response.status_code == 401
@@ -349,7 +451,7 @@ class TestMemberPermissions:
         added = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": new_user.id, "role_id": role_id},
+            _account(new_user.email, role_id),
         )
         changed = _patch_json(
             auth_client,
@@ -379,7 +481,7 @@ class TestMemberPermissions:
         response = _post_json(
             auth_client,
             f"/api/v1/companies/{company.id}/members/",
-            {"user_id": user_factory().id, "role_id": foreign_role_id},
+            _account(user_factory().email, foreign_role_id),
         )
 
         assert response.status_code == HTTPStatus.BAD_REQUEST

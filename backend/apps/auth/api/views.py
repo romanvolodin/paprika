@@ -2,10 +2,13 @@ from http import HTTPStatus
 from typing import override
 
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
-from dmr import Body, ResponseSpec, validate
+from dmr import APIError, Body, ResponseSpec, modify, validate
 from dmr.endpoint import ValidateAnyCallable
-from dmr.plugins.pydantic import PydanticFastSerializer
+from dmr.errors import ErrorType
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.jwt import request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistSyncMixin
@@ -16,11 +19,12 @@ from dmr.security.jwt.views import (
     ObtainTokensPayload,
 )
 
-from apps.users.api.schemas import UserOut
-from apps.users.api.views import _serialize_user
+from apps.users.api.schemas import MeOut
+from apps.users.api.views import serialize_me
 from apps.users.models import User
 
-from .schemas import LoginPayload
+from .controllers import AuthenticatedController
+from .schemas import LoginPayload, PasswordChangeIn
 from .security import access_token_auth
 
 
@@ -47,8 +51,8 @@ class _CookieSecurity:
     jwt_cookie_secure = not settings.DEBUG
 
 
-def _serialized_request_user(controller) -> UserOut:
-    return _serialize_user(controller.request, controller.request.user)
+def _serialized_request_user(controller) -> MeOut:
+    return serialize_me(controller.request, controller.request.user)
 
 
 class LoginController(
@@ -56,7 +60,7 @@ class LoginController(
     CookieObtainTokensSyncController[
         PydanticFastSerializer,
         LoginPayload,
-        UserOut,
+        MeOut,
     ],
 ):
     """`POST /api/v1/auth/login/` - exchange email+password for cookies."""
@@ -72,7 +76,7 @@ class LoginController(
         return {"username": payload.email, "password": payload.password}
 
     @override
-    def make_api_response(self) -> UserOut:
+    def make_api_response(self) -> MeOut:
         return _serialized_request_user(self)
 
     @classmethod
@@ -82,7 +86,7 @@ class LoginController(
         # reflect this subclass, not the framework's own defaults.
         return validate(
             ResponseSpec(
-                UserOut,
+                MeOut,
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies={**cls.issued_cookies_spec(), **cls.csrf_cookie_spec()},
@@ -122,7 +126,7 @@ class RefreshController(
     JWTokenBlocklistSyncMixin,
     CookieRefreshTokensSyncController[
         PydanticFastSerializer,
-        UserOut,
+        MeOut,
     ],
 ):
     """`POST /api/v1/auth/refresh/` - rotate cookies using the refresh cookie."""
@@ -131,14 +135,14 @@ class RefreshController(
     response_status_code = HTTPStatus.OK
 
     @override
-    def make_api_response(self) -> UserOut:
+    def make_api_response(self) -> MeOut:
         return _serialized_request_user(self)
 
     @classmethod
     def _post_spec(cls) -> ValidateAnyCallable:
         return validate(
             ResponseSpec(
-                UserOut,
+                MeOut,
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
@@ -173,6 +177,8 @@ class LogoutController(
 
     request: AuthenticatedHttpRequest[User]
     auth = (access_token_auth,)
+    # Signing out has to work for someone who still owes a new password.
+    allows_pending_password_change = True
     # Needed so the discard `Set-Cookie` for the refresh cookie is scoped
     # to the same path it was originally issued with - otherwise the
     # browser won't recognize it as the same cookie and won't clear it.
@@ -212,3 +218,43 @@ class LogoutController(
     @override
     def post(self) -> HttpResponse:
         return super().post()
+
+
+class PasswordController(AuthenticatedController[PydanticSerializer]):
+    """`POST /api/v1/auth/password/` - change your own password."""
+
+    # This is the one thing an account with a temporary password may do.
+    allows_pending_password_change = True
+
+    @modify(
+        status_code=HTTPStatus.NO_CONTENT,
+        summary="Change password",
+        description=(
+            "Change the signed-in user's password. The current password "
+            "has to be sent too, and the new one has to pass the server's "
+            "password rules. This also ends the obligation to choose a new "
+            "password of an account created with a temporary one."
+        ),
+        extra_responses=[ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST)],
+        tags=["Auth"],
+    )
+    def post(self, parsed_body: Body[PasswordChangeIn]) -> None:
+        user = self.request.user
+        if not user.check_password(parsed_body.current_password):
+            raise self._bad_request(
+                "The current password is wrong.", "current_password"
+            )
+        try:
+            validate_password(parsed_body.new_password, user)
+        except DjangoValidationError as exc:
+            raise self._bad_request(" ".join(exc.messages), "new_password") from exc
+
+        user.set_password(parsed_body.new_password)
+        user.must_change_password = False
+        user.save(update_fields=["password", "must_change_password"])
+
+    def _bad_request(self, message: str, field: str) -> APIError:
+        return APIError(
+            self.format_error(message, loc=[field], error_type=ErrorType.value_error),
+            status_code=HTTPStatus.BAD_REQUEST,
+        )

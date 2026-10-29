@@ -58,6 +58,20 @@ class UserOut(pydantic.BaseModel):
     )
 
 
+class MeOut(UserOut):
+    """The signed-in user's own account: `UserOut` plus what only they see."""
+
+    is_superuser: bool = pydantic.Field(
+        description="Whether the user administers the whole server.",
+    )
+    must_change_password: bool = pydantic.Field(
+        description=(
+            "Whether the password was set by someone else and has to be "
+            "changed before anything else can be done."
+        ),
+    )
+
+
 class UserListQuery(pydantic.BaseModel):
     """Pagination and search params for `GET /api/v1/users/`."""
 

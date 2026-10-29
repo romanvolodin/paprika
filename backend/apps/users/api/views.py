@@ -21,6 +21,7 @@ from apps.core.storage import delete_stored_file
 from apps.users.models import User
 
 from .schemas import (
+    MeOut,
     UserAvatarFiles,
     UserCreateIn,
     UserListOut,
@@ -41,6 +42,15 @@ def _serialize_user(request, user: User) -> UserOut:
         avatar=avatar_url,
         is_active=user.is_active,
         date_joined=user.date_joined,
+    )
+
+
+def serialize_me(request, user: User) -> MeOut:
+    """The signed-in user's own account, with the fields only they see."""
+    return MeOut(
+        **_serialize_user(request, user).model_dump(),
+        is_superuser=user.is_superuser,
+        must_change_password=user.must_change_password,
     )
 
 
@@ -100,6 +110,9 @@ def _clear_avatar(user: User) -> None:
 class MeController(AuthenticatedController[PydanticFastSerializer]):
     """`GET /api/v1/users/me/` - return the currently authenticated user."""
 
+    # The page that asks for a new password needs to know it has to.
+    allows_pending_password_change = True
+
     @modify(
         summary="Get current user",
         description="Return the profile of the user identified by the "
@@ -107,27 +120,29 @@ class MeController(AuthenticatedController[PydanticFastSerializer]):
         response_description="The currently authenticated user.",
         tags=["Users"],
     )
-    def get(self) -> UserOut:
-        return _serialize_user(self.request, self.request.user)
+    def get(self) -> MeOut:
+        return serialize_me(self.request, self.request.user)
 
 
 class UserListController(AuthenticatedController[PydanticSerializer]):
     """`GET/POST /api/v1/users/` - list and create users.
 
-    Any authenticated user may list or create users; finer-grained
-    permissions are deferred until they're actually needed.
+    Server-wide account management, so only for the superuser. Company
+    admins and producers add people through their company instead.
     """
 
     @modify(
         summary="List users",
         description=(
             "Return a paginated list of users, optionally filtered by "
-            "`search` against email, first and last name."
+            "`search` against email, first and last name. Superuser only."
         ),
         response_description="A page of users.",
+        extra_responses=[ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN)],
         tags=["Users"],
     )
     def get(self, parsed_query: Query[UserListQuery]) -> UserListOut:
+        require_superuser(self.request.user)
         queryset = User.objects.all()
 
         if parsed_query.search:
@@ -156,11 +171,12 @@ class UserListController(AuthenticatedController[PydanticSerializer]):
             "as `multipart/form-data`: regular fields for `email`, "
             "`password`, `first_name`, `last_name`, plus an optional "
             "`avatar` file field. If `password` is omitted, the account "
-            "is created with an unusable password."
+            "is created with an unusable password. Superuser only."
         ),
         response_description="The created user.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.BAD_REQUEST),
+            ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
         ],
         tags=["Users"],
     )
@@ -169,6 +185,7 @@ class UserListController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[UserCreateIn],
         parsed_file_metadata: FileMetadata[UserAvatarFiles],
     ) -> UserOut:
+        require_superuser(self.request.user)
         if User.objects.filter(email__iexact=parsed_body.email).exists():
             raise APIError(
                 self.format_error(
@@ -194,7 +211,10 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
 
     @modify(
         summary="Get a user",
-        description="Return a single user by id.",
+        description=(
+            "Return a single user by id: yourself, or anyone for the server "
+            "superuser. Other accounts answer 404."
+        ),
         response_description="The requested user.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -203,6 +223,11 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[UserPath]) -> UserOut:
         user = _get_user_or_404(parsed_path.user_id)
+        if user.pk != self.request.user.pk and not self.request.user.is_superuser:
+            raise APIError(
+                {"detail": f"User with id={parsed_path.user_id} was not found."},
+                status_code=HTTPStatus.NOT_FOUND,
+            )
         return _serialize_user(self.request, user)
 
     @modify(

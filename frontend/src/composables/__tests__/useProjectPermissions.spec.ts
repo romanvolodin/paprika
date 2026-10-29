@@ -4,9 +4,9 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { PERMISSION } from '@/constants/permissions'
 import { useAuthStore } from '@/stores/auth'
-import type { ProjectOut, UserOut } from '@/types/api'
+import type { ProjectOut, MeOut } from '@/types/api'
 
-function buildUser(overrides: Partial<UserOut> = {}): UserOut {
+function buildUser(overrides: Partial<MeOut> = {}): MeOut {
   return {
     id: 1,
     email: 'a@paprika.dev',
@@ -15,6 +15,8 @@ function buildUser(overrides: Partial<UserOut> = {}): UserOut {
     avatar: null,
     is_active: true,
     date_joined: '2026-01-01T00:00:00Z',
+    is_superuser: false,
+    must_change_password: false,
     ...overrides,
   }
 }

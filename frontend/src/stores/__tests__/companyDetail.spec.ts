@@ -28,6 +28,14 @@ function buildRoleOut(overrides: Partial<RoleOut> = {}): RoleOut {
   }
 }
 
+const NEW_MEMBER = {
+  email: 'new@paprika.dev',
+  first_name: 'New',
+  last_name: 'Person',
+  password: 'temporary-pass-1',
+  role_id: 4,
+}
+
 function buildCompany(overrides: Partial<CompanyOut> = {}): CompanyOut {
   return {
     id: 1,
@@ -120,12 +128,9 @@ describe('useCompanyDetailStore', () => {
       })
 
       const store = useCompanyDetailStore()
-      await store.addMember(1, { user_id: 1, role_id: 4 })
+      await store.addMember(1, NEW_MEMBER)
 
-      expect(companiesApi.addCompanyMember).toHaveBeenCalledWith(1, {
-        user_id: 1,
-        role_id: 4,
-      })
+      expect(companiesApi.addCompanyMember).toHaveBeenCalledWith(1, NEW_MEMBER)
       expect(companiesApi.listCompanyMembers).toHaveBeenCalledWith(1)
       expect(store.members).toHaveLength(1)
     })

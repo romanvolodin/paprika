@@ -5,13 +5,13 @@ import { setupAuthGuard } from '@/router/guards'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import * as companiesApi from '@/api/companies'
-import type { UserOut } from '@/types/api'
+import type { MeOut } from '@/types/api'
 
 vi.mock('@/api/auth')
 vi.mock('@/api/users')
 vi.mock('@/api/companies')
 
-const user: UserOut = {
+const user: MeOut = {
   id: 1,
   email: 'roman@paprika.dev',
   first_name: 'Roman',
@@ -19,6 +19,8 @@ const user: UserOut = {
   avatar: null,
   is_active: true,
   date_joined: '2026-01-01T00:00:00Z',
+  is_superuser: false,
+  must_change_password: false,
 }
 
 function buildRouter() {
@@ -35,6 +37,18 @@ function buildRouter() {
       {
         path: '/projects',
         name: 'project-list',
+        component: { template: '<div />' },
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/server',
+        name: 'server-only',
+        component: { template: '<div />' },
+        meta: { requiresAuth: true, requiresSuperuser: true },
+      },
+      {
+        path: '/password',
+        name: 'change-password',
         component: { template: '<div />' },
         meta: { requiresAuth: true },
       },
@@ -145,5 +159,68 @@ describe('setupAuthGuard', () => {
     await router.push('/users')
 
     expect(companiesApi.listCompanies).toHaveBeenCalledTimes(1)
+  })
+
+  describe('an account with a temporary password', () => {
+    async function signIn(overrides: Partial<MeOut>) {
+      const authApi = await import('@/api/auth')
+      vi.mocked(authApi.refresh).mockResolvedValue({ ...user, ...overrides })
+      return buildRouter()
+    }
+
+    it('is sent to the page that changes it, wherever it goes', async () => {
+      const router = await signIn({ must_change_password: true })
+
+      await router.push('/projects')
+
+      expect(router.currentRoute.value.name).toBe('change-password')
+    })
+
+    it('is not sent to the login page loop, nor does it load the companies', async () => {
+      const router = await signIn({ must_change_password: true })
+
+      await router.push('/login')
+
+      expect(router.currentRoute.value.name).toBe('change-password')
+      expect(companiesApi.listCompanies).not.toHaveBeenCalled()
+    })
+
+    it('may stay on the password page', async () => {
+      const router = await signIn({ must_change_password: true })
+
+      await router.push('/password')
+
+      expect(router.currentRoute.value.name).toBe('change-password')
+    })
+
+    it('goes where it wants once the password is changed', async () => {
+      const router = await signIn({ must_change_password: false })
+
+      await router.push('/projects')
+
+      expect(router.currentRoute.value.name).toBe('project-list')
+    })
+  })
+
+  describe('a superuser-only route', () => {
+    it('sends an ordinary user to the projects', async () => {
+      const authApi = await import('@/api/auth')
+      vi.mocked(authApi.refresh).mockResolvedValue(user)
+      const router = buildRouter()
+
+      await router.push('/server')
+
+      expect(router.currentRoute.value.name).toBe('project-list')
+    })
+
+    it('lets the superuser in', async () => {
+      const authApi = await import('@/api/auth')
+      vi.mocked(authApi.refresh).mockResolvedValue({ ...user, is_superuser: true })
+      const router = buildRouter()
+
+      await router.push('/server')
+
+      expect(router.currentRoute.value.name).toBe('server-only')
+    })
   })
 })

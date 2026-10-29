@@ -13,6 +13,7 @@
 import type { components, operations } from '@/api/schema'
 
 export type UserOut = components['schemas']['UserOut']
+export type MeOut = components['schemas']['MeOut']
 export type UserListOut = components['schemas']['UserListOut']
 export type UserCreateIn = components['schemas']['UserCreateIn']
 export type UserUpdateIn = components['schemas']['UserUpdateIn']

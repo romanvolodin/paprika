@@ -47,6 +47,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change password
+         * @description Change the signed-in user's password. The current password has to be sent too, and the new one has to pass the server's password rules. This also ends the obligation to choose a new password of an account created with a temporary one.
+         */
+        post: operations["postPasswordControllerApiV1AuthPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh/": {
         parameters: {
             query?: never;
@@ -206,7 +226,7 @@ export interface paths {
         put?: never;
         /**
          * Add a company member
-         * @description Add an existing user to the company with the given role. Needs the `company.members` permission.
+         * @description Add a person to the company with the given role. If nobody has this email yet, an account is created with the temporary password (the person has to change it at the first sign-in). If the account exists, it is added as is and the name and password sent are ignored, so the answer looks the same either way. Needs the `company.members` permission.
          */
         post: operations["postCompanyMemberListControllerApiV1CompaniesCompanyIdMembers"];
         delete?: never;
@@ -932,13 +952,13 @@ export interface paths {
         };
         /**
          * List users
-         * @description Return a paginated list of users, optionally filtered by `search` against email, first and last name.
+         * @description Return a paginated list of users, optionally filtered by `search` against email, first and last name. Superuser only.
          */
         get: operations["getUserListControllerApiV1Users"];
         put?: never;
         /**
          * Create a user
-         * @description Create a new user account, optionally with an avatar. Send as `multipart/form-data`: regular fields for `email`, `password`, `first_name`, `last_name`, plus an optional `avatar` file field. If `password` is omitted, the account is created with an unusable password.
+         * @description Create a new user account, optionally with an avatar. Send as `multipart/form-data`: regular fields for `email`, `password`, `first_name`, `last_name`, plus an optional `avatar` file field. If `password` is omitted, the account is created with an unusable password. Superuser only.
          */
         post: operations["postUserListControllerApiV1Users"];
         delete?: never;
@@ -976,7 +996,7 @@ export interface paths {
         };
         /**
          * Get a user
-         * @description Return a single user by id.
+         * @description Return a single user by id: yourself, or anyone for the server superuser. Other accounts answer 404.
          */
         get: operations["getUserDetailControllerApiV1UsersUserId"];
         put?: never;
@@ -1099,8 +1119,21 @@ export interface components {
          * @description Payload for `POST /api/v1/companies/<id>/members/`.
          */
         CompanyMemberCreateIn: {
-            /** User Id */
-            user_id: number;
+            /**
+             * Email
+             * Format: email
+             * @description Email of the person to add; it identifies their account.
+             */
+            email: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /**
+             * Password
+             * @description Temporary password for a new account; the person has to choose their own at the first sign-in. Ignored when an account with this email already exists.
+             */
+            password: string;
             /**
              * Role Id
              * @description A role of this company.
@@ -1362,6 +1395,59 @@ export interface components {
              */
             password: string;
         };
+        /**
+         * MeOut
+         * @description The signed-in user's own account: `UserOut` plus what only they see.
+         */
+        MeOut: {
+            /**
+             * Id
+             * @description Internal numeric user identifier.
+             */
+            id: number;
+            /**
+             * Email
+             * @description User's email address.
+             */
+            email: string;
+            /**
+             * First Name
+             * @description User's first name.
+             */
+            first_name: string;
+            /**
+             * Last Name
+             * @description User's last name.
+             */
+            last_name: string;
+            /**
+             * Avatar
+             * @description Absolute URL of the user's avatar image, or null if none.
+             * @default null
+             */
+            avatar?: string | null;
+            /**
+             * Is Active
+             * @description Whether the user account is active.
+             */
+            is_active: boolean;
+            /**
+             * Date Joined
+             * Format: date-time
+             * @description When the user account was created.
+             */
+            date_joined: string;
+            /**
+             * Is Superuser
+             * @description Whether the user administers the whole server.
+             */
+            is_superuser: boolean;
+            /**
+             * Must Change Password
+             * @description Whether the password was set by someone else and has to be changed before anything else can be done.
+             */
+            must_change_password: boolean;
+        };
         /** MessageCreateIn */
         MessageCreateIn: {
             /**
@@ -1450,6 +1536,22 @@ export interface components {
         MessageUpdateIn: {
             /** Text */
             text: string;
+        };
+        /**
+         * PasswordChangeIn
+         * @description Payload for `POST /api/v1/auth/password/`.
+         */
+        PasswordChangeIn: {
+            /**
+             * Current Password
+             * @description The password the user signs in with now.
+             */
+            current_password: string;
+            /**
+             * New Password
+             * @description The new password; it must pass the server's password rules.
+             */
+            new_password: string;
         };
         /**
          * PermissionListOut
@@ -2897,7 +2999,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserOut"];
+                    "application/json": components["schemas"]["MeOut"];
                 };
             };
             /** @description Raised when request components cannot be parsed */
@@ -3000,6 +3102,78 @@ export interface operations {
             };
         };
     };
+    postPasswordControllerApiV1AuthPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Payload for `POST /api/v1/auth/password/`. */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeIn"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": null;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Raised when auth was not successful */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when CSRF check failed */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when provided `Accept` header cannot be satisfied */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Raised when returned response does not match the response schema */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     postRefreshControllerApiV1AuthRefresh: {
         parameters: {
             query?: never;
@@ -3021,7 +3195,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserOut"];
+                    "application/json": components["schemas"]["MeOut"];
                 };
             };
             /** @description Unauthorized */
@@ -9299,6 +9473,17 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
             /** @description Raised when provided `Accept` header cannot be satisfied */
             406: {
                 headers: {
@@ -9370,13 +9555,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorModel"];
                 };
             };
-            /** @description Raised when CSRF check failed */
+            /** @description Forbidden */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorModel"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when provided `Accept` header cannot be satisfied */
@@ -9414,7 +9601,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserOut"];
+                    "application/json": components["schemas"]["MeOut"];
                 };
             };
             /** @description Raised when auth was not successful */

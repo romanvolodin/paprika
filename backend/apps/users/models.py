@@ -60,6 +60,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_("Designates whether the user can log into this admin site."),
     )
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
+    must_change_password = models.BooleanField(
+        _("must change password"),
+        default=False,
+        help_text=_(
+            "Set for an account created with a temporary password: until the "
+            "person chooses their own, the API only lets them do that."
+        ),
+    )
 
     class Meta:
         verbose_name = _("user")

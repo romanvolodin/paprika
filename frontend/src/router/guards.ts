@@ -17,6 +17,16 @@ export function setupAuthGuard(router: Router) {
       return { name: 'login', query: { redirect: to.fullPath } }
     }
 
+    // Until the password is changed the API refuses everything else, so
+    // there is nothing to show but the page that changes it.
+    if (auth.mustChangePassword) {
+      return to.name === 'change-password' ? true : { name: 'change-password' }
+    }
+
+    if (to.meta.requiresSuperuser && !auth.isSuperuser) {
+      return { name: 'project-list' }
+    }
+
     if (to.name === 'login' && auth.isAuthenticated) {
       return { name: 'project-list' }
     }

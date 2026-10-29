@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.paginator import Paginator
 from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
@@ -114,16 +116,6 @@ def _last_role_manager_error() -> APIError:
         {"detail": "The company must keep at least one person who can edit roles."},
         status_code=HTTPStatus.CONFLICT,
     )
-
-
-def _get_target_user_or_404(user_id: int) -> User:
-    try:
-        return User.objects.get(pk=user_id)
-    except User.DoesNotExist as exc:
-        raise APIError(
-            {"detail": f"User with id={user_id} was not found."},
-            status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
 
 
 class CompanyListController(AuthenticatedController[PydanticSerializer]):
@@ -319,8 +311,12 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
         status_code=HTTPStatus.CREATED,
         summary="Add a company member",
         description=(
-            "Add an existing user to the company with the given role. Needs "
-            "the `company.members` permission."
+            "Add a person to the company with the given role. If nobody has "
+            "this email yet, an account is created with the temporary "
+            "password (the person has to change it at the first sign-in). "
+            "If the account exists, it is added as is and the name and "
+            "password sent are ignored, so the answer looks the same either "
+            "way. Needs the `company.members` permission."
         ),
         response_description="The created membership.",
         extra_responses=[
@@ -337,14 +333,36 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
     ) -> CompanyMemberOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
-        target_user = _get_target_user_or_404(parsed_body.user_id)
         role = _get_role_or_400(self, company, parsed_body.role_id)
+        email = User.objects.normalize_email(parsed_body.email)
 
-        if CompanyMembership.objects.filter(company=company, user=target_user).exists():
+        target_user = User.objects.filter(email__iexact=email).first()
+        if target_user is None:
+            try:
+                validate_password(parsed_body.password)
+            except DjangoValidationError as exc:
+                raise APIError(
+                    self.format_error(
+                        " ".join(exc.messages),
+                        loc=["password"],
+                        error_type=ErrorType.value_error,
+                    ),
+                    status_code=HTTPStatus.BAD_REQUEST,
+                ) from exc
+            target_user = User.objects.create_user(
+                email=email,
+                password=parsed_body.password,
+                first_name=parsed_body.first_name,
+                last_name=parsed_body.last_name,
+                must_change_password=True,
+            )
+        elif CompanyMembership.objects.filter(
+            company=company, user=target_user
+        ).exists():
             raise APIError(
                 self.format_error(
-                    "This user is already a member of the company.",
-                    loc=["user_id"],
+                    "This person is already a member of the company.",
+                    loc=["email"],
                     error_type=ErrorType.value_error,
                 ),
                 status_code=HTTPStatus.BAD_REQUEST,

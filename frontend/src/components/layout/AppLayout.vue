@@ -10,6 +10,7 @@ import {
   SunnyOutline,
   MenuOutline,
   LogOutOutline,
+  KeyOutline,
 } from '@vicons/ionicons5'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
@@ -40,12 +41,12 @@ function renderIcon(icon: object) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
-const menuOptions: MenuOption[] = [
-  {
-    label: 'Пользователи',
-    key: 'users-list',
-    icon: renderIcon(PeopleOutline),
-  },
+const menuOptions = computed<MenuOption[]>(() => [
+  // Accounts are the server administrator's business; everyone else adds
+  // people through their company.
+  ...(auth.isSuperuser
+    ? [{ label: 'Пользователи', key: 'users-list', icon: renderIcon(PeopleOutline) }]
+    : []),
   {
     label: 'Проекты',
     key: 'project-list',
@@ -56,7 +57,7 @@ const menuOptions: MenuOption[] = [
     key: 'company-list',
     icon: renderIcon(BusinessOutline),
   },
-]
+])
 
 const activeKey = computed(() => {
   if (route.name === 'users-list') return 'users-list'
@@ -70,7 +71,11 @@ function handleMenuSelect(key: string) {
   mobileDrawerOpen.value = false
 }
 
-async function handleLogout() {
+async function handleUserMenu(key: string) {
+  if (key === 'change-password') {
+    router.push({ name: 'change-password' })
+    return
+  }
   await auth.logout()
   router.push({ name: 'login' })
 }
@@ -135,8 +140,11 @@ async function handleLogout() {
 
         <n-dropdown
           trigger="click"
-          :options="[{ label: 'Выйти', key: 'logout', icon: renderIcon(LogOutOutline) }]"
-          @select="handleLogout"
+          :options="[
+            { label: 'Сменить пароль', key: 'change-password', icon: renderIcon(KeyOutline) },
+            { label: 'Выйти', key: 'logout', icon: renderIcon(LogOutOutline) },
+          ]"
+          @select="handleUserMenu"
         >
           <button class="user-menu-trigger" type="button">
             <n-avatar

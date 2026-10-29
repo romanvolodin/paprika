@@ -5,6 +5,8 @@ import { routePageTitle } from '@/utils/pageTitle'
 declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean
+    // Only for the server's superuser; anyone else is sent to the projects.
+    requiresSuperuser?: boolean
     // Rendered full-screen, without the sidebar/header AppShell.
     standalone?: boolean
     // Tab title of the page; the shot name / project code and the app name are added around it.
@@ -22,6 +24,12 @@ const router = createRouter({
       meta: { title: 'Вход', standalone: true },
     },
     {
+      path: '/password',
+      name: 'change-password',
+      component: () => import('@/views/ChangePasswordView.vue'),
+      meta: { title: 'Смена пароля', requiresAuth: true, standalone: true },
+    },
+    {
       path: '/',
       redirect: { name: 'project-list' },
     },
@@ -29,13 +37,13 @@ const router = createRouter({
       path: '/users',
       name: 'users-list',
       component: () => import('@/views/UsersListView.vue'),
-      meta: { title: 'Пользователи', requiresAuth: true },
+      meta: { title: 'Пользователи', requiresAuth: true, requiresSuperuser: true },
     },
     {
       path: '/users/new',
       name: 'user-create',
       component: () => import('@/views/UserFormView.vue'),
-      meta: { title: 'Новый пользователь', requiresAuth: true },
+      meta: { title: 'Новый пользователь', requiresAuth: true, requiresSuperuser: true },
     },
     {
       path: '/users/:id(\\d+)',

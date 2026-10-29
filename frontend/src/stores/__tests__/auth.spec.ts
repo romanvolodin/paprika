@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import * as authApi from '@/api/auth'
-import type { UserOut } from '@/types/api'
+import type { MeOut } from '@/types/api'
 
 vi.mock('@/api/auth')
 
-const user: UserOut = {
+const user: MeOut = {
   id: 1,
   email: 'roman@paprika.dev',
   first_name: 'Roman',
@@ -14,6 +14,8 @@ const user: UserOut = {
   avatar: null,
   is_active: true,
   date_joined: '2026-01-01T00:00:00Z',
+  is_superuser: false,
+  must_change_password: false,
 }
 
 describe('useAuthStore', () => {
@@ -92,5 +94,45 @@ describe('useAuthStore', () => {
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.currentUser).toBeNull()
     expect(authApi.logout).toHaveBeenCalledWith()
+  })
+
+  it('knows about the superuser flag and a pending password change', async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      ...user,
+      is_superuser: true,
+      must_change_password: true,
+    })
+    const auth = useAuthStore()
+    expect(auth.isSuperuser).toBe(false)
+    expect(auth.mustChangePassword).toBe(false)
+
+    await auth.login('roman@paprika.dev', 'temporary')
+
+    expect(auth.isSuperuser).toBe(true)
+    expect(auth.mustChangePassword).toBe(true)
+  })
+
+  it('changePassword sends both passwords and lifts the pending flag', async () => {
+    vi.mocked(authApi.login).mockResolvedValue({ ...user, must_change_password: true })
+    vi.mocked(authApi.changePassword).mockResolvedValue({} as never)
+    const auth = useAuthStore()
+    await auth.login('roman@paprika.dev', 'temporary')
+
+    await auth.changePassword('temporary', 'mine-now-1')
+
+    expect(authApi.changePassword).toHaveBeenCalledWith('temporary', 'mine-now-1')
+    expect(auth.mustChangePassword).toBe(false)
+    expect(auth.currentUser?.email).toBe('roman@paprika.dev')
+  })
+
+  it('changePassword keeps the flag when the server refuses', async () => {
+    vi.mocked(authApi.login).mockResolvedValue({ ...user, must_change_password: true })
+    vi.mocked(authApi.changePassword).mockRejectedValue(new Error('400'))
+    const auth = useAuthStore()
+    await auth.login('roman@paprika.dev', 'temporary')
+
+    await expect(auth.changePassword('wrong', 'mine-now-1')).rejects.toThrow()
+
+    expect(auth.mustChangePassword).toBe(true)
   })
 })

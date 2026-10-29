@@ -69,6 +69,34 @@ class TestOrdinaryUser:
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert User.objects.filter(pk=target.pk).exists()
 
+    def test_cannot_list_or_create_accounts(self, ordinary_client):
+        listed = ordinary_client.get("/api/v1/users/")
+        created = ordinary_client.post(
+            "/api/v1/users/",
+            data={
+                "email": "x@example.com",
+                "first_name": "X",
+                "last_name": "Y",
+                "password": "a-long-passphrase-99",
+            },
+        )
+
+        assert listed.status_code == HTTPStatus.FORBIDDEN
+        assert created.status_code == HTTPStatus.FORBIDDEN
+        assert not User.objects.filter(email="x@example.com").exists()
+
+    def test_can_read_their_own_account_but_not_someone_elses(
+        self, ordinary_client, user_factory
+    ):
+        user = ordinary_client.user
+        target = user_factory()
+
+        own = ordinary_client.get(f"/api/v1/users/{user.id}/")
+        other = ordinary_client.get(f"/api/v1/users/{target.id}/")
+
+        assert own.status_code == HTTPStatus.OK
+        assert other.status_code == HTTPStatus.NOT_FOUND
+
     def test_can_delete_their_own_account(self, ordinary_client):
         user = ordinary_client.user
 
@@ -79,6 +107,15 @@ class TestOrdinaryUser:
 
 
 class TestSuperuser:
+    def test_can_list_and_read_anyone(self, auth_client, user_factory):
+        target = user_factory()
+
+        listed = auth_client.get("/api/v1/users/")
+        read = auth_client.get(f"/api/v1/users/{target.id}/")
+
+        assert listed.status_code == HTTPStatus.OK
+        assert read.status_code == HTTPStatus.OK
+
     def test_can_update_and_delete_anyone(
         self, auth_client, multipart_patch, user_factory
     ):

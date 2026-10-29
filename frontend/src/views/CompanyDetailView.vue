@@ -16,19 +16,19 @@ import {
   type DataTableColumns,
   type FormInst,
   type FormRules,
-  type SelectOption,
 } from 'naive-ui'
-import { AddOutline, ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
+import { ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
+import AddMemberForm from '@/components/company/AddMemberForm.vue'
 import ShotStatusesSection from '@/components/shots/ShotStatusesSection.vue'
 import TaskStatusesSection from '@/components/tasks/TaskStatusesSection.vue'
 import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
-import { useUserSearchOptions } from '@/composables/useUserSearchOptions'
+import { firstValidationMessage } from '@/utils/apiError'
 import { tagColor } from '@/utils/color'
 import { slugify } from '@/utils/slugify'
-import type { CompanyMemberOut, UserOut } from '@/types/api'
+import type { CompanyMemberCreateIn, CompanyMemberOut } from '@/types/api'
 
 const props = defineProps<{ companyId: number }>()
 
@@ -210,47 +210,20 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
 
 // --- Add member --------------------------------------------------------
 
-const userSearch = useUserSearchOptions()
-const newMemberUserId = ref<number | null>(null)
-const newMemberRole = ref<number | null>(null)
+const addMemberForm = ref<InstanceType<typeof AddMemberForm> | null>(null)
 const isAddingMember = ref(false)
 
-function renderUserOption(option: SelectOption) {
-  const user = (option as { user?: UserOut }).user
-  return h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
-    h(
-      NAvatar,
-      {
-        round: true,
-        size: 24,
-        src: user?.avatar ?? undefined,
-        style: { fontFamily: 'var(--font-mono)', fontSize: '10px' },
-      },
-      user?.avatar
-        ? undefined
-        : {
-            default: () =>
-              user ? `${user.first_name[0] ?? ''}${user.last_name[0] ?? ''}`.toUpperCase() : '',
-          },
-    ),
-    h('span', null, option.label as string),
-  ])
-}
-
-async function handleAddMember() {
-  if (!newMemberUserId.value || !newMemberRole.value) return
-
+async function handleAddMember(input: CompanyMemberCreateIn) {
   isAddingMember.value = true
   try {
-    await store.addMember(props.companyId, {
-      user_id: newMemberUserId.value,
-      role_id: newMemberRole.value,
-    })
+    await store.addMember(props.companyId, input)
     message.success('Участник добавлен.')
-    newMemberUserId.value = null
-    newMemberRole.value = null
-  } catch {
-    message.error('Не удалось добавить участника. Возможно, он уже состоит в компании.')
+    addMemberForm.value?.reset()
+  } catch (error) {
+    message.error(
+      firstValidationMessage(error) ??
+        'Не удалось добавить участника. Возможно, он уже состоит в компании.',
+    )
   } finally {
     isAddingMember.value = false
   }
@@ -303,36 +276,13 @@ async function handleAddMember() {
         :row-key="(row: CompanyMemberOut) => row.id"
       />
 
-      <div v-if="canManageMembers" class="company-detail__add-member">
-        <n-select
-          v-model:value="newMemberUserId"
-          filterable
-          remote
-          clearable
-          placeholder="Найти пользователя по имени или email"
-          style="max-width: 320px"
-          :loading="userSearch.loading.value"
-          :options="userSearch.options.value"
-          :render-label="renderUserOption"
-          @search="userSearch.search"
-          @focus="userSearch.loadInitial"
-        />
-        <n-select
-          v-model:value="newMemberRole"
-          :options="roleOptions"
-          placeholder="Роль"
-          style="max-width: 180px"
-        />
-        <n-button
-          type="primary"
-          :disabled="!newMemberUserId || !newMemberRole"
-          :loading="isAddingMember"
-          @click="handleAddMember"
-        >
-          <template #icon><n-icon :component="AddOutline" /></template>
-          Добавить
-        </n-button>
-      </div>
+      <add-member-form
+        v-if="canManageMembers"
+        ref="addMemberForm"
+        :roles="store.roles"
+        :is-submitting="isAddingMember"
+        @submit="handleAddMember"
+      />
     </section>
 
     <section class="company-detail__section">

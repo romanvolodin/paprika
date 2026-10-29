@@ -2,16 +2,19 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as authApi from '@/api/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
-import type { UserOut } from '@/types/api'
+import type { MeOut } from '@/types/api'
 
 export const useAuthStore = defineStore('auth', () => {
   // Both tokens live in httponly cookies now - the browser sends and
   // stores them on its own, and JavaScript can't read them even to
   // check whether they exist. `currentUser` is the only signal we have
   // left for "am I logged in".
-  const currentUser = ref<UserOut | null>(null)
+  const currentUser = ref<MeOut | null>(null)
 
   const isAuthenticated = computed(() => currentUser.value !== null)
+  const isSuperuser = computed(() => currentUser.value?.is_superuser ?? false)
+  // An account created with a temporary password can only change it.
+  const mustChangePassword = computed(() => currentUser.value?.must_change_password ?? false)
 
   function clearSession() {
     currentUser.value = null
@@ -37,6 +40,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function changePassword(currentPassword: string, newPassword: string) {
+    await authApi.changePassword(currentPassword, newPassword)
+    if (currentUser.value) {
+      currentUser.value = { ...currentUser.value, must_change_password: false }
+    }
+  }
+
   async function logout() {
     clearSession()
     try {
@@ -50,7 +60,10 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     currentUser,
     isAuthenticated,
+    isSuperuser,
+    mustChangePassword,
     login,
+    changePassword,
     logout,
     refresh,
     restoreSession,
