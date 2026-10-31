@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import ShotStatusTag from '@/components/shots/ShotStatusTag.vue'
-import type { ShotGroupOut, ShotOut, ShotStatusOut } from '@/types/api'
+import type { ShotOut, ShotStatusOut } from '@/types/api'
 
 defineProps<{
   shot: ShotOut
   status?: ShotStatusOut
-  groups: ShotGroupOut[]
   to: RouteLocationRaw
 }>()
 </script>
@@ -85,11 +84,5 @@ defineProps<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.shot-card__groups {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1, 4px);
 }
 </style>

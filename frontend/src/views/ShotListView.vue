@@ -226,7 +226,6 @@ watch(
               <shot-card
                 :shot="item"
                 :status="statusById.get(item.status_id)"
-                :groups="groupsOf(item)"
                 :to="shotRoute(item)"
               />
             </template>

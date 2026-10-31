@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import ShotCard from '@/components/shots/ShotCard.vue'
-import type { ShotGroupOut, ShotOut, ShotStatusOut } from '@/types/api'
+import type { ShotOut, ShotStatusOut } from '@/types/api'
 
 function buildShot(overrides: Partial<ShotOut> = {}): ShotOut {
   return {
@@ -31,16 +31,7 @@ const status = {
   is_default: false,
 } as ShotStatusOut
 
-const groups = [
-  { id: 1, project_id: 1, name: 'Эпизод 1' },
-  { id: 2, project_id: 1, name: 'Эпизод 2' },
-] as ShotGroupOut[]
-
-async function mountCard(props: {
-  shot?: ShotOut
-  status?: ShotStatusOut
-  groups?: ShotGroupOut[]
-}) {
+async function mountCard(props: { shot?: ShotOut; status?: ShotStatusOut }) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/shots/:name', name: 'shot', component: { render: () => null } }],
@@ -50,7 +41,6 @@ async function mountCard(props: {
   return mount(ShotCard, {
     props: {
       shot: buildShot(),
-      groups: [],
       to: { name: 'shot', params: { name: 'PRJ_0010' } },
       ...props,
     },
@@ -73,13 +63,6 @@ describe('ShotCard', () => {
 
     expect(wrapper.find('img').exists()).toBe(false)
     expect(wrapper.text()).toContain('Нет превью')
-  })
-
-  it('shows the groups of the shot', async () => {
-    const wrapper = await mountCard({ groups })
-
-    expect(wrapper.text()).toContain('Эпизод 1')
-    expect(wrapper.text()).toContain('Эпизод 2')
   })
 
   it('shows no status when it is unknown', async () => {
