@@ -104,7 +104,7 @@ class TestAddMember:
     ):
         company_membership_factory(user=auth_user, company=company)
         project = project_factory(company=company)
-        project_membership_factory(user=auth_user, project=project)
+        project_membership_factory(user=auth_user, project=project, role="admin")
         new_member = user_factory(email="newmember@example.com")
         company_membership_factory(user=new_member, company=company)
 

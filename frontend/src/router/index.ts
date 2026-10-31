@@ -24,6 +24,13 @@ const router = createRouter({
       meta: { title: 'Вход', standalone: true },
     },
     {
+      path: '/invite/:token',
+      name: 'invite',
+      component: () => import('@/views/InviteView.vue'),
+      props: true,
+      meta: { title: 'Приглашение', standalone: true },
+    },
+    {
       path: '/password',
       name: 'change-password',
       component: () => import('@/views/ChangePasswordView.vue'),

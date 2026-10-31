@@ -32,4 +32,14 @@ export const PERMISSION = {
   chatEditAny: 'chat.edit_any',
 } as const
 
+// The permissions that act through the role in the company, not in a project.
+export const COMPANY_LEVEL_CODES = [
+  PERMISSION.companyEdit,
+  PERMISSION.companyMembers,
+  PERMISSION.companyRoles,
+  PERMISSION.companyPipeline,
+  PERMISSION.projectCreate,
+  'company.delete',
+] as const
+
 export type PermissionCode = (typeof PERMISSION)[keyof typeof PERMISSION]

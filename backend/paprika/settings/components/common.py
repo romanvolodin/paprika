@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.chat",
     "apps.companies",
     "apps.feed",
+    "apps.invitations",
     "apps.projects",
     "apps.shots",
     "apps.tasks",
@@ -116,6 +117,9 @@ VERSION_THUMB_FRAME_POSITION = env.float(
 )
 # Longest side of a generated thumbnail, in pixels.
 VERSION_THUMB_MAX_SIZE = 320
+
+# Invitations (see `apps.invitations`): how many days an invitation link works.
+INVITATION_TTL_DAYS = env.int("PAPRIKA_INVITATION_TTL_DAYS", 7)
 
 # Chat (see `apps.chat`). Plain environment variables, like the versions
 # ones above.

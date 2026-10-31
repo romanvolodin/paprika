@@ -20,6 +20,7 @@ import {
 import { ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
 import AddMemberForm from '@/components/company/AddMemberForm.vue'
+import CompanyInvitationsSection from '@/components/company/CompanyInvitationsSection.vue'
 import ShotStatusesSection from '@/components/shots/ShotStatusesSection.vue'
 import TaskStatusesSection from '@/components/tasks/TaskStatusesSection.vue'
 import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
@@ -283,6 +284,11 @@ async function handleAddMember(input: CompanyMemberCreateIn) {
         :is-submitting="isAddingMember"
         @submit="handleAddMember"
       />
+    </section>
+
+    <section v-if="canManageMembers" class="company-detail__section">
+      <h2 class="company-detail__heading">Приглашения</h2>
+      <company-invitations-section :company-id="props.companyId" />
     </section>
 
     <section class="company-detail__section">

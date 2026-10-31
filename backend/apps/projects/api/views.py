@@ -20,6 +20,7 @@ from apps.access.checks import (
     project_permissions,
     project_permissions_by_id,
     projects_q,
+    require_can_grant_project_role,
     require_company_perm,
     require_project_perm,
 )
@@ -460,6 +461,7 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
         require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         target_user = _get_company_member_or_404(project.company, parsed_body.user_id)
         role = _get_role_or_400(self, project.company, parsed_body.role_id)
+        require_can_grant_project_role(self.request.user, project, role)
 
         if ProjectMembership.objects.filter(project=project, user=target_user).exists():
             raise APIError(
@@ -507,6 +509,8 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
         require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         membership = _get_membership_or_404(project, parsed_path.user_id)
         role = _get_role_or_400(self, project.company, parsed_body.role_id)
+        require_can_grant_project_role(self.request.user, project, membership.role)
+        require_can_grant_project_role(self.request.user, project, role)
 
         membership.role = role
         membership.updated_by = self.request.user
@@ -530,5 +534,6 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
         membership = _get_membership_or_404(project, parsed_path.user_id)
+        require_can_grant_project_role(self.request.user, project, membership.role)
         membership.delete()
         return None

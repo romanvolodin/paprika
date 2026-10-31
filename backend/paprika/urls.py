@@ -11,6 +11,7 @@ from apps.auth.api.urls import router as auth_router
 from apps.chat.api.urls import router as chat_router
 from apps.companies.api.urls import router as companies_router
 from apps.feed.api.urls import router as feed_router
+from apps.invitations.api.urls import router as invitations_router
 from apps.projects.api.urls import router as projects_router
 from apps.shot_import.api.urls import router as shot_import_router
 from apps.shots.api.urls import router as shots_router
@@ -22,6 +23,7 @@ from apps.versions.api.urls import router as versions_router
 api_router = Router("api/v1/")
 api_router.include(access_router)
 api_router.include(auth_router)
+api_router.include(invitations_router)
 api_router.include(chat_router)
 api_router.include(companies_router)
 api_router.include(feed_router)

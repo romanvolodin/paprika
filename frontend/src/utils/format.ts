@@ -25,3 +25,8 @@ export function formatHours(estimated: number | null, actual: number | null): st
     value === null ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })
   return `${format(estimated)} / ${format(actual)}`
 }
+
+/** "до 12 ноября" for the day an invitation stops working. */
+export function formatExpiry(iso: string): string {
+  return `до ${new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`
+}

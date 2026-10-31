@@ -20,6 +20,7 @@ from apps.chat.tests.factories import (
     ReactionFactory,
 )
 from apps.companies.tests.factories import CompanyFactory, CompanyMembershipFactory
+from apps.invitations.tests.factories import InvitationFactory
 from apps.projects.tests.factories import ProjectFactory, ProjectMembershipFactory
 from apps.shots.tests.factories import ShotFactory, ShotGroupFactory, ShotStatusFactory
 from apps.tasks.tests.factories import (
@@ -114,6 +115,12 @@ def company(company_factory):
 def company_membership_factory():
     """The `CompanyMembershipFactory` class itself."""
     return CompanyMembershipFactory
+
+
+@pytest.fixture
+def invitation_factory():
+    """The `InvitationFactory` class itself, e.g. `invitation_factory(company=...)`."""
+    return InvitationFactory
 
 
 @pytest.fixture

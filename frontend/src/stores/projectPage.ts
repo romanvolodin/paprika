@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { isAxiosError } from 'axios'
 import * as companiesApi from '@/api/companies'
+import * as invitationsApi from '@/api/invitations'
 import * as projectsApi from '@/api/projects'
 import * as rolesApi from '@/api/roles'
 import type { UpdateProjectInput } from '@/api/projects'
@@ -9,6 +10,8 @@ import type {
   CompanyMemberOut,
   CompanyOut,
   ProjectMemberCreateIn,
+  InvitationOut,
+  ProjectInvitationCreateIn,
   ProjectMemberOut,
   ProjectOut,
   RoleOut,
@@ -116,6 +119,11 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     await refetchMembers()
   }
 
+  async function inviteToProject(input: ProjectInvitationCreateIn): Promise<InvitationOut> {
+    if (!project.value) throw new Error('No project is open.')
+    return invitationsApi.createProjectInvitation(project.value.id, input)
+  }
+
   async function updateMemberRole(userId: number, roleId: number) {
     if (!project.value) return
     await projectsApi.updateProjectMember(project.value.id, userId, { role_id: roleId })
@@ -135,6 +143,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     members,
     companyMembers,
     roles,
+    inviteToProject,
     isLoading,
     open,
     setNotFound,

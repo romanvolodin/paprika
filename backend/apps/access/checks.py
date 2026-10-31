@@ -210,3 +210,44 @@ def role_manager_would_vanish(
     return not _has_role_manager(
         company, remove_user_id=remove_user_id, move=move, edit=edit
     )
+
+
+def _company_role_sees_all_projects(user: User, company: Company) -> bool:
+    return CompanyMembership.objects.filter(
+        user=user, company=company, role__sees_all_projects=True
+    ).exists()
+
+
+def can_grant_company_role(user: User, company: Company, role: Role) -> bool:
+    """Whether the user may give `role` to someone in the company.
+
+    Nobody can hand out more than they have: the role's company permissions
+    must all be among the user's own, and a role that sees every project
+    only goes to someone who sees every project themselves.
+    """
+    if user.is_superuser:
+        return True
+    if not (COMPANY_CODES & frozenset(role.permissions)) <= company_permissions(
+        user, company
+    ):
+        return False
+    return not role.sees_all_projects or _company_role_sees_all_projects(user, company)
+
+
+def can_grant_project_role(user: User, project: Project, role: Role) -> bool:
+    """Whether the user may give `role` to someone in the project."""
+    if user.is_superuser:
+        return True
+    return (PROJECT_CODES & frozenset(role.permissions)) <= project_permissions(
+        user, project
+    )
+
+
+def require_can_grant_company_role(user: User, company: Company, role: Role) -> None:
+    if not can_grant_company_role(user, company, role):
+        raise _forbidden()
+
+
+def require_can_grant_project_role(user: User, project: Project, role: Role) -> None:
+    if not can_grant_project_role(user, project, role):
+        raise _forbidden()

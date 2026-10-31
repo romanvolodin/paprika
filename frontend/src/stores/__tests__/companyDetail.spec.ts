@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
 import * as companiesApi from '@/api/companies'
+import * as invitationsApi from '@/api/invitations'
 import * as rolesApi from '@/api/roles'
 import type { CompanyMemberOut, CompanyOut, RoleOut, RoleRefOut } from '@/types/api'
 
 vi.mock('@/api/companies')
 vi.mock('@/api/roles')
+vi.mock('@/api/invitations')
 
 function buildRole(overrides: Partial<RoleRefOut> = {}): RoleRefOut {
   return { id: 1, name: 'Админ', color: '#00A64F', ...overrides }
@@ -234,6 +236,70 @@ describe('useCompanyDetailStore', () => {
 
       expect(rolesApi.deleteRole).toHaveBeenCalledWith(1)
       expect(store.roles).toEqual([])
+    })
+  })
+
+  describe('invitations', () => {
+    const sent = {
+      id: 1,
+      company_id: 1,
+      email: 'invited@paprika.dev',
+      role: { id: 4, name: 'Исполнитель', color: '#E971B8' },
+      projects: [],
+      token: 'tok',
+      expires_at: '2099-01-01T00:00:00Z',
+      is_expired: false,
+      created_by_name: null,
+      created_at: '2026-01-01T00:00:00Z',
+    }
+
+    it('loads the open invitations', async () => {
+      vi.mocked(invitationsApi.listCompanyInvitations).mockResolvedValue({ items: [sent] })
+      const store = useCompanyDetailStore()
+
+      await store.loadInvitations(1)
+
+      expect(invitationsApi.listCompanyInvitations).toHaveBeenCalledWith(1)
+      expect(store.invitations).toEqual([sent])
+    })
+
+    it('invites and refreshes the list', async () => {
+      vi.mocked(invitationsApi.createCompanyInvitation).mockResolvedValue(sent)
+      vi.mocked(invitationsApi.listCompanyInvitations).mockResolvedValue({ items: [sent] })
+      const store = useCompanyDetailStore()
+      const input = { email: 'invited@paprika.dev', role_id: 4, projects: [] }
+
+      const result = await store.invite(1, input)
+
+      expect(invitationsApi.createCompanyInvitation).toHaveBeenCalledWith(1, input)
+      expect(result).toEqual(sent)
+      expect(store.invitations).toHaveLength(1)
+    })
+
+    it('renews and refreshes the list', async () => {
+      vi.mocked(invitationsApi.renewInvitation).mockResolvedValue({ ...sent, token: 'new' })
+      vi.mocked(invitationsApi.listCompanyInvitations).mockResolvedValue({
+        items: [{ ...sent, token: 'new' }],
+      })
+      const store = useCompanyDetailStore()
+
+      const result = await store.renewInvitation(1, 1)
+
+      expect(invitationsApi.renewInvitation).toHaveBeenCalledWith(1)
+      expect(result.token).toBe('new')
+      expect(store.invitations[0]?.token).toBe('new')
+    })
+
+    it('revokes and refreshes the list', async () => {
+      vi.mocked(invitationsApi.revokeInvitation).mockResolvedValue({} as never)
+      vi.mocked(invitationsApi.listCompanyInvitations).mockResolvedValue({ items: [] })
+      const store = useCompanyDetailStore()
+      store.invitations = [sent]
+
+      await store.revokeInvitation(1, 1)
+
+      expect(invitationsApi.revokeInvitation).toHaveBeenCalledWith(1)
+      expect(store.invitations).toEqual([])
     })
   })
 })

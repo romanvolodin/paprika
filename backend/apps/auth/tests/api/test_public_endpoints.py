@@ -1,14 +1,18 @@
 import pytest
 
 
-# The only API operations that may be called without being logged in.
+# The only API operations that may be called without being logged in: signing
+# in, and the invitation link, which is how someone without an account gets
+# one (the secret in the link is the credential).
 PUBLIC_OPERATIONS = {
     "POST /api/v1/auth/login/",
     "POST /api/v1/auth/refresh/",
+    "GET /api/v1/invite/{token}/",
+    "POST /api/v1/invite/{token}/register/",
 }
 
 
-def test_only_login_and_refresh_are_public(client):
+def test_only_the_known_operations_are_public(client):
     """Every other operation must declare a security requirement.
 
     Authentication comes from `AuthenticatedController`; a controller that

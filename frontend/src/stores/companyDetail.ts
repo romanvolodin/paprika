@@ -1,12 +1,15 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as companiesApi from '@/api/companies'
+import * as invitationsApi from '@/api/invitations'
 import * as rolesApi from '@/api/roles'
 import type {
   CompanyMemberCreateIn,
   CompanyMemberOut,
   CompanyOut,
   CompanyUpdateIn,
+  InvitationCreateIn,
+  InvitationOut,
   PermissionOut,
   RoleCreateIn,
   RoleOut,
@@ -17,6 +20,8 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
   const company = ref<CompanyOut | null>(null)
   const members = ref<CompanyMemberOut[]>([])
   const roles = ref<RoleOut[]>([])
+  // Invitations nobody accepted yet; only loaded for those who manage members.
+  const invitations = ref<InvitationOut[]>([])
   // The fixed list of permissions a role is made of, the same for every company.
   const permissionCatalog = ref<PermissionOut[]>([])
   const isLoading = ref(false)
@@ -35,6 +40,27 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     } finally {
       isLoading.value = false
     }
+  }
+
+  async function loadInvitations(companyId: number) {
+    invitations.value = (await invitationsApi.listCompanyInvitations(companyId)).items
+  }
+
+  async function invite(companyId: number, input: InvitationCreateIn): Promise<InvitationOut> {
+    const invitation = await invitationsApi.createCompanyInvitation(companyId, input)
+    await loadInvitations(companyId)
+    return invitation
+  }
+
+  async function renewInvitation(companyId: number, invitationId: number): Promise<InvitationOut> {
+    const invitation = await invitationsApi.renewInvitation(invitationId)
+    await loadInvitations(companyId)
+    return invitation
+  }
+
+  async function revokeInvitation(companyId: number, invitationId: number) {
+    await invitationsApi.revokeInvitation(invitationId)
+    await loadInvitations(companyId)
   }
 
   async function loadPermissionCatalog() {
@@ -90,9 +116,14 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     members,
     roles,
     permissionCatalog,
+    invitations,
     isLoading,
     fetch,
     loadPermissionCatalog,
+    loadInvitations,
+    invite,
+    renewInvitation,
+    revokeInvitation,
     createRole,
     updateRole,
     removeRole,

@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { AxiosError } from 'axios'
 import { useProjectPageStore } from '@/stores/projectPage'
 import * as companiesApi from '@/api/companies'
+import * as invitationsApi from '@/api/invitations'
 import * as projectsApi from '@/api/projects'
 import * as rolesApi from '@/api/roles'
 import type {
@@ -17,6 +18,7 @@ import type {
 vi.mock('@/api/projects')
 vi.mock('@/api/companies')
 vi.mock('@/api/roles')
+vi.mock('@/api/invitations')
 
 const company: CompanyOut = {
   id: 7,
@@ -208,6 +210,28 @@ describe('useProjectPageStore', () => {
       expect(store.companyMembers).toHaveLength(2)
       expect(store.roles.map((role) => role.name)).toEqual(['Админ', 'Исполнитель'])
       expect(store.isLoading).toBe(false)
+    })
+  })
+
+  describe('inviteToProject', () => {
+    it('invites to the open project and returns the invitation', async () => {
+      const store = await openedStore()
+      const sent = { id: 3, token: 'tok' } as never
+      vi.mocked(invitationsApi.createProjectInvitation).mockResolvedValue(sent)
+
+      const result = await store.inviteToProject({ email: 'new@paprika.dev', role_id: 4 })
+
+      expect(invitationsApi.createProjectInvitation).toHaveBeenCalledWith(1, {
+        email: 'new@paprika.dev',
+        role_id: 4,
+      })
+      expect(result).toBe(sent)
+    })
+
+    it('refuses when no project is open', async () => {
+      const store = useProjectPageStore()
+
+      await expect(store.inviteToProject({ email: 'a@b.dev', role_id: 4 })).rejects.toThrow()
     })
   })
 

@@ -12,6 +12,7 @@ from apps.access.checks import (
     companies_q,
     company_permissions,
     company_permissions_by_id,
+    require_can_grant_company_role,
     require_company_perm,
     role_manager_would_vanish,
 )
@@ -334,6 +335,7 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         role = _get_role_or_400(self, company, parsed_body.role_id)
+        require_can_grant_company_role(self.request.user, company, role)
         email = User.objects.normalize_email(parsed_body.email)
 
         target_user = User.objects.filter(email__iexact=email).first()
@@ -405,6 +407,8 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         membership = _get_membership_or_404(company, parsed_path.user_id)
         role = _get_role_or_400(self, company, parsed_body.role_id)
+        require_can_grant_company_role(self.request.user, company, membership.role)
+        require_can_grant_company_role(self.request.user, company, role)
 
         if role_manager_would_vanish(company, move=(membership.user_id, role)):
             raise _last_role_manager_error()
@@ -433,6 +437,7 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         membership = _get_membership_or_404(company, parsed_path.user_id)
+        require_can_grant_company_role(self.request.user, company, membership.role)
         if role_manager_would_vanish(company, remove_user_id=membership.user_id):
             raise _last_role_manager_error()
         membership.delete()

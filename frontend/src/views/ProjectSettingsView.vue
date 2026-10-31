@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import InvitationLink from '@/components/company/InvitationLink.vue'
+import ProjectInviteForm from '@/components/projects/ProjectInviteForm.vue'
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -24,7 +26,8 @@ import { AddOutline, CameraOutline, TrashOutline } from '@vicons/ionicons5'
 import { storeToRefs } from 'pinia'
 import { useProjectPageStore } from '@/stores/projectPage'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
-import type { CompanyMemberOut, ProjectMemberOut } from '@/types/api'
+import { firstValidationMessage } from '@/utils/apiError'
+import type { CompanyMemberOut, InvitationOut, ProjectMemberOut } from '@/types/api'
 
 const router = useRouter()
 const message = useMessage()
@@ -248,6 +251,24 @@ const newMemberUserId = ref<number | null>(null)
 const newMemberRole = ref<number | null>(null)
 const isAddingMember = ref(false)
 
+const inviteForm = ref<InstanceType<typeof ProjectInviteForm> | null>(null)
+const isInviting = ref(false)
+const justInvited = ref<InvitationOut | null>(null)
+
+async function handleInvite(input: { email: string; role_id: number }) {
+  isInviting.value = true
+  try {
+    justInvited.value = await store.inviteToProject(input)
+    inviteForm.value?.reset()
+    message.success('Приглашение создано. Передайте ссылку человеку.')
+  } catch (error) {
+    justInvited.value = null
+    message.error(firstValidationMessage(error) ?? 'Не удалось создать приглашение.')
+  } finally {
+    isInviting.value = false
+  }
+}
+
 function renderMemberOption(option: SelectOption) {
   const member = (option as { member?: CompanyMemberOut }).member
   return h('div', { style: 'display: flex; align-items: center; gap: 8px;' }, [
@@ -428,6 +449,25 @@ function confirmDeleteProject() {
           Добавить
         </n-button>
       </div>
+
+      <div v-if="canManageMembers" class="project-settings__invite">
+        <h3 class="project-settings__subheading">Пригласить в проект</h3>
+        <p class="project-settings__hint project-settings__hint--plain">
+          Для тех, кого ещё нет в компании. Человек войдёт в компанию с той же ролью, поэтому здесь
+          только роли без прав на управление компанией. Паприка не отправляет письма: скопируйте
+          ссылку и передайте её человеку.
+        </p>
+        <project-invite-form
+          ref="inviteForm"
+          :roles="store.roles"
+          :is-submitting="isInviting"
+          @submit="handleInvite"
+        />
+        <div v-if="justInvited" class="project-settings__invited">
+          <strong>{{ justInvited.email }}</strong>
+          <InvitationLink :token="justInvited.token" />
+        </div>
+      </div>
     </section>
 
     <section v-if="canDeleteProject" class="project-settings__section">
@@ -505,6 +545,28 @@ function confirmDeleteProject() {
 
 .project-settings__cover-input {
   display: none;
+}
+
+.project-settings__invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.project-settings__subheading {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.project-settings__invited {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
 }
 
 .project-settings__add-member {
