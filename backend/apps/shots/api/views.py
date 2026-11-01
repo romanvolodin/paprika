@@ -11,6 +11,7 @@ from apps.access.checks import (
     projects_q,
     require_company_perm,
     require_project_perm,
+    visible_shots,
 )
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
@@ -526,14 +527,12 @@ def _serialize_shot(request, shot: Shot) -> ShotOut:
 
 
 def _get_shot_or_404(user: User, shot_id: int) -> Shot:
-    """Look up a shot, scoped to projects the user is a member of.
+    """Look up a shot the user can see (see `visible_shots`).
 
-    Mirrors `_get_shot_group_or_404` - visibility follows the parent
-    project's `ProjectMembership` directly, regardless of which (if any)
-    groups the shot belongs to.
+    A shot the user's role doesn't show answers 404 like a missing one.
     """
     try:
-        return Shot.objects.filter(projects_q(user, "project")).get(pk=shot_id)
+        return visible_shots(user).get(pk=shot_id)
     except Shot.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Shot with id={shot_id} was not found."},

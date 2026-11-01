@@ -71,6 +71,12 @@ class ProjectOut(pydantic.BaseModel):
     my_permissions: list[str] = pydantic.Field(
         description="Codes of the project permissions the current user has."
     )
+    my_sees_all_shots: bool = pydantic.Field(
+        description=(
+            "Whether the current user sees every shot of the project, or "
+            "only the ones with a task assigned to them."
+        )
+    )
     created_at: dt.datetime
     updated_at: dt.datetime
 

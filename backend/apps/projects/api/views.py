@@ -19,6 +19,8 @@ from apps.access.checks import (
     companies_q,
     project_permissions,
     project_permissions_by_id,
+    project_sees_all_shots,
+    project_sees_all_shots_by_id,
     projects_q,
     require_can_grant_project_role,
     require_company_perm,
@@ -50,7 +52,9 @@ from .schemas import (
 )
 
 
-def _serialize_project(request, project: Project, permissions) -> ProjectOut:
+def _serialize_project(
+    request, project: Project, permissions, sees_all_shots: bool
+) -> ProjectOut:
     cover_url = request.build_absolute_uri(project.cover.url) if project.cover else None
     return ProjectOut(
         id=project.id,
@@ -63,6 +67,7 @@ def _serialize_project(request, project: Project, permissions) -> ProjectOut:
         deadline=project.deadline,
         is_active=project.is_active,
         my_permissions=sorted(permissions),
+        my_sees_all_shots=sees_all_shots,
         created_by=_serialize_user(request, project.created_by)
         if project.created_by
         else None,
@@ -71,6 +76,16 @@ def _serialize_project(request, project: Project, permissions) -> ProjectOut:
         else None,
         created_at=project.created_at,
         updated_at=project.updated_at,
+    )
+
+
+def _serialize_project_for_user(request, project: Project) -> ProjectOut:
+    user = request.user
+    return _serialize_project(
+        request,
+        project,
+        project_permissions(user, project),
+        project_sees_all_shots(user, project),
     )
 
 
@@ -250,9 +265,15 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
 
         projects = list(page.object_list)
         permissions = project_permissions_by_id(self.request.user, projects)
+        sees_all_shots = project_sees_all_shots_by_id(self.request.user, projects)
         return ProjectListOut(
             items=[
-                _serialize_project(self.request, project, permissions[project.pk])
+                _serialize_project(
+                    self.request,
+                    project,
+                    permissions[project.pk],
+                    sees_all_shots[project.pk],
+                )
                 for project in projects
             ],
             total=paginator.count,
@@ -321,9 +342,7 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
                 updated_by=self.request.user,
             )
         _apply_cover(project, parsed_file_metadata, self.request)
-        return _serialize_project(
-            self.request, project, project_permissions(self.request.user, project)
-        )
+        return _serialize_project_for_user(self.request, project)
 
 
 class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
@@ -340,9 +359,7 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[ProjectPath]) -> ProjectOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        return _serialize_project(
-            self.request, project, project_permissions(self.request.user, project)
-        )
+        return _serialize_project_for_user(self.request, project)
 
     @modify(
         parsers=[MultiPartParser()],
@@ -388,9 +405,7 @@ class ProjectDetailController(AuthenticatedController[PydanticSerializer]):
         elif parsed_body.remove_cover and project.cover:
             _clear_cover(project)
 
-        return _serialize_project(
-            self.request, project, project_permissions(self.request.user, project)
-        )
+        return _serialize_project_for_user(self.request, project)
 
     @modify(
         status_code=HTTPStatus.NO_CONTENT,

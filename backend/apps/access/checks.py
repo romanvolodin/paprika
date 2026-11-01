@@ -16,6 +16,7 @@ from dmr import APIError
 
 from apps.companies.models import Company, CompanyMembership
 from apps.projects.models import Project, ProjectMembership
+from apps.shots.models import Shot
 from apps.users.models import User
 
 from .models import Role
@@ -44,6 +45,53 @@ def visible_projects(user: User) -> QuerySet[Project]:
             company__memberships__role__sees_all_projects=True,
         )
     )
+
+
+def _projects_with_all_shots(user: User) -> QuerySet[Project]:
+    """Projects where the user's role shows every shot, not just assigned ones.
+
+    The role in the project decides; a company role that sees every
+    project only speaks for projects the user is not a member of.
+    """
+    if user.is_superuser:
+        return Project.objects.all()
+    as_member = Project.objects.filter(
+        memberships__user=user, memberships__role__sees_all_shots=True
+    )
+    as_company_role = Project.objects.filter(
+        company__memberships__user=user,
+        company__memberships__role__sees_all_projects=True,
+        company__memberships__role__sees_all_shots=True,
+    ).exclude(memberships__user=user)
+    return Project.objects.filter(
+        Q(pk__in=as_member.values("pk")) | Q(pk__in=as_company_role.values("pk"))
+    )
+
+
+def visible_shots(user: User) -> QuerySet[Shot]:
+    """Shots the user can see.
+
+    A shot is visible in a visible project when the user's role shows
+    every shot there, or when a task on the shot is assigned to them.
+    """
+    shots = Shot.objects.filter(projects_q(user, "project"))
+    if user.is_superuser:
+        return shots
+    assigned = Shot.objects.filter(shot_tasks__assignee=user).values("pk")
+    return shots.filter(
+        Q(project__in=_projects_with_all_shots(user).values("pk")) | Q(pk__in=assigned)
+    )
+
+
+def shots_q(user: User, lookup: str = "shot") -> Q:
+    """A filter keeping only rows of shots the user can see.
+
+    `lookup` is the path from the filtered model to its shot (`shot`,
+    `shot_task__shot`...), `pk` for `Shot` itself.
+    """
+    if user.is_superuser:
+        return Q()
+    return Q(**{f"{lookup}__in": visible_shots(user).values("pk")})
 
 
 def companies_q(user: User, lookup: str = "company") -> Q:
@@ -136,6 +184,27 @@ def project_permissions_by_id(
     return result
 
 
+def project_sees_all_shots(user: User, project: Project) -> bool:
+    """Whether the user's role shows every shot of the project."""
+    if user.is_superuser:
+        return True
+    return _projects_with_all_shots(user).filter(pk=project.pk).exists()
+
+
+def project_sees_all_shots_by_id(
+    user: User, projects: list[Project]
+) -> dict[int, bool]:
+    """`project_sees_all_shots` for several projects at once (for lists)."""
+    if user.is_superuser:
+        return {project.pk: True for project in projects}
+    full = set(
+        _projects_with_all_shots(user)
+        .filter(pk__in=[project.pk for project in projects])
+        .values_list("pk", flat=True)
+    )
+    return {project.pk: project.pk in full for project in projects}
+
+
 def can_in_company(user: User, company: Company, code: str) -> bool:
     return code in company_permissions(user, company)
 
@@ -218,12 +287,22 @@ def _company_role_sees_all_projects(user: User, company: Company) -> bool:
     ).exists()
 
 
+def _company_role_sees_all_projects_and_shots(user: User, company: Company) -> bool:
+    return CompanyMembership.objects.filter(
+        user=user,
+        company=company,
+        role__sees_all_projects=True,
+        role__sees_all_shots=True,
+    ).exists()
+
+
 def can_grant_company_role(user: User, company: Company, role: Role) -> bool:
     """Whether the user may give `role` to someone in the company.
 
     Nobody can hand out more than they have: the role's company permissions
     must all be among the user's own, and a role that sees every project
-    only goes to someone who sees every project themselves.
+    only goes to someone who sees every project themselves, and every
+    shot of them if the role does.
     """
     if user.is_superuser:
         return True
@@ -231,16 +310,22 @@ def can_grant_company_role(user: User, company: Company, role: Role) -> bool:
         user, company
     ):
         return False
-    return not role.sees_all_projects or _company_role_sees_all_projects(user, company)
+    if not role.sees_all_projects:
+        return True
+    if role.sees_all_shots:
+        return _company_role_sees_all_projects_and_shots(user, company)
+    return _company_role_sees_all_projects(user, company)
 
 
 def can_grant_project_role(user: User, project: Project, role: Role) -> bool:
     """Whether the user may give `role` to someone in the project."""
     if user.is_superuser:
         return True
-    return (PROJECT_CODES & frozenset(role.permissions)) <= project_permissions(
+    if not (PROJECT_CODES & frozenset(role.permissions)) <= project_permissions(
         user, project
-    )
+    ):
+        return False
+    return not role.sees_all_shots or project_sees_all_shots(user, project)
 
 
 def require_can_grant_company_role(user: User, company: Company, role: Role) -> None:

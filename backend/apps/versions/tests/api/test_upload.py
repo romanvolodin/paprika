@@ -262,9 +262,16 @@ class TestUploadPermissions:
         "role", ["admin", "producer", "coordinator", "executor", "freelancer"]
     )
     def test_other_roles_can_upload(
-        self, auth_client, auth_user, shot, project_membership_factory, role
+        self,
+        auth_client,
+        auth_user,
+        shot,
+        project_membership_factory,
+        shot_task_factory,
+        role,
     ):
         project_membership_factory(user=auth_user, project=shot.project, role=role)
+        shot_task_factory(shot=shot, assignee=auth_user)
 
         response = _upload(auth_client, shot, "a.jpg", make_jpeg())
 
