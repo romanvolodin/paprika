@@ -782,8 +782,9 @@ class ShotFiltersController(AuthenticatedController[PydanticSerializer]):
         summary="List the values a project's shots can be filtered by",
         description=(
             "Return the shot statuses and task assignees that actually "
-            "occur in the project, so the filter panel offers nothing "
-            "that would give an empty list."
+            "occur on the shots of the project the current user can see, "
+            "so the filter panel offers nothing that would give an empty "
+            "list."
         ),
         response_description="Available filter values.",
         extra_responses=[
@@ -793,7 +794,7 @@ class ShotFiltersController(AuthenticatedController[PydanticSerializer]):
     )
     def get(self, parsed_path: Path[ProjectShotsPath]) -> ShotFiltersOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
-        shots = Shot.objects.filter(project=project)
+        shots = visible_shots(self.request.user).filter(project=project)
         assignee_ids = set(
             shots.filter(shot_tasks__assignee__isnull=False).values_list(
                 "shot_tasks__assignee_id", flat=True

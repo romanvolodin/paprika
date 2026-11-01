@@ -156,3 +156,83 @@ class TestGroupShotList:
         response = auth_client.get(f"/api/v1/shot-groups/{group.id}/shots/")
 
         assert sorted(_names(response)) == ["MINE", "OTHER"]
+
+
+class TestShotFilterOptions:
+    def _url(self, project):
+        return f"/api/v1/projects/{project.id}/shot-filters/"
+
+    def test_statuses_come_only_from_visible_shots(
+        self, auth_client, freelancer, project, mine, other, shot_status_factory
+    ):
+        hidden_status = shot_status_factory(company=project.company)
+        other.status = hidden_status
+        other.save()
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body["status_ids"] == [mine.status_id]
+
+    def test_assignees_come_only_from_visible_shots(
+        self,
+        auth_client,
+        freelancer,
+        project,
+        mine,
+        other,
+        user_factory,
+        shot_task_factory,
+    ):
+        beside_me, elsewhere = user_factory(), user_factory()
+        shot_task_factory(shot=mine, assignee=beside_me)
+        shot_task_factory(shot=other, assignee=elsewhere)
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body["assignee_ids"] == sorted([freelancer.id, beside_me.id])
+
+    def test_an_unassigned_task_on_a_hidden_shot_is_not_reported(
+        self, auth_client, freelancer, project, other, shot_task_factory
+    ):
+        shot_task_factory(shot=other, assignee=None)
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body["has_unassigned"] is False
+
+    def test_an_unassigned_task_on_a_visible_shot_is_reported(
+        self, auth_client, freelancer, project, mine, shot_task_factory
+    ):
+        shot_task_factory(shot=mine, assignee=None)
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body["has_unassigned"] is True
+
+    def test_without_assignments_nothing_is_offered(
+        self, auth_client, auth_user, project, other, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="freelancer")
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body == {"status_ids": [], "assignee_ids": [], "has_unassigned": False}
+
+    def test_a_role_that_sees_everything_gets_every_value(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        mine,
+        other,
+        user_factory,
+        shot_task_factory,
+        project_membership_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project, role="executor")
+        elsewhere = user_factory()
+        shot_task_factory(shot=other, assignee=elsewhere)
+
+        body = auth_client.get(self._url(project)).json()
+
+        assert body["assignee_ids"] == [elsewhere.id]
