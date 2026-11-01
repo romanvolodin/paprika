@@ -18,7 +18,7 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 
-from apps.access.checks import can_in_project, projects_q, require_project_perm
+from apps.access.checks import can_in_project, require_project_perm, shots_q
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.models import Attachment, Message, Reaction
@@ -142,16 +142,15 @@ def _message_queryset():
 
 
 def _get_message_or_404(user: User, message_id: int) -> Message:
-    """Look up a (not deleted) message, scoped to projects the user is in.
+    """Look up a (not deleted) message of a shot the user can see.
 
-    Mirrors `_get_shot_or_404`: visibility follows the parent project's
-    `ProjectMembership`. A deleted message is answered with 404 like a
-    missing one - it only survives as a quote inside replies.
+    A message of a hidden shot is answered with 404, and so is a deleted
+    one - it only survives as a quote inside replies.
     """
     try:
         return (
             _message_queryset()
-            .filter(projects_q(user, "shot__project"), deleted_at__isnull=True)
+            .filter(shots_q(user, "shot"), deleted_at__isnull=True)
             .get(pk=message_id)
         )
     except Message.DoesNotExist as exc:
@@ -443,7 +442,7 @@ class ChatAttachmentDetailController(AuthenticatedController[PydanticSerializer]
         user = self.request.user
         try:
             attachment = (
-                Attachment.objects.filter(projects_q(user, "shot__project"))
+                Attachment.objects.filter(shots_q(user, "shot"))
                 .select_related("shot__project")
                 .distinct()
                 .get(pk=parsed_path.attachment_id)
