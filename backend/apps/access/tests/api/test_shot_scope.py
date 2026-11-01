@@ -275,6 +275,7 @@ class TestGrantingTheScope:
             company=project.company,
             permissions=[
                 "project.members",
+                "feed.view",
                 "task.update_own",
                 "version.upload",
                 "version.delete_own",

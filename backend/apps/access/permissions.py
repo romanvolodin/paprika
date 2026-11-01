@@ -284,7 +284,13 @@ DEFAULT_ROLES: dict[str, RoleTemplate] = {
         "Фрилансер",
         "#12B5CB",
         frozenset(
-            {P.TASK_UPDATE_OWN, P.VERSION_UPLOAD, P.VERSION_DELETE_OWN, P.CHAT_WRITE}
+            {
+                P.FEED_VIEW,
+                P.TASK_UPDATE_OWN,
+                P.VERSION_UPLOAD,
+                P.VERSION_DELETE_OWN,
+                P.CHAT_WRITE,
+            }
         ),
         sees_all_shots=False,
     ),

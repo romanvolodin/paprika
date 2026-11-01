@@ -37,7 +37,7 @@ const PROJECT_PERMISSIONS: Record<StarterRole, string[]> = {
   producer: [...PROJECT_WORK, 'project.delete'],
   coordinator: PROJECT_WORK,
   executor: ['feed.view', 'task.update_own', 'version.upload', 'version.delete_own', 'chat.write'],
-  freelancer: ['task.update_own', 'version.upload', 'version.delete_own', 'chat.write'],
+  freelancer: ['feed.view', 'task.update_own', 'version.upload', 'version.delete_own', 'chat.write'],
   client: ['chat.write'],
   readonly: [],
 }

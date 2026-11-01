@@ -48,7 +48,7 @@ class TestAccess:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-    @pytest.mark.parametrize("role", ["client", "freelancer"])
+    @pytest.mark.parametrize("role", ["client"])
     def test_role_without_the_feed_permission_gets_a_403(
         self, auth_client, auth_user, project_factory, project_membership_factory, role
     ):
@@ -481,3 +481,25 @@ class TestShotScope:
         response = auth_client.get(_url(project))
 
         assert len(response.json()["items"]) == 2
+
+    def test_the_starter_freelancer_gets_the_feed_of_its_own_shots(
+        self,
+        auth_client,
+        auth_user,
+        project_factory,
+        project_membership_factory,
+        shot_factory,
+        shot_task_factory,
+        message_factory,
+    ):
+        project = project_factory()
+        project_membership_factory(user=auth_user, project=project, role="freelancer")
+        mine, other = shot_factory(project=project), shot_factory(project=project)
+        shot_task_factory(shot=mine, assignee=auth_user)
+        message_factory(shot=mine)
+        message_factory(shot=other)
+
+        response = auth_client.get(_url(project))
+
+        assert response.status_code == HTTPStatus.OK
+        assert {item["shot"]["id"] for item in response.json()["items"]} == {mine.id}
