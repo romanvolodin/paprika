@@ -13,6 +13,7 @@ from apps.access.checks import (
     projects_q,
     require_company_perm,
     require_project_perm,
+    shots_q,
 )
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
@@ -790,13 +791,9 @@ def _shot_task_queryset():
 
 
 def _get_shot_task_or_404(user: User, shot_task_id: int) -> ShotTask:
-    """Look up a shot task, scoped to projects the user is a member of."""
+    """Look up a shot task of a shot the user can see."""
     try:
-        return (
-            _shot_task_queryset()
-            .filter(projects_q(user, "shot__project"))
-            .get(pk=shot_task_id)
-        )
+        return _shot_task_queryset().filter(shots_q(user, "shot")).get(pk=shot_task_id)
     except ShotTask.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Shot task with id={shot_task_id} was not found."},
