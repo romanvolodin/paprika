@@ -684,8 +684,9 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
     @modify(
         summary="List a project's shots",
         description=(
-            "Return a paginated list of every shot in the given project, "
-            "regardless of which group(s) it belongs to, optionally "
+            "Return a paginated list of every shot in the given project "
+            "that the current user can see, regardless of which group(s) "
+            "it belongs to, optionally "
             "filtered by `search` against the name, by `status` and by "
             "`assigned_to`."
         ),
@@ -703,7 +704,9 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotListOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
 
-        queryset = _with_latest_thumb(Shot.objects.filter(project=project))
+        queryset = _with_latest_thumb(
+            visible_shots(self.request.user).filter(project=project)
+        )
 
         queryset = _filter_shots(self, queryset, parsed_query)
 
@@ -817,7 +820,8 @@ class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
         summary="List a shot group's shots",
         description=(
             "Return a paginated list of shots belonging to the given "
-            "group, optionally filtered by `search` against the name."
+            "group that the current user can see, optionally filtered by "
+            "`search` against the name."
         ),
         response_description="A page of shots.",
         extra_responses=[
@@ -834,7 +838,9 @@ class ShotGroupShotListController(AuthenticatedController[PydanticSerializer]):
             self.request.user, parsed_path.shot_group_id
         )
 
-        queryset = _with_latest_thumb(Shot.objects.filter(groups=shot_group))
+        queryset = _with_latest_thumb(
+            visible_shots(self.request.user).filter(groups=shot_group)
+        )
 
         queryset = _filter_shots(self, queryset, parsed_query)
 
