@@ -560,7 +560,7 @@ export interface paths {
         };
         /**
          * List the project's events
-         * @description Chat messages, uploaded versions and task events (a task added to a shot, its status or assignee changed) of all the shots of the project, newest first. The events are collected on the fly from the chat and version tables. One response covers a window of 5 days, counted back from the newest event found (so a quiet week doesn't give an empty page). To load earlier events pass the `next_before_date` of the response as `before_date`.
+         * @description Chat messages, uploaded versions and task events (a task added to a shot, its status or assignee changed) of all the shots of the project that the current user can see, newest first. The events are collected on the fly from the chat and version tables. One response covers a window of 5 days, counted back from the newest event found (so a quiet week doesn't give an empty page). To load earlier events pass the `next_before_date` of the response as `before_date`.
          */
         get: operations["getProjectFeedControllerApiV1ProjectsProjectIdFeed"];
         put?: never;
@@ -600,7 +600,7 @@ export interface paths {
         };
         /**
          * List project members
-         * @description Return every member of the project.
+         * @description Return the members of the project. A user whose role does not show every shot gets only themselves and the people assigned to tasks on the shots they can see.
          */
         get: operations["getProjectMemberListControllerApiV1ProjectsProjectIdMembers"];
         put?: never;
@@ -648,7 +648,7 @@ export interface paths {
         };
         /**
          * List the values a project's shots can be filtered by
-         * @description Return the shot statuses and task assignees that actually occur in the project, so the filter panel offers nothing that would give an empty list.
+         * @description Return the shot statuses and task assignees that actually occur on the shots of the project the current user can see, so the filter panel offers nothing that would give an empty list.
          */
         get: operations["getShotFiltersControllerApiV1ProjectsProjectIdShotFilters"];
         put?: never;
@@ -668,7 +668,7 @@ export interface paths {
         };
         /**
          * List a project's shot groups
-         * @description Return a paginated list of shot groups within the given project, optionally filtered by `search` against the name.
+         * @description Return a paginated list of shot groups within the given project that the current user can see, optionally filtered by `search` against the name.
          */
         get: operations["getShotGroupListControllerApiV1ProjectsProjectIdShotGroups"];
         put?: never;
@@ -712,7 +712,7 @@ export interface paths {
         };
         /**
          * List a project's shots
-         * @description Return a paginated list of every shot in the given project, regardless of which group(s) it belongs to, optionally filtered by `search` against the name, by `status` and by `assigned_to`.
+         * @description Return a paginated list of every shot in the given project that the current user can see, regardless of which group(s) it belongs to, optionally filtered by `search` against the name, by `status` and by `assigned_to`.
          */
         get: operations["getShotListControllerApiV1ProjectsProjectIdShots"];
         put?: never;
@@ -736,7 +736,7 @@ export interface paths {
         };
         /**
          * List a project's tasks
-         * @description Return a paginated list of the project's tasks, newest first, optionally filtered by `search` against the name or code and by `type` (a task type id).
+         * @description Return a paginated list of the tasks of the project that the current user can see, newest first, optionally filtered by `search` against the name or code and by `type` (a task type id). A user whose role does not show every shot sees only the tasks assigned to them, and `shot_ids` lists only the shots they can see.
          */
         get: operations["getTaskListControllerApiV1ProjectsProjectIdTasks"];
         put?: never;
@@ -816,7 +816,7 @@ export interface paths {
         };
         /**
          * List a shot group's shots
-         * @description Return a paginated list of shots belonging to the given group, optionally filtered by `search` against the name.
+         * @description Return a paginated list of shots belonging to the given group that the current user can see, optionally filtered by `search` against the name.
          */
         get: operations["getShotGroupShotListControllerApiV1ShotGroupsShotGroupIdShots"];
         put?: never;
@@ -2023,6 +2023,11 @@ export interface components {
              */
             my_permissions: string[];
             /**
+             * My Sees All Shots
+             * @description Whether the current user sees every shot of the project, or only the ones with a task assigned to them.
+             */
+            my_sees_all_shots: boolean;
+            /**
              * Created At
              * Format: date-time
              */
@@ -2148,6 +2153,11 @@ export interface components {
              * @default false
              */
             sees_all_projects?: boolean;
+            /**
+             * Sees All Shots
+             * @default true
+             */
+            sees_all_shots?: boolean;
         };
         /**
          * RoleListOut
@@ -2183,6 +2193,11 @@ export interface components {
              * @description Whether a company member with this role sees every project of the company, not only those they were added to.
              */
             sees_all_projects: boolean;
+            /**
+             * Sees All Shots
+             * @description Whether a member with this role sees every shot of a project, not only the ones with a task assigned to them.
+             */
+            sees_all_shots: boolean;
             /**
              * Company Members Count
              * @description How many people have this role in the company.
@@ -2244,6 +2259,11 @@ export interface components {
              * @default null
              */
             sees_all_projects?: boolean | null;
+            /**
+             * Sees All Shots
+             * @default null
+             */
+            sees_all_shots?: boolean | null;
         };
         /**
          * ShotCreateIn

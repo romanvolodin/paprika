@@ -20,6 +20,7 @@ function role(id: number, name: string): RoleOut {
     color: '#888888',
     permissions: [],
     sees_all_projects: false,
+    sees_all_shots: true,
     company_members_count: 0,
     project_members_count: 0,
     created_at: '2026-01-01T00:00:00Z',

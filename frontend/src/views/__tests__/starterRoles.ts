@@ -37,7 +37,13 @@ const PROJECT_PERMISSIONS: Record<StarterRole, string[]> = {
   producer: [...PROJECT_WORK, 'project.delete'],
   coordinator: PROJECT_WORK,
   executor: ['feed.view', 'task.update_own', 'version.upload', 'version.delete_own', 'chat.write'],
-  freelancer: ['feed.view', 'task.update_own', 'version.upload', 'version.delete_own', 'chat.write'],
+  freelancer: [
+    'feed.view',
+    'task.update_own',
+    'version.upload',
+    'version.delete_own',
+    'chat.write',
+  ],
   client: ['chat.write'],
   readonly: [],
 }
@@ -71,6 +77,7 @@ export function buildProjectFor(
     deadline: null,
     is_active: true,
     my_permissions: PROJECT_PERMISSIONS[role],
+    my_sees_all_shots: role !== 'freelancer',
     created_by: null,
     updated_by: null,
     created_at: '2026-01-01T00:00:00Z',

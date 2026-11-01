@@ -31,6 +31,7 @@ function buildRole(overrides: Partial<RoleOut>): RoleOut {
     color: '#00A64F',
     permissions: ['company.edit'],
     sees_all_projects: true,
+    sees_all_shots: true,
     company_members_count: 1,
     project_members_count: 2,
     created_at: '2026-01-01T00:00:00Z',
@@ -64,6 +65,7 @@ const roles = [
     color: '#8A8A8A',
     permissions: [],
     sees_all_projects: false,
+    sees_all_shots: true,
     company_members_count: 0,
     project_members_count: 0,
   }),
@@ -140,6 +142,7 @@ describe('CompanyRolesView', () => {
       color: '#00A64F',
       permissions: ['company.edit'],
       sees_all_projects: true,
+      sees_all_shots: true,
     })
     expect(rolesApi.listCompanyRoles).toHaveBeenCalledTimes(2)
   })
@@ -163,6 +166,7 @@ describe('CompanyRolesView', () => {
       color: '#888888',
       permissions: [],
       sees_all_projects: false,
+      sees_all_shots: true,
     })
     expect(wrapper.find('.role-editor__title').text()).toBe('Монтажёр')
   })

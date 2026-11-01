@@ -27,6 +27,7 @@ const role: RoleOut = {
   color: '#0A84DB',
   permissions: ['shot.create'],
   sees_all_projects: false,
+  sees_all_shots: true,
   company_members_count: 2,
   project_members_count: 5,
   created_at: '2026-01-01T00:00:00Z',
@@ -72,9 +73,30 @@ describe('RoleEditor', () => {
           color: '#0A84DB',
           permissions: ['shot.create', 'company.edit'],
           sees_all_projects: false,
+          sees_all_shots: true,
         },
       ],
     ])
+  })
+
+  it('sends a role limited to the shots assigned to its people', async () => {
+    const wrapper = mountEditor()
+
+    await wrapper.find('[aria-label="Видит все кадры проекта"]').trigger('click')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ sees_all_shots: false })
+  })
+
+  it('offers a new role every shot of a project', async () => {
+    const wrapper = mountEditor({ role: null })
+
+    await wrapper.find('.role-editor__name input').setValue('Новая')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ sees_all_shots: true })
   })
 
   it('does not send a role without a name', async () => {

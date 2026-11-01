@@ -51,6 +51,16 @@ function has(role: RoleOut, code: string): boolean {
             >
           </td>
         </tr>
+        <tr class="role-matrix__scope-row">
+          <th scope="row">Видит все кадры проекта</th>
+          <td v-for="role in roles" :key="role.id">
+            <span
+              :class="role.sees_all_shots ? 'role-matrix__yes' : 'role-matrix__no'"
+              :aria-label="role.sees_all_shots ? 'Да' : 'Нет'"
+              >{{ role.sees_all_shots ? '✓' : '—' }}</span
+            >
+          </td>
+        </tr>
         <template v-for="row in rows" :key="row.kind === 'group' ? row.title : row.item.code">
           <tr v-if="row.kind === 'group'" class="role-matrix__group">
             <th :colspan="roles.length + 1" scope="colgroup">{{ row.title }}</th>

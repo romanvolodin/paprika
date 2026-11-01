@@ -20,6 +20,7 @@ export interface RoleFormValue {
   color: string
   permissions: string[]
   sees_all_projects: boolean
+  sees_all_shots: boolean
 }
 
 // `role` is null while a new role is being made.
@@ -41,6 +42,7 @@ const formRef = ref<FormInst | null>(null)
 const name = ref('')
 const color = ref(DEFAULT_COLOR)
 const seesAllProjects = ref(false)
+const seesAllShots = ref(true)
 const permissions = ref<string[]>([])
 
 watch(
@@ -49,6 +51,7 @@ watch(
     name.value = role?.name ?? ''
     color.value = role?.color ?? DEFAULT_COLOR
     seesAllProjects.value = role?.sees_all_projects ?? false
+    seesAllShots.value = role?.sees_all_shots ?? true
     permissions.value = role ? [...role.permissions] : []
   },
   { immediate: true },
@@ -101,6 +104,7 @@ async function handleSave() {
     color: color.value,
     permissions: permissions.value,
     sees_all_projects: seesAllProjects.value,
+    sees_all_shots: seesAllShots.value,
   })
 }
 </script>
@@ -132,6 +136,16 @@ async function handleSave() {
         <div class="role-editor__scope-title">Видит все проекты компании</div>
         <div class="role-editor__hint">
           Иначе человек видит только те проекты, в которые его добавили.
+        </div>
+      </div>
+    </div>
+
+    <div class="role-editor__scope">
+      <n-switch v-model:value="seesAllShots" aria-label="Видит все кадры проекта" />
+      <div>
+        <div class="role-editor__scope-title">Видит все кадры проекта</div>
+        <div class="role-editor__hint">
+          Иначе человек видит только те кадры, на которые ему назначена задача.
         </div>
       </div>
     </div>

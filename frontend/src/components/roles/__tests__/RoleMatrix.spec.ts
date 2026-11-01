@@ -11,6 +11,7 @@ function buildRole(overrides: Partial<RoleOut>): RoleOut {
     color: '#00A64F',
     permissions: [],
     sees_all_projects: false,
+    sees_all_shots: true,
     company_members_count: 0,
     project_members_count: 0,
     created_at: '2026-01-01T00:00:00Z',
@@ -49,6 +50,7 @@ const roles = [
     name: 'Админ',
     permissions: ['company.edit', 'shot.create'],
     sees_all_projects: true,
+    sees_all_shots: true,
   }),
   buildRole({ id: 2, name: 'Клиент', permissions: [] }),
 ]
@@ -81,6 +83,16 @@ describe('RoleMatrix', () => {
     const row = wrapper.find('.role-matrix__scope-row')
     expect(row.text()).toContain('Видит все проекты компании')
     expect(row.findAll('td').map((td) => td.text())).toEqual(['✓', '—'])
+  })
+
+  it('shows which roles see all shots of a project', () => {
+    const limited = [roles[0]!, buildRole({ id: 3, name: 'Фрилансер', sees_all_shots: false })]
+    const wrapper = mount(RoleMatrix, { props: { roles: limited, catalog } })
+
+    const row = wrapper
+      .findAll('.role-matrix__scope-row')
+      .find((candidate) => candidate.text().includes('Видит все кадры проекта'))
+    expect(row?.findAll('td').map((td) => td.text())).toEqual(['✓', '—'])
   })
 
   it('tells which role was picked when its name is clicked', async () => {

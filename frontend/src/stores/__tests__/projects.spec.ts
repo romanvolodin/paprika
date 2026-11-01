@@ -18,6 +18,7 @@ function buildProject(overrides: Partial<ProjectOut> = {}): ProjectOut {
     deadline: null,
     is_active: true,
     my_permissions: [],
+    my_sees_all_shots: true,
     created_by: null,
     updated_by: null,
     created_at: '2026-01-01T00:00:00Z',
