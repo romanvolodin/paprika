@@ -6,7 +6,7 @@ from dmr import APIError, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
-from apps.access.checks import require_project_perm
+from apps.access.checks import require_project_perm, shots_q
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.api.views import _serialize_attachment
@@ -77,6 +77,9 @@ def _sources(project, user, types: set[str], mine: bool) -> dict[str, QuerySet]:
     if "version" in types:
         sources["version"] = Version.objects.filter(project=project)
 
+    visible = shots_q(user, "shot")
+    sources = {key: queryset.filter(visible) for key, queryset in sources.items()}
+
     if mine:
         assigned = Exists(
             ShotTask.objects.filter(assignee=user, shot=OuterRef("shot_id"))
@@ -134,7 +137,8 @@ class ProjectFeedController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Chat messages, uploaded versions and task events (a task added "
             "to a shot, its status or assignee changed) of all the shots of "
-            "the project, newest first. The events are collected on the fly "
+            "the project that the current user can see, newest first. The "
+            "events are collected on the fly "
             "from the chat and version tables. One response covers a window "
             "of 5 days, counted back from the newest event found (so a quiet "
             "week doesn't give an empty page). To load earlier events pass "

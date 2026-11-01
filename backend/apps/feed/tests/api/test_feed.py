@@ -393,3 +393,91 @@ class TestWindow:
 
         assert len(response.json()["items"]) == 1
         assert response.json()["next_before_date"] is None
+
+
+class TestShotScope:
+    @pytest.fixture
+    def scoped_project(
+        self, auth_user, project_factory, role_factory, project_membership_factory
+    ):
+        project = project_factory()
+        role = role_factory(
+            company=project.company, permissions=["feed.view"], sees_all_shots=False
+        )
+        project_membership_factory(user=auth_user, project=project, role=role)
+        return project
+
+    @pytest.fixture
+    def mine(self, auth_user, scoped_project, shot_factory, shot_task_factory):
+        shot = shot_factory(project=scoped_project)
+        shot_task_factory(shot=shot, assignee=auth_user)
+        return shot
+
+    @pytest.fixture
+    def other(self, scoped_project, shot_factory):
+        return shot_factory(project=scoped_project)
+
+    def test_only_events_of_visible_shots_are_listed(
+        self,
+        auth_client,
+        scoped_project,
+        mine,
+        other,
+        message_factory,
+        version_factory,
+        system_message,
+    ):
+        shown = [
+            message_factory(shot=mine),
+            version_factory(shot=mine),
+            system_message(mine),
+        ]
+        message_factory(shot=other)
+        version_factory(shot=other)
+        system_message(other)
+
+        response = auth_client.get(_url(scoped_project))
+
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json()["items"]) == len(shown)
+        assert {item["shot"]["id"] for item in response.json()["items"]} == {mine.id}
+
+    def test_a_hidden_shot_does_not_move_the_window_or_the_cursor(
+        self, auth_client, scoped_project, mine, other, message_factory, at
+    ):
+        at(message_factory(shot=mine), _days_ago(20))
+        at(message_factory(shot=other), _days_ago(1))
+        at(message_factory(shot=other), _days_ago(30))
+
+        response = auth_client.get(_url(scoped_project))
+
+        assert len(response.json()["items"]) == 1
+        assert response.json()["next_before_date"] is None
+
+    def test_without_assignments_the_feed_is_empty(
+        self, auth_client, scoped_project, other, message_factory
+    ):
+        message_factory(shot=other)
+
+        response = auth_client.get(_url(scoped_project))
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == {"items": [], "next_before_date": None}
+
+    def test_a_role_that_sees_everything_gets_every_event(
+        self,
+        auth_client,
+        auth_user,
+        project_factory,
+        project_membership_factory,
+        shot_factory,
+        message_factory,
+    ):
+        project = project_factory()
+        project_membership_factory(user=auth_user, project=project, role="admin")
+        message_factory(shot=shot_factory(project=project))
+        message_factory(shot=shot_factory(project=project))
+
+        response = auth_client.get(_url(project))
+
+        assert len(response.json()["items"]) == 2
