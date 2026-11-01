@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import ProtectedError, Q, QuerySet
 from dmr import APIError, Body, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
@@ -11,9 +11,11 @@ from apps.access.checks import (
     can_in_project,
     companies_q,
     projects_q,
+    projects_with_all_shots,
     require_company_perm,
     require_project_perm,
     shots_q,
+    visible_shots,
 )
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
@@ -560,7 +562,28 @@ class TaskStatusDetailController(AuthenticatedController[PydanticSerializer]):
 # --- tasks ------------------------------------------------------------------
 
 
+def _visible_shot_ids(request, project_id: int) -> set[int] | None:
+    """Ids of the project's shots the user can see, or None for all of them.
+
+    Worked out once per project and request, so a page of tasks costs a
+    single lookup.
+    """
+    cache = request.__dict__.setdefault("_visible_shot_ids_by_project", {})
+    if project_id not in cache:
+        user = request.user
+        if projects_with_all_shots(user).filter(pk=project_id).exists():
+            cache[project_id] = None
+        else:
+            cache[project_id] = set(
+                visible_shots(user)
+                .filter(project_id=project_id)
+                .values_list("pk", flat=True)
+            )
+    return cache[project_id]
+
+
 def _serialize_task(request, task: Task) -> TaskOut:
+    visible = _visible_shot_ids(request, task.project_id)
     return TaskOut(
         id=task.id,
         project_id=task.project_id,
@@ -568,7 +591,11 @@ def _serialize_task(request, task: Task) -> TaskOut:
         name=task.name,
         description=task.description,
         type_id=task.type_id,
-        shot_ids=[shot.id for shot in task.shots.all()],
+        shot_ids=[
+            shot.id
+            for shot in task.shots.all()
+            if visible is None or shot.id in visible
+        ],
         **_audit(request, task),
     )
 
@@ -579,10 +606,29 @@ def _task_queryset():
     )
 
 
+def _visible_tasks(user: User) -> QuerySet[Task]:
+    """Tasks the user can see.
+
+    A role that shows every shot sees every task of its projects; any
+    other role sees only the tasks it has an assignment in.
+    """
+    tasks = Task.objects.filter(projects_q(user, "project"))
+    if user.is_superuser:
+        return tasks
+    assigned = Task.objects.filter(shot_tasks__assignee=user).values("pk")
+    return tasks.filter(
+        Q(project__in=projects_with_all_shots(user).values("pk")) | Q(pk__in=assigned)
+    )
+
+
 def _get_task_or_404(user: User, task_id: int) -> Task:
-    """Look up a task, scoped to projects the user is a member of."""
+    """Look up a task the user can see (see `_visible_tasks`)."""
     try:
-        return _task_queryset().filter(projects_q(user, "project")).get(pk=task_id)
+        return (
+            _task_queryset()
+            .filter(pk__in=_visible_tasks(user).values("pk"))
+            .get(pk=task_id)
+        )
     except Task.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Task with id={task_id} was not found."},
@@ -610,9 +656,12 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
     @modify(
         summary="List a project's tasks",
         description=(
-            "Return a paginated list of the project's tasks, newest "
-            "first, optionally filtered by `search` against the name or "
-            "code and by `type` (a task type id)."
+            "Return a paginated list of the tasks of the project that the "
+            "current user can see, newest first, optionally filtered by "
+            "`search` against the name or code and by `type` (a task type "
+            "id). A user whose role does not show every shot sees only the "
+            "tasks assigned to them, and `shot_ids` lists only the shots "
+            "they can see."
         ),
         response_description="A page of tasks.",
         extra_responses=[
@@ -627,7 +676,9 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
     ) -> TaskListOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
 
-        queryset = _task_queryset().filter(project=project)
+        queryset = _task_queryset().filter(
+            pk__in=_visible_tasks(self.request.user).values("pk"), project=project
+        )
         if parsed_query.search:
             queryset = queryset.filter(
                 Q(name__icontains=parsed_query.search)

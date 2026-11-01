@@ -47,7 +47,7 @@ def visible_projects(user: User) -> QuerySet[Project]:
     )
 
 
-def _projects_with_all_shots(user: User) -> QuerySet[Project]:
+def projects_with_all_shots(user: User) -> QuerySet[Project]:
     """Projects where the user's role shows every shot, not just assigned ones.
 
     The role in the project decides; a company role that sees every
@@ -79,7 +79,7 @@ def visible_shots(user: User) -> QuerySet[Shot]:
         return shots
     assigned = Shot.objects.filter(shot_tasks__assignee=user).values("pk")
     return shots.filter(
-        Q(project__in=_projects_with_all_shots(user).values("pk")) | Q(pk__in=assigned)
+        Q(project__in=projects_with_all_shots(user).values("pk")) | Q(pk__in=assigned)
     )
 
 
@@ -96,7 +96,7 @@ def visible_shot_groups(user: User) -> QuerySet[ShotGroup]:
         visible_shots(user).filter(groups__isnull=False).values("groups")
     )
     return groups.filter(
-        Q(project__in=_projects_with_all_shots(user).values("pk"))
+        Q(project__in=projects_with_all_shots(user).values("pk"))
         | Q(pk__in=with_visible_shots)
     )
 
@@ -206,7 +206,7 @@ def project_sees_all_shots(user: User, project: Project) -> bool:
     """Whether the user's role shows every shot of the project."""
     if user.is_superuser:
         return True
-    return _projects_with_all_shots(user).filter(pk=project.pk).exists()
+    return projects_with_all_shots(user).filter(pk=project.pk).exists()
 
 
 def visible_project_member_ids(user: User, project: Project) -> set[int] | None:
@@ -232,7 +232,7 @@ def project_sees_all_shots_by_id(
     if user.is_superuser:
         return {project.pk: True for project in projects}
     full = set(
-        _projects_with_all_shots(user)
+        projects_with_all_shots(user)
         .filter(pk__in=[project.pk for project in projects])
         .values_list("pk", flat=True)
     )
