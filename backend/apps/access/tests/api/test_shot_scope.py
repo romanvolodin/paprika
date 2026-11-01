@@ -344,3 +344,43 @@ def _new_person(email, role_id):
         "password": "temporary-passphrase-77",
         "role_id": role_id,
     }
+
+
+class TestProjectMemberList:
+    @pytest.fixture
+    def crew(self, project, user_factory, project_membership_factory):
+        people = {name: user_factory() for name in ("beside_me", "elsewhere", "idle")}
+        for person in people.values():
+            project_membership_factory(user=person, project=project, role="executor")
+        return people
+
+    def _ids(self, client, project):
+        response = client.get(f"/api/v1/projects/{project.id}/members/")
+        assert response.status_code == HTTPStatus.OK
+        return {item["user_id"] for item in response.json()["items"]}
+
+    def test_a_limited_role_sees_itself_and_the_colleagues_on_its_shots(
+        self, auth_client, assigned, project, mine, other, crew, shot_task_factory
+    ):
+        shot_task_factory(shot=mine, assignee=crew["beside_me"])
+        shot_task_factory(shot=other, assignee=crew["elsewhere"])
+
+        ids = self._ids(auth_client, project)
+
+        assert ids == {assigned.assignee_id, crew["beside_me"].id}
+
+    def test_without_assignments_only_the_user_themselves_is_listed(
+        self, auth_client, auth_user, project, crew, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="freelancer")
+
+        assert self._ids(auth_client, project) == {auth_user.id}
+
+    def test_a_role_that_sees_everything_gets_every_member(
+        self, auth_client, auth_user, project, crew, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="executor")
+
+        ids = self._ids(auth_client, project)
+
+        assert ids == {auth_user.id, *(person.id for person in crew.values())}

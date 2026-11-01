@@ -25,6 +25,7 @@ from apps.access.checks import (
     require_can_grant_project_role,
     require_company_perm,
     require_project_perm,
+    visible_project_member_ids,
 )
 from apps.access.models import Role
 from apps.access.permissions import P
@@ -432,7 +433,11 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
 
     @modify(
         summary="List project members",
-        description="Return every member of the project.",
+        description=(
+            "Return the members of the project. A user whose role does not "
+            "show every shot gets only themselves and the people assigned "
+            "to tasks on the shots they can see."
+        ),
         response_description="The project's members.",
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -444,6 +449,9 @@ class ProjectMemberListController(AuthenticatedController[PydanticSerializer]):
         memberships = project.memberships.select_related("user", "role").order_by(
             "user__email"
         )
+        visible_ids = visible_project_member_ids(self.request.user, project)
+        if visible_ids is not None:
+            memberships = memberships.filter(user_id__in=visible_ids)
         return ProjectMemberListOut(
             items=[
                 _serialize_member(self.request, membership)

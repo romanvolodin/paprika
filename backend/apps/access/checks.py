@@ -191,6 +191,22 @@ def project_sees_all_shots(user: User, project: Project) -> bool:
     return _projects_with_all_shots(user).filter(pk=project.pk).exists()
 
 
+def visible_project_member_ids(user: User, project: Project) -> set[int] | None:
+    """Ids of the project members the user may see, or None for all of them.
+
+    A role that doesn't show every shot sees only the user themselves and
+    the people assigned to tasks on the shots the user can see.
+    """
+    if project_sees_all_shots(user, project):
+        return None
+    colleagues = (
+        visible_shots(user)
+        .filter(project=project, shot_tasks__assignee__isnull=False)
+        .values_list("shot_tasks__assignee_id", flat=True)
+    )
+    return {user.pk, *colleagues}
+
+
 def project_sees_all_shots_by_id(
     user: User, projects: list[Project]
 ) -> dict[int, bool]:
