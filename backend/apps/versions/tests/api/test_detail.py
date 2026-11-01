@@ -77,10 +77,17 @@ class TestDeleteVersion:
 
     @pytest.mark.parametrize("role", ["executor", "freelancer"])
     def test_deletes_their_own_version_with_the_own_permission(
-        self, auth_client, auth_user, version_factory, project_membership_factory, role
+        self,
+        auth_client,
+        auth_user,
+        version_factory,
+        project_membership_factory,
+        shot_task_factory,
+        role,
     ):
         version = version_factory(created_by=auth_user)
         project_membership_factory(user=auth_user, project=version.project, role=role)
+        shot_task_factory(shot=version.shot, assignee=auth_user)
 
         response = auth_client.delete(f"/api/v1/versions/{version.id}/")
 
@@ -89,9 +96,16 @@ class TestDeleteVersion:
 
     @pytest.mark.parametrize("role", ["executor", "freelancer"])
     def test_cannot_delete_someone_elses_version_with_only_the_own_permission(
-        self, auth_client, auth_user, version, project_membership_factory, role
+        self,
+        auth_client,
+        auth_user,
+        version,
+        project_membership_factory,
+        shot_task_factory,
+        role,
     ):
         project_membership_factory(user=auth_user, project=version.project, role=role)
+        shot_task_factory(shot=version.shot, assignee=auth_user)
 
         response = auth_client.delete(f"/api/v1/versions/{version.id}/")
 

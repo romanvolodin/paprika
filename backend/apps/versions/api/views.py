@@ -16,7 +16,7 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 
-from apps.access.checks import can_in_project, projects_q, require_project_perm
+from apps.access.checks import can_in_project, require_project_perm, shots_q
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.events import record_version_uploaded
@@ -73,14 +73,14 @@ def _serialize_version(request, version: Version) -> VersionOut:
 
 
 def _get_version_or_404(user: User, version_id: int) -> Version:
-    """Look up a version, scoped to projects the user is a member of.
+    """Look up a version of a shot the user can see.
 
-    Mirrors `apps.shots.api.views._get_shot_or_404` - visibility follows
-    the parent project's `ProjectMembership`.
+    A version of a hidden shot answers 404 like a missing one, see
+    `apps.access.checks.visible_shots`.
     """
     try:
         return (
-            Version.objects.filter(projects_q(user, "project"))
+            Version.objects.filter(shots_q(user, "shot"))
             .select_related("created_by", "updated_by")
             .distinct()
             .get(pk=version_id)
