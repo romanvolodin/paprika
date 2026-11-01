@@ -236,3 +236,79 @@ class TestShotFilterOptions:
         body = auth_client.get(self._url(project)).json()
 
         assert body["assignee_ids"] == [elsewhere.id]
+
+
+class TestShotGroups:
+    @pytest.fixture
+    def hidden_group(self, project, other, shot_group_factory):
+        hidden = shot_group_factory(project=project, name="HIDDEN")
+        other.groups.set([hidden])
+        return hidden
+
+    @pytest.fixture
+    def empty_group(self, project, shot_group_factory):
+        return shot_group_factory(project=project, name="EMPTY")
+
+    def test_the_list_holds_only_groups_with_visible_shots(
+        self, auth_client, freelancer, project, group, hidden_group, empty_group
+    ):
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shot-groups/")
+
+        assert [item["id"] for item in response.json()["items"]] == [group.id]
+        assert response.json()["total"] == 1
+
+    def test_a_group_without_visible_shots_is_not_found(
+        self, auth_client, freelancer, hidden_group, empty_group
+    ):
+        for shot_group in (hidden_group, empty_group):
+            url = f"/api/v1/shot-groups/{shot_group.id}/"
+            responses = [
+                auth_client.get(url),
+                auth_client.get(f"{url}shots/"),
+                auth_client.patch(
+                    url, data={"name": "Новое"}, content_type="application/json"
+                ),
+                auth_client.delete(url),
+            ]
+
+            assert {r.status_code for r in responses} == {HTTPStatus.NOT_FOUND}
+
+    def test_a_group_with_visible_shots_is_found(self, auth_client, freelancer, group):
+        response = auth_client.get(f"/api/v1/shot-groups/{group.id}/")
+
+        assert response.status_code == HTTPStatus.OK
+
+    def test_a_search_does_not_find_a_hidden_group(
+        self, auth_client, freelancer, project, hidden_group
+    ):
+        response = auth_client.get(
+            f"/api/v1/projects/{project.id}/shot-groups/", {"search": "HIDDEN"}
+        )
+
+        assert response.json()["total"] == 0
+
+    def test_without_assignments_there_are_no_groups(
+        self, auth_client, auth_user, project, group, project_membership_factory
+    ):
+        project_membership_factory(user=auth_user, project=project, role="freelancer")
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shot-groups/")
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.json()["items"] == []
+
+    def test_a_role_that_sees_everything_gets_every_group(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        group,
+        hidden_group,
+        empty_group,
+        project_membership_factory,
+    ):
+        project_membership_factory(user=auth_user, project=project, role="executor")
+
+        response = auth_client.get(f"/api/v1/projects/{project.id}/shot-groups/")
+
+        assert response.json()["total"] == 3

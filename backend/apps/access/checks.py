@@ -16,7 +16,7 @@ from dmr import APIError
 
 from apps.companies.models import Company, CompanyMembership
 from apps.projects.models import Project, ProjectMembership
-from apps.shots.models import Shot
+from apps.shots.models import Shot, ShotGroup
 from apps.users.models import User
 
 from .models import Role
@@ -80,6 +80,24 @@ def visible_shots(user: User) -> QuerySet[Shot]:
     assigned = Shot.objects.filter(shot_tasks__assignee=user).values("pk")
     return shots.filter(
         Q(project__in=_projects_with_all_shots(user).values("pk")) | Q(pk__in=assigned)
+    )
+
+
+def visible_shot_groups(user: User) -> QuerySet[ShotGroup]:
+    """Shot groups the user can see.
+
+    A role that shows every shot sees every group of its projects; any
+    other role sees only the groups that hold a shot it can see.
+    """
+    groups = ShotGroup.objects.filter(projects_q(user, "project"))
+    if user.is_superuser:
+        return groups
+    with_visible_shots = (
+        visible_shots(user).filter(groups__isnull=False).values("groups")
+    )
+    return groups.filter(
+        Q(project__in=_projects_with_all_shots(user).values("pk"))
+        | Q(pk__in=with_visible_shots)
     )
 
 

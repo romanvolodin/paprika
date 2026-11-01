@@ -8,9 +8,9 @@ from dmr.plugins.pydantic import PydanticSerializer
 
 from apps.access.checks import (
     companies_q,
-    projects_q,
     require_company_perm,
     require_project_perm,
+    visible_shot_groups,
     visible_shots,
 )
 from apps.access.permissions import P
@@ -67,16 +67,9 @@ def _serialize_shot_group(request, shot_group: ShotGroup) -> ShotGroupOut:
 
 
 def _get_shot_group_or_404(user: User, shot_group_id: int) -> ShotGroup:
-    """Look up a shot group, scoped to projects the user is a member of.
-
-    Mirrors `apps.projects.api.views._get_project_or_404` - visibility
-    follows the parent project's `ProjectMembership`; there's no separate
-    membership model for shot groups.
-    """
+    """Look up a shot group the user can see (see `visible_shot_groups`)."""
     try:
-        return ShotGroup.objects.filter(projects_q(user, "project")).get(
-            pk=shot_group_id
-        )
+        return visible_shot_groups(user).get(pk=shot_group_id)
     except ShotGroup.DoesNotExist as exc:
         raise APIError(
             {"detail": f"Shot group with id={shot_group_id} was not found."},
@@ -93,7 +86,8 @@ class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
         summary="List a project's shot groups",
         description=(
             "Return a paginated list of shot groups within the given "
-            "project, optionally filtered by `search` against the name."
+            "project that the current user can see, optionally filtered by "
+            "`search` against the name."
         ),
         response_description="A page of shot groups.",
         extra_responses=[
@@ -108,7 +102,7 @@ class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotGroupListOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
 
-        queryset = ShotGroup.objects.filter(project=project)
+        queryset = visible_shot_groups(self.request.user).filter(project=project)
 
         if parsed_query.search:
             queryset = queryset.filter(name__icontains=parsed_query.search)
