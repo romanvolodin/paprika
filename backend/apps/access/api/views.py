@@ -57,6 +57,7 @@ def _serialize_role(role: Role) -> RoleOut:
         color=role.color,
         permissions=list(role.permissions),
         sees_all_projects=role.sees_all_projects,
+        sees_all_shots=role.sees_all_shots,
         company_members_count=role.company_members_count,
         project_members_count=role.project_members_count,
         created_at=role.created_at,
@@ -164,6 +165,7 @@ class RoleListController(AuthenticatedController[PydanticSerializer]):
             color=parsed_body.color,
             permissions=parsed_body.permissions,
             sees_all_projects=parsed_body.sees_all_projects,
+            sees_all_shots=parsed_body.sees_all_shots,
             created_by=self.request.user,
             updated_by=self.request.user,
         )
@@ -207,7 +209,13 @@ class RoleDetailController(AuthenticatedController[PydanticSerializer]):
         role = _get_role_or_404(self.request.user, parsed_path.role_id)
         require_company_perm(self.request.user, role.company, P.COMPANY_ROLES)
 
-        for field in ("name", "color", "permissions", "sees_all_projects"):
+        for field in (
+            "name",
+            "color",
+            "permissions",
+            "sees_all_projects",
+            "sees_all_shots",
+        ):
             if (
                 field in parsed_body.model_fields_set
                 and getattr(parsed_body, field) is None

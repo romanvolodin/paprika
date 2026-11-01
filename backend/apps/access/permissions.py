@@ -221,6 +221,7 @@ class RoleTemplate:
     color: str
     permissions: frozenset[str]
     sees_all_projects: bool = False
+    sees_all_shots: bool = True
 
 
 _PROJECT_WORK = frozenset(
@@ -285,6 +286,7 @@ DEFAULT_ROLES: dict[str, RoleTemplate] = {
         frozenset(
             {P.TASK_UPDATE_OWN, P.VERSION_UPLOAD, P.VERSION_DELETE_OWN, P.CHAT_WRITE}
         ),
+        sees_all_shots=False,
     ),
     "client": RoleTemplate("Клиент", "#8A8A8A", frozenset({P.CHAT_WRITE})),
 }

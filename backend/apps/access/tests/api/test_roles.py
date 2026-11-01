@@ -51,6 +51,18 @@ class TestListRoles:
         assert by_name["Клиент"]["company_members_count"] == 0
         assert by_name["Админ"]["sees_all_projects"] is True
 
+    def test_only_the_freelancer_is_limited_to_their_own_shots(
+        self, auth_client, admin_company
+    ):
+        response = auth_client.get(f"/api/v1/companies/{admin_company.id}/roles/")
+
+        limited = {
+            role["name"]
+            for role in response.json()["items"]
+            if not role["sees_all_shots"]
+        }
+        assert limited == {"Фрилансер"}
+
     def test_any_member_can_read_the_roles(
         self, auth_client, auth_user, company, company_membership_factory
     ):
@@ -123,6 +135,62 @@ class TestCreateRole:
         )
 
         assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+class TestRoleShotScope:
+    def test_a_new_role_sees_all_shots_by_default(self, auth_client, admin_company):
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{admin_company.id}/roles/",
+            {"name": "Новая", "color": "#112233"},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["sees_all_shots"] is True
+
+    def test_a_role_can_be_created_limited_to_assigned_shots(
+        self, auth_client, admin_company
+    ):
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{admin_company.id}/roles/",
+            {"name": "Новая", "color": "#112233", "sees_all_shots": False},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json()["sees_all_shots"] is False
+        assert not Role.objects.get(pk=response.json()["id"]).sees_all_shots
+
+    def test_the_scope_can_be_changed(self, auth_client, admin_company, role_factory):
+        role = role_factory(company=admin_company)
+
+        response = _patch(
+            auth_client, f"/api/v1/roles/{role.id}/", {"sees_all_shots": False}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.json()["sees_all_shots"] is False
+        role.refresh_from_db()
+        assert not role.sees_all_shots
+
+    def test_other_fields_leave_the_scope_alone(
+        self, auth_client, admin_company, role_factory
+    ):
+        role = role_factory(company=admin_company, sees_all_shots=False)
+
+        _patch(auth_client, f"/api/v1/roles/{role.id}/", {"name": "Другое"})
+
+        role.refresh_from_db()
+        assert not role.sees_all_shots
+
+    def test_null_is_rejected(self, auth_client, admin_company, role_factory):
+        role = role_factory(company=admin_company)
+
+        response = _patch(
+            auth_client, f"/api/v1/roles/{role.id}/", {"sees_all_shots": None}
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 class TestUpdateRole:

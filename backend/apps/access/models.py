@@ -42,6 +42,14 @@ class Role(BaseModel):
             "of the company, not only the ones they were added to."
         ),
     )
+    sees_all_shots = models.BooleanField(
+        _("sees all shots"),
+        default=True,
+        help_text=_(
+            "Whether a member with this role sees every shot of the project, "
+            "not only the ones with a task assigned to them."
+        ),
+    )
 
     class Meta:
         verbose_name = _("role")

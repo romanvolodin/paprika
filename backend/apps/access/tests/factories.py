@@ -31,3 +31,4 @@ class RoleFactory(DjangoModelFactory):
     color = "#FF5733"
     permissions = factory.LazyFunction(list)
     sees_all_projects = False
+    sees_all_shots = True

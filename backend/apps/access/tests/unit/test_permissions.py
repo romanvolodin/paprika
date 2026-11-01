@@ -42,6 +42,11 @@ class TestRegistry:
 
         assert wide == {"admin", "producer"}
 
+    def test_only_the_freelancer_is_limited_to_their_own_shots(self):
+        limited = {key for key, t in DEFAULT_ROLES.items() if not t.sees_all_shots}
+
+        assert limited == {"freelancer"}
+
     @pytest.mark.parametrize("key", ["executor", "freelancer"])
     def test_executors_delete_only_their_own_versions(self, key):
         permissions = DEFAULT_ROLES[key].permissions
@@ -64,6 +69,14 @@ class TestSeeding:
 
         assert set(admin.permissions) == ALL_CODES
         assert admin.sees_all_projects
+
+    def test_the_starter_roles_carry_their_shot_scope(self, company):
+        by_name = dict(
+            Role.objects.filter(company=company).values_list("name", "sees_all_shots")
+        )
+
+        assert by_name[DEFAULT_ROLES["freelancer"].name] is False
+        assert by_name[DEFAULT_ROLES["executor"].name] is True
 
     def test_roles_of_different_companies_are_separate(self, company_factory):
         first, second = company_factory(), company_factory()

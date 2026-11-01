@@ -75,6 +75,12 @@ class RoleOut(pydantic.BaseModel):
             "the company, not only those they were added to."
         )
     )
+    sees_all_shots: bool = pydantic.Field(
+        description=(
+            "Whether a member with this role sees every shot of a project, "
+            "not only the ones with a task assigned to them."
+        )
+    )
     company_members_count: int = pydantic.Field(
         description="How many people have this role in the company."
     )
@@ -106,6 +112,7 @@ class RoleCreateIn(pydantic.BaseModel):
     color: str = pydantic.Field(pattern=_COLOR_PATTERN)
     permissions: list[str] = pydantic.Field(default_factory=list)
     sees_all_projects: bool = False
+    sees_all_shots: bool = True
 
     @pydantic.field_validator("permissions")
     @classmethod
@@ -120,6 +127,7 @@ class RoleUpdateIn(pydantic.BaseModel):
     color: str | None = pydantic.Field(default=None, pattern=_COLOR_PATTERN)
     permissions: list[str] | None = None
     sees_all_projects: bool | None = None
+    sees_all_shots: bool | None = None
 
     @pydantic.field_validator("permissions")
     @classmethod

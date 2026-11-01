@@ -13,6 +13,7 @@ def create_default_roles(company: Company) -> dict[str, Role]:
             color=template.color,
             permissions=sorted(template.permissions),
             sees_all_projects=template.sees_all_projects,
+            sees_all_shots=template.sees_all_shots,
             created_by=company.created_by,
             updated_by=company.created_by,
         )
