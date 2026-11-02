@@ -3,6 +3,7 @@ import { computed, h, ref, watch } from 'vue'
 import {
   NButton,
   NDataTable,
+  NEmpty,
   NIcon,
   NInput,
   NModal,
@@ -15,7 +16,10 @@ import { useShotGroupsStore } from '@/stores/shotGroups'
 import { firstValidationMessage } from '@/utils/apiError'
 import type { ShotGroupOut } from '@/types/api'
 
-const props = defineProps<{ projectId: number; canWrite: boolean }>()
+const props = withDefaults(
+  defineProps<{ projectId: number; canWrite: boolean; emptyText?: string }>(),
+  { emptyText: 'Ничего не найдено' },
+)
 
 const store = useShotGroupsStore()
 const message = useMessage()
@@ -131,7 +135,9 @@ const columns = computed<DataTableColumns<ShotGroupOut>>(() => [
       :loading="store.isLoading"
       :bordered="false"
       :row-key="(row: ShotGroupOut) => row.id"
-    />
+    >
+      <template #empty><n-empty :description="emptyText" /></template>
+    </n-data-table>
 
     <div v-if="canWrite" class="shot-groups__add">
       <n-input

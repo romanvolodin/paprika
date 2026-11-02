@@ -13,7 +13,9 @@ import type {
   ShotUpdateIn,
 } from '@/types/api'
 
-export type ShotDetailState = 'loading' | 'ready' | 'not-found' | 'error'
+// `unavailable`: the shot was open and then went away from under the
+// reader (deleted, or the reader's task on it was taken off).
+export type ShotDetailState = 'loading' | 'ready' | 'not-found' | 'unavailable' | 'error'
 
 const MAX_PAGE_SIZE = 100
 
@@ -76,6 +78,10 @@ export const useShotDetailStore = defineStore('shotDetail', () => {
     }
   }
 
+  function markUnavailable() {
+    if (state.value === 'ready') state.value = 'unavailable'
+  }
+
   async function updateShot(input: ShotUpdateIn) {
     if (!shot.value) return
     shot.value = await shotsApi.updateShot(shot.value.id, input)
@@ -86,5 +92,16 @@ export const useShotDetailStore = defineStore('shotDetail', () => {
     await shotsApi.deleteShot(shot.value.id)
   }
 
-  return { state, project, shot, members, statuses, groups, open, updateShot, deleteShot }
+  return {
+    state,
+    project,
+    shot,
+    members,
+    statuses,
+    groups,
+    open,
+    markUnavailable,
+    updateShot,
+    deleteShot,
+  }
 })

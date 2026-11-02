@@ -7,6 +7,7 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import ShotLayoutView from '@/views/ShotLayoutView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
+import { useShotDetailStore } from '@/stores/shotDetail'
 import * as projectsApi from '@/api/projects'
 import * as shotsApi from '@/api/shots'
 import type { ProjectMemberOut, ShotOut } from '@/types/api'
@@ -213,6 +214,17 @@ describe('ShotLayoutView', () => {
 
     expect(wrapper.find('.shot-page__status-select').exists()).toBe(false)
     expect(wrapper.text()).toContain('Не начат')
+  })
+
+  it('tells the reader the shot went away and links back to the list', async () => {
+    const wrapper = await mountShot('freelancer')
+
+    useShotDetailStore().markUnavailable()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Кадр больше недоступен')
+    expect(wrapper.find('a[href="/acme/PRJ/shots"]').exists()).toBe(true)
+    expect(wrapper.find('nav').exists()).toBe(false)
   })
 
   it('says the shot is not found for an unknown company slug', async () => {

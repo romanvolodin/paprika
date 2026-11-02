@@ -36,7 +36,15 @@ const currentCompany = useCurrentCompanyStore()
 
 const message = useMessage()
 const { project } = storeToRefs(shots)
-const { can } = useProjectPermissions(project)
+const { can, seesAllShots } = useProjectPermissions(project)
+
+// An empty list is only "nothing assigned yet" when no search or filter
+// narrows it down.
+const emptyText = computed(() => {
+  const narrowed =
+    shots.search !== '' || shots.statusSelected.length > 0 || shots.assigneeSelected.length > 0
+  return seesAllShots.value || narrowed ? undefined : 'Вам пока ничего не назначено'
+})
 
 const viewMode = useViewMode('shots')
 const pageSizeOptions = PAGE_SIZE_OPTIONS.map((size) => ({
@@ -220,6 +228,7 @@ watch(
             :columns="columns"
             :mode="viewMode"
             :loading="shots.isLoading"
+            :empty-text="emptyText"
             :row-key="(shot: ShotOut) => shot.id"
           >
             <template #card="{ item }">

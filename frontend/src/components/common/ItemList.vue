@@ -2,13 +2,17 @@
 import { NDataTable, NEmpty, NSpin, type DataTableColumns } from 'naive-ui'
 import type { ViewMode } from '@/composables/useViewMode'
 
-defineProps<{
-  items: T[]
-  columns: DataTableColumns<T>
-  mode: ViewMode
-  rowKey: (item: T) => string | number
-  loading?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    items: T[]
+    columns: DataTableColumns<T>
+    mode: ViewMode
+    rowKey: (item: T) => string | number
+    loading?: boolean
+    emptyText?: string
+  }>(),
+  { emptyText: 'Ничего не найдено' },
+)
 
 defineSlots<{ card(props: { item: T }): unknown }>()
 </script>
@@ -22,7 +26,7 @@ defineSlots<{ card(props: { item: T }): unknown }>()
     :bordered="false"
     :row-key="rowKey"
   >
-    <template #empty><n-empty description="Ничего не найдено" /></template>
+    <template #empty><n-empty :description="emptyText" /></template>
   </n-data-table>
 
   <n-spin v-else :show="loading">
@@ -31,7 +35,7 @@ defineSlots<{ card(props: { item: T }): unknown }>()
         <slot name="card" :item="item" />
       </li>
     </ul>
-    <n-empty v-else-if="!loading" description="Ничего не найдено" class="item-list__empty" />
+    <n-empty v-else-if="!loading" :description="emptyText" class="item-list__empty" />
   </n-spin>
 </template>
 

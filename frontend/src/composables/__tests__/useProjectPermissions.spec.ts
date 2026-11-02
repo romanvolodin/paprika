@@ -55,6 +55,22 @@ describe('useProjectPermissions', () => {
     expect(can(PERMISSION.shotDelete)).toBe(false)
   })
 
+  it('tells whether the project shows every shot to the user', () => {
+    const project = ref<ProjectOut | null>({ ...buildProject([]), my_sees_all_shots: false })
+
+    const { seesAllShots } = useProjectPermissions(project)
+    expect(seesAllShots.value).toBe(false)
+
+    project.value = { ...buildProject([]), my_sees_all_shots: true }
+    expect(seesAllShots.value).toBe(true)
+  })
+
+  it('assumes every shot is shown while there is no project', () => {
+    const { seesAllShots } = useProjectPermissions(ref(null))
+
+    expect(seesAllShots.value).toBe(true)
+  })
+
   it('grants nothing while there is no project', () => {
     const { can, canEditProject, canOpenSettings } = useProjectPermissions(ref(null))
 

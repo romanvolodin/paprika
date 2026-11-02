@@ -22,8 +22,13 @@ export function useProjectPermissions(project: Ref<ProjectOut | null>) {
     () => canEditProject.value || canDeleteProject.value || canManageMembers.value,
   )
 
+  // Until the project is loaded nothing is hidden, so no "assigned to
+  // you" wording flashes up for people who see everything.
+  const seesAllShots = computed(() => project.value?.my_sees_all_shots ?? true)
+
   return {
     can,
+    seesAllShots,
     canEditProject,
     canDeleteProject,
     canOpenSettings,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { isAxiosError } from 'axios'
 import { useDocumentVisibility, useIntervalFn } from '@vueuse/core'
 import { NButton, NDropdown, NIcon, NInput, useDialog, useMessage } from 'naive-ui'
 import {
@@ -13,6 +14,7 @@ import ChatReactions from '@/components/shots/ChatReactions.vue'
 import { MAX_CHAT_ATTACHMENTS, useChatAttachments } from '@/composables/useChatAttachments'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
+import { useShotDetailStore } from '@/stores/shotDetail'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { buildChatEntries, describeSystemMessage, formatClock, userName } from '@/utils/chat'
 import { formatFileSize } from '@/utils/format'
@@ -34,6 +36,7 @@ const STICK_TO_BOTTOM_PX = 80
 
 const auth = useAuthStore()
 const store = useChatStore()
+const shotDetail = useShotDetailStore()
 const message = useMessage()
 const dialog = useDialog()
 
@@ -68,8 +71,10 @@ function handleScroll() {
 async function refresh() {
   try {
     await store.refresh()
-  } catch {
-    // A missed poll is harmless; the next one retries.
+  } catch (error) {
+    // A missed poll is harmless; the next one retries. Not found is
+    // not a missed poll: the shot is gone for this reader.
+    if (isShotGone(error)) shotDetail.markUnavailable()
   }
 }
 
@@ -124,7 +129,15 @@ async function showOlder() {
   if (list) list.scrollTop += list.scrollHeight - heightBefore
 }
 
+function isShotGone(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 404
+}
+
 function describeSendError(error: unknown, fallback: string): string {
+  if (isShotGone(error)) {
+    shotDetail.markUnavailable()
+    return 'Кадр больше недоступен.'
+  }
   const detail = firstValidationMessage(error)
   if (detail?.includes('too long')) return 'Сообщение слишком длинное.'
   if (detail?.includes("can't be replied to")) {

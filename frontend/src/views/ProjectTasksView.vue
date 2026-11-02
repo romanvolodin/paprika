@@ -3,6 +3,7 @@ import { computed, h, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import {
   NDataTable,
+  NEmpty,
   NIcon,
   NInput,
   NPagination,
@@ -11,12 +12,22 @@ import {
   type DataTableColumns,
 } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
+import { storeToRefs } from 'pinia'
+import { useProjectPermissions } from '@/composables/useProjectPermissions'
 import { useProjectPageStore } from '@/stores/projectPage'
 import { useProjectTasksStore } from '@/stores/projectTasks'
 import type { TaskOut } from '@/types/api'
 
 const page = useProjectPageStore()
 const tasks = useProjectTasksStore()
+const { project } = storeToRefs(page)
+const { seesAllShots } = useProjectPermissions(project)
+
+const emptyText = computed(() =>
+  seesAllShots.value || tasks.search !== '' || tasks.typeId !== null
+    ? 'Ничего не найдено'
+    : 'Вам пока ничего не назначено',
+)
 
 const searchInput = ref('')
 
@@ -115,7 +126,9 @@ const columns = computed<DataTableColumns<TaskOut>>(() => [
       :loading="tasks.isLoading"
       :bordered="false"
       :row-key="(row: TaskOut) => row.id"
-    />
+    >
+      <template #empty><n-empty :description="emptyText" /></template>
+    </n-data-table>
 
     <div class="project-tasks__pagination">
       <n-pagination

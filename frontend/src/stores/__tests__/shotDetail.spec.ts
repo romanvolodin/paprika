@@ -102,6 +102,27 @@ describe('useShotDetailStore', () => {
     expect(store.state).toBe('ready')
   })
 
+  it('markUnavailable turns an open shot into an unavailable one', async () => {
+    mockProjects([buildProject()])
+    mockShotApi([buildShot()])
+    const store = useShotDetailStore()
+    await store.open(company, 'PRJ', '0010')
+
+    store.markUnavailable()
+
+    expect(store.state).toBe('unavailable')
+  })
+
+  it('markUnavailable leaves a shot that is not open alone', async () => {
+    mockProjects([])
+    const store = useShotDetailStore()
+    await store.open(company, 'PRJ', '0010')
+
+    store.markUnavailable()
+
+    expect(store.state).toBe('not-found')
+  })
+
   it('open reports not-found when the project does not exist', async () => {
     mockProjects([])
 

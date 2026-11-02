@@ -72,6 +72,13 @@ watch(
       Кадр не найден или у вас нет к нему доступа.
     </p>
 
+    <p v-else-if="store.state === 'unavailable'" class="shot-page__message">
+      Кадр больше недоступен: его удалили или вас сняли с задачи.
+      <RouterLink :to="{ name: 'shot-list', params: { companySlug, projectCode } }">
+        К списку кадров
+      </RouterLink>
+    </p>
+
     <p v-else-if="store.state === 'error'" class="shot-page__message">
       Не удалось загрузить кадр. Попробуйте обновить страницу.
     </p>

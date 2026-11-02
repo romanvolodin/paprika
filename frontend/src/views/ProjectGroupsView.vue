@@ -7,13 +7,17 @@ import { useProjectPageStore } from '@/stores/projectPage'
 
 const store = useProjectPageStore()
 const { project } = storeToRefs(store)
-const { can } = useProjectPermissions(project)
+const { can, seesAllShots } = useProjectPermissions(project)
 </script>
 
 <template>
   <section v-if="store.project" class="project-groups">
     <h2 class="project-groups__heading">Группы кадров</h2>
-    <shot-groups-section :project-id="store.project.id" :can-write="can(PERMISSION.groupManage)" />
+    <shot-groups-section
+      :project-id="store.project.id"
+      :can-write="can(PERMISSION.groupManage)"
+      :empty-text="seesAllShots ? undefined : 'Вам пока ничего не назначено'"
+    />
   </section>
 </template>
 

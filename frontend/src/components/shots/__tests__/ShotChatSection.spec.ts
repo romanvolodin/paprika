@@ -8,6 +8,7 @@ import ShotChatSection from '@/components/shots/ShotChatSection.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
+import { useShotDetailStore } from '@/stores/shotDetail'
 import * as chatApi from '@/api/chat'
 import type { AttachmentOut, MeOut, MessageOut, UserOut, VersionOut } from '@/types/api'
 
@@ -754,6 +755,60 @@ describe('ShotChatSection', () => {
       await flushPromises()
       expect(chatApi.listMessages).toHaveBeenCalledTimes(2)
       wrapper.unmount()
+    })
+
+    it('marks the shot unavailable when a poll finds it gone', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+      useShotDetailStore().state = 'ready'
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      vi.mocked(chatApi.listMessages).mockRejectedValue(
+        new AxiosError('Not found', 'ERR_BAD_REQUEST', undefined, undefined, {
+          status: 404,
+        } as never),
+      )
+
+      vi.advanceTimersByTime(10_000)
+      await flushPromises()
+
+      expect(useShotDetailStore().state).toBe('unavailable')
+      wrapper.unmount()
+    })
+
+    it('shrugs off a poll that fails for any other reason', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+      useShotDetailStore().state = 'ready'
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+      vi.mocked(chatApi.listMessages).mockRejectedValue(
+        new AxiosError('Server error', 'ERR_BAD_RESPONSE', undefined, undefined, {
+          status: 500,
+        } as never),
+      )
+
+      vi.advanceTimersByTime(10_000)
+      await flushPromises()
+
+      expect(useShotDetailStore().state).toBe('ready')
+      wrapper.unmount()
+    })
+
+    it('marks the shot unavailable when sending finds it gone', async () => {
+      useShotDetailStore().state = 'ready'
+      vi.mocked(chatApi.sendMessage).mockRejectedValue(
+        new AxiosError('Not found', 'ERR_BAD_REQUEST', undefined, undefined, {
+          status: 404,
+        } as never),
+      )
+      const wrapper = mount(Host, { props: { shotId: 10 } })
+      await flushPromises()
+
+      const input = wrapper.find('textarea')
+      await input.setValue('Hello')
+      await input.trigger('keydown', { key: 'Enter' })
+      await flushPromises()
+
+      expect(useShotDetailStore().state).toBe('unavailable')
     })
 
     it('stops polling when the section goes away', async () => {

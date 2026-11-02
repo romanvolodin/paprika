@@ -13,7 +13,12 @@ const items: Row[] = [
   { id: 2, name: 'Second' },
 ]
 
-function mountList(props: { mode: 'table' | 'cards'; items?: Row[]; loading?: boolean }) {
+function mountList(props: {
+  mode: 'table' | 'cards'
+  items?: Row[]
+  loading?: boolean
+  emptyText?: string
+}) {
   return mount(ItemList<Row>, {
     props: {
       items,
@@ -47,6 +52,13 @@ describe('ItemList', () => {
   it('says nothing was found when there are no items, in both modes', () => {
     expect(mountList({ mode: 'cards', items: [] }).text()).toContain('Ничего не найдено')
     expect(mountList({ mode: 'table', items: [] }).text()).toContain('Ничего не найдено')
+  })
+
+  it('shows the text it is given when there are no items, in both modes', () => {
+    const emptyText = 'Вам пока ничего не назначено'
+
+    expect(mountList({ mode: 'cards', items: [], emptyText }).text()).toContain(emptyText)
+    expect(mountList({ mode: 'table', items: [], emptyText }).text()).toContain(emptyText)
   })
 
   it('does not say nothing was found while loading in cards mode', () => {
