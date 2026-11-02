@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectPermissions } from '@/composables/useProjectPermissions'
+import { PERMISSION } from '@/constants/permissions'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import { useProjectPageStore } from '@/stores/projectPage'
 import AppHeaderContent from '@/components/layout/AppHeaderContent.vue'
@@ -13,7 +14,7 @@ const route = useRoute()
 const store = useProjectPageStore()
 const currentCompany = useCurrentCompanyStore()
 const { project } = storeToRefs(store)
-const { canOpenSettings } = useProjectPermissions(project)
+const { can, canOpenSettings } = useProjectPermissions(project)
 
 // A link is highlighted by section, not by router-link matching: the
 // import page is a sibling of the shot list in the route tree, yet it
@@ -87,6 +88,7 @@ watch(
 
         <nav class="project-page__nav" aria-label="Разделы проекта">
           <RouterLink
+            v-if="can(PERMISSION.feedView)"
             class="project-page__link"
             :class="{ 'project-page__link--active': isActive('feed') }"
             :to="{ name: 'project-feed', params: routeParams }"

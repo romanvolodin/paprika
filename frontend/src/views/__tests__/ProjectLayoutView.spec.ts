@@ -130,6 +130,26 @@ describe('ProjectLayoutView', () => {
     ])
   })
 
+  it.each(['admin', 'producer', 'coordinator', 'executor', 'freelancer'] as const)(
+    'shows the feed link to a %s',
+    async (role) => {
+      const wrapper = await mountLayout(role)
+
+      expect(wrapper.findAll('a').map((link) => link.text())).toContain('Лента')
+    },
+  )
+
+  it.each(['client', 'readonly'] as const)(
+    'hides the feed link from a %s, who may not read the feed',
+    async (role) => {
+      const wrapper = await mountLayout(role)
+
+      const links = wrapper.findAll('a').map((link) => link.text())
+      expect(links).not.toContain('Лента')
+      expect(links).toContain('Кадры')
+    },
+  )
+
   it.each(['admin', 'producer', 'coordinator'] as const)(
     'shows the settings link to a %s',
     async (role) => {
