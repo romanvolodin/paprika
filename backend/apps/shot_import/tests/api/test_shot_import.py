@@ -375,3 +375,37 @@ class TestPermissions:
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert not Shot.objects.filter(project=project).exists()
+
+
+class TestImportIsAPackage:
+    def test_the_import_permission_alone_covers_shots_groups_and_tasks(
+        self,
+        auth_client,
+        auth_user,
+        project,
+        role_factory,
+        project_membership_factory,
+        task_type_factory,
+    ):
+        role = role_factory(company=project.company, permissions=["shot.import"])
+        project_membership_factory(user=auth_user, project=project, role=role)
+        task_type = task_type_factory(company=project.company)
+
+        response = _post(
+            auth_client,
+            project,
+            {
+                "shots": [
+                    {
+                        "name": "A",
+                        "groups": ["01 СЕРИЯ"],
+                        "tasks": [{"name": "Х", "type_id": task_type.id}],
+                    }
+                ]
+            },
+        )
+
+        assert response.status_code == HTTPStatus.CREATED, response.content
+        assert response.json()["shots_created"] == 1
+        assert response.json()["groups_created"] == 1
+        assert response.json()["tasks_created"] == 1

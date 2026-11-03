@@ -138,7 +138,7 @@ PERMISSIONS: tuple[Permission, ...] = (
     Permission(
         P.SHOT_IMPORT,
         "Импорт кадров",
-        "Загружать кадры из таблицы",
+        "Загружать кадры, группы и задачи из таблицы",
         "Кадры",
         PROJECT,
     ),
