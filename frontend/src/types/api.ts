@@ -33,7 +33,6 @@ export type CompanyListQuery = NonNullable<
 
 export type CompanyMemberOut = components['schemas']['CompanyMemberOut']
 export type CompanyMemberListOut = components['schemas']['CompanyMemberListOut']
-export type CompanyMemberCreateIn = components['schemas']['CompanyMemberCreateIn']
 export type CompanyMemberUpdateIn = components['schemas']['CompanyMemberUpdateIn']
 
 // Roles belong to a company and are shared by its company and project

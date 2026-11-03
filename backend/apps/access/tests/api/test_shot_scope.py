@@ -328,7 +328,7 @@ class TestGrantingTheScope:
         narrow = role_factory(
             company=company, sees_all_projects=True, sees_all_shots=False
         )
-        path = f"/api/v1/companies/{company.id}/members/"
+        path = f"/api/v1/companies/{company.id}/invitations/"
 
         refused = _post(auth_client, path, _new_person("a@example.com", wide.id))
         allowed = _post(auth_client, path, _new_person("b@example.com", narrow.id))
@@ -338,13 +338,7 @@ class TestGrantingTheScope:
 
 
 def _new_person(email, role_id):
-    return {
-        "email": email,
-        "first_name": "New",
-        "last_name": "Person",
-        "password": "temporary-passphrase-77",
-        "role_id": role_id,
-    }
+    return {"email": email, "role_id": role_id}
 
 
 class TestProjectMemberList:

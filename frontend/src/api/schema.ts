@@ -248,11 +248,7 @@ export interface paths {
          */
         get: operations["getCompanyMemberListControllerApiV1CompaniesCompanyIdMembers"];
         put?: never;
-        /**
-         * Add a company member
-         * @description Add a person to the company with the given role. If nobody has this email yet, an account is created with the temporary password (the person has to change it at the first sign-in). If the account exists, it is added as is and the name and password sent are ignored, so the answer looks the same either way. Needs the `company.members` permission.
-         */
-        post: operations["postCompanyMemberListControllerApiV1CompaniesCompanyIdMembers"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1257,32 +1253,6 @@ export interface components {
             page: number;
             /** Page Size */
             page_size: number;
-        };
-        /**
-         * CompanyMemberCreateIn
-         * @description Payload for `POST /api/v1/companies/<id>/members/`.
-         */
-        CompanyMemberCreateIn: {
-            /**
-             * Email
-             * Format: email
-             * @description Email of the person to add; it identifies their account.
-             */
-            email: string;
-            /** First Name */
-            first_name: string;
-            /** Last Name */
-            last_name: string;
-            /**
-             * Password
-             * @description Temporary password for a new account; the person has to choose their own at the first sign-in. Ignored when an account with this email already exists.
-             */
-            password: string;
-            /**
-             * Role Id
-             * @description A role of this company.
-             */
-            role_id: number;
         };
         /**
          * CompanyMemberListOut
@@ -4630,94 +4600,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Raised when provided `Accept` header cannot be satisfied */
-            406: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorModel"];
-                };
-            };
-            /** @description Raised when returned response does not match the response schema */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorModel"];
-                };
-            };
-        };
-    };
-    postCompanyMemberListControllerApiV1CompaniesCompanyIdMembers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description URL path parameters identifying a single company. */
-                company_id: number;
-            };
-            cookie?: never;
-        };
-        /** @description Payload for `POST /api/v1/companies/<id>/members/`. */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompanyMemberCreateIn"];
-            };
-        };
-        responses: {
-            /** @description The created membership. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanyMemberOut"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Raised when auth was not successful */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorModel"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
             /** @description Not Found */

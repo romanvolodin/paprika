@@ -4,7 +4,6 @@ import * as companiesApi from '@/api/companies'
 import * as invitationsApi from '@/api/invitations'
 import * as rolesApi from '@/api/roles'
 import type {
-  CompanyMemberCreateIn,
   CompanyMemberOut,
   CompanyOut,
   CompanyUpdateIn,
@@ -96,11 +95,6 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     members.value = (await companiesApi.listCompanyMembers(companyId)).items
   }
 
-  async function addMember(companyId: number, input: CompanyMemberCreateIn) {
-    await companiesApi.addCompanyMember(companyId, input)
-    await refetchMembers(companyId)
-  }
-
   async function updateMemberRole(companyId: number, userId: number, roleId: number) {
     await companiesApi.updateCompanyMember(companyId, userId, { role_id: roleId })
     await refetchMembers(companyId)
@@ -128,7 +122,6 @@ export const useCompanyDetailStore = defineStore('companyDetail', () => {
     updateRole,
     removeRole,
     updateCompany,
-    addMember,
     updateMemberRole,
     removeMember,
   }

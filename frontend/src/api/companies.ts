@@ -3,7 +3,6 @@ import type {
   CompanyCreateIn,
   CompanyListOut,
   CompanyListQuery,
-  CompanyMemberCreateIn,
   CompanyMemberListOut,
   CompanyMemberOut,
   CompanyMemberUpdateIn,
@@ -34,12 +33,6 @@ export function deleteCompany(companyId: number) {
 export function listCompanyMembers(companyId: number) {
   return apiClient
     .get<CompanyMemberListOut>(`/companies/${companyId}/members/`)
-    .then((res) => res.data)
-}
-
-export function addCompanyMember(companyId: number, input: CompanyMemberCreateIn) {
-  return apiClient
-    .post<CompanyMemberOut>(`/companies/${companyId}/members/`, input)
     .then((res) => res.data)
 }
 

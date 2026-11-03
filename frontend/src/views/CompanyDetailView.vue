@@ -19,17 +19,15 @@ import {
 } from 'naive-ui'
 import { ArrowBackOutline, TrashOutline } from '@vicons/ionicons5'
 import { useCompanyDetailStore } from '@/stores/companyDetail'
-import AddMemberForm from '@/components/company/AddMemberForm.vue'
 import CompanyInvitationsSection from '@/components/company/CompanyInvitationsSection.vue'
 import ShotStatusesSection from '@/components/shots/ShotStatusesSection.vue'
 import TaskStatusesSection from '@/components/tasks/TaskStatusesSection.vue'
 import TaskTypesSection from '@/components/tasks/TaskTypesSection.vue'
 import { useCompanyPermissions } from '@/composables/useCompanyPermissions'
 import { useDynamicPageTitle } from '@/composables/useDynamicPageTitle'
-import { firstValidationMessage } from '@/utils/apiError'
 import { tagColor } from '@/utils/color'
 import { slugify } from '@/utils/slugify'
-import type { CompanyMemberCreateIn, CompanyMemberOut } from '@/types/api'
+import type { CompanyMemberOut } from '@/types/api'
 
 const props = defineProps<{ companyId: number }>()
 
@@ -208,27 +206,6 @@ const columns = computed<DataTableColumns<CompanyMemberOut>>(() => [
         : null,
   },
 ])
-
-// --- Add member --------------------------------------------------------
-
-const addMemberForm = ref<InstanceType<typeof AddMemberForm> | null>(null)
-const isAddingMember = ref(false)
-
-async function handleAddMember(input: CompanyMemberCreateIn) {
-  isAddingMember.value = true
-  try {
-    await store.addMember(props.companyId, input)
-    message.success('Участник добавлен.')
-    addMemberForm.value?.reset()
-  } catch (error) {
-    message.error(
-      firstValidationMessage(error) ??
-        'Не удалось добавить участника. Возможно, он уже состоит в компании.',
-    )
-  } finally {
-    isAddingMember.value = false
-  }
-}
 </script>
 
 <template>
@@ -275,14 +252,6 @@ async function handleAddMember(input: CompanyMemberCreateIn) {
         :loading="store.isLoading"
         :bordered="false"
         :row-key="(row: CompanyMemberOut) => row.id"
-      />
-
-      <add-member-form
-        v-if="canManageMembers"
-        ref="addMemberForm"
-        :roles="store.roles"
-        :is-submitting="isAddingMember"
-        @submit="handleAddMember"
       />
     </section>
 

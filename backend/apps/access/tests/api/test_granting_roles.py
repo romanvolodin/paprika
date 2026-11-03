@@ -18,13 +18,7 @@ def _patch(client, path, payload):
 
 
 def _new_person(email, role_id):
-    return {
-        "email": email,
-        "first_name": "New",
-        "last_name": "Person",
-        "password": "temporary-passphrase-77",
-        "role_id": role_id,
-    }
+    return {"email": email, "role_id": role_id}
 
 
 class TestCompanyRoles:
@@ -40,7 +34,7 @@ class TestCompanyRoles:
 
         response = _post(
             auth_client,
-            f"/api/v1/companies/{producer_company.id}/members/",
+            f"/api/v1/companies/{producer_company.id}/invitations/",
             _new_person("boss@example.com", admin_id),
         )
 
@@ -53,7 +47,7 @@ class TestCompanyRoles:
 
         response = _post(
             auth_client,
-            f"/api/v1/companies/{producer_company.id}/members/",
+            f"/api/v1/companies/{producer_company.id}/invitations/",
             _new_person("coord@example.com", coordinator_id),
         )
 
@@ -97,7 +91,7 @@ class TestCompanyRoles:
 
         response = _post(
             auth_client,
-            f"/api/v1/companies/{company.id}/members/",
+            f"/api/v1/companies/{company.id}/invitations/",
             _new_person("second@example.com", get_default_role(company, "admin").id),
         )
 
@@ -124,7 +118,7 @@ class TestCompanyRoles:
 
         response = _post(
             auth_client,
-            f"/api/v1/companies/{company.id}/members/",
+            f"/api/v1/companies/{company.id}/invitations/",
             _new_person("wide@example.com", wide.id),
         )
 

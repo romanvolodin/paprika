@@ -100,25 +100,6 @@ class CompanyMemberPath(pydantic.BaseModel):
     user_id: int = pydantic.Field(gt=0)
 
 
-class CompanyMemberCreateIn(pydantic.BaseModel):
-    """Payload for `POST /api/v1/companies/<id>/members/`."""
-
-    email: pydantic.EmailStr = pydantic.Field(
-        description="Email of the person to add; it identifies their account."
-    )
-    first_name: str = pydantic.Field(min_length=1, max_length=150)
-    last_name: str = pydantic.Field(min_length=1, max_length=150)
-    password: str = pydantic.Field(
-        min_length=1,
-        description=(
-            "Temporary password for a new account; the person has to choose "
-            "their own at the first sign-in. Ignored when an account with "
-            "this email already exists."
-        ),
-    )
-    role_id: int = pydantic.Field(gt=0, description="A role of this company.")
-
-
 class CompanyMemberUpdateIn(pydantic.BaseModel):
     """Payload for `PATCH /api/v1/companies/<id>/members/<user_id>/`."""
 

@@ -31,14 +31,6 @@ function buildRoleOut(overrides: Partial<RoleOut> = {}): RoleOut {
   }
 }
 
-const NEW_MEMBER = {
-  email: 'new@paprika.dev',
-  first_name: 'New',
-  last_name: 'Person',
-  password: 'temporary-pass-1',
-  role_id: 4,
-}
-
 function buildCompany(overrides: Partial<CompanyOut> = {}): CompanyOut {
   return {
     id: 1,
@@ -120,22 +112,6 @@ describe('useCompanyDetailStore', () => {
 
       expect(companiesApi.updateCompany).toHaveBeenCalledWith(1, { name: 'Renamed' })
       expect(store.company?.name).toBe('Renamed')
-    })
-  })
-
-  describe('addMember', () => {
-    it('adds the member then refetches the members list', async () => {
-      vi.mocked(companiesApi.addCompanyMember).mockResolvedValue(buildMember())
-      vi.mocked(companiesApi.listCompanyMembers).mockResolvedValue({
-        items: [buildMember()],
-      })
-
-      const store = useCompanyDetailStore()
-      await store.addMember(1, NEW_MEMBER)
-
-      expect(companiesApi.addCompanyMember).toHaveBeenCalledWith(1, NEW_MEMBER)
-      expect(companiesApi.listCompanyMembers).toHaveBeenCalledWith(1)
-      expect(store.members).toHaveLength(1)
     })
   })
 
