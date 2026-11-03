@@ -460,3 +460,28 @@ class TestMemberPermissions:
         )
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+class TestActingOnYourself:
+    @pytest.fixture
+    def project(self, auth_user, project_factory, project_membership_factory):
+        project = project_factory()
+        project_membership_factory(user=auth_user, project=project, role="admin")
+        return project
+
+    def test_cannot_remove_yourself(self, auth_client, auth_user, project):
+        response = auth_client.delete(
+            f"/api/v1/projects/{project.id}/members/{auth_user.id}/"
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert ProjectMembership.objects.filter(user=auth_user).exists()
+
+    def test_cannot_change_your_own_role(self, auth_client, auth_user, project):
+        response = _patch_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/members/{auth_user.id}/",
+            {"role_id": _role_id(project, "executor")},
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN

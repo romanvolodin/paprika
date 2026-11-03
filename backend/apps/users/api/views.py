@@ -15,7 +15,7 @@ from dmr.errors import ErrorType
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 
-from apps.access.checks import require_superuser
+from apps.access.checks import companies_left_without_role_manager, require_superuser
 from apps.auth.api.controllers import AuthenticatedController
 from apps.core.storage import delete_stored_file
 from apps.users.models import User
@@ -283,11 +283,13 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
         summary="Delete a user",
         description=(
             "Permanently delete a user account: your own, or any one for "
-            "the server superuser."
+            "the server superuser. Rejected with a 409 while the user is the "
+            "last person in a company who can edit roles."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
             ResponseSpec(dict, status_code=HTTPStatus.FORBIDDEN),
+            ResponseSpec(dict, status_code=HTTPStatus.CONFLICT),
         ],
         tags=["Users"],
     )
@@ -295,5 +297,16 @@ class UserDetailController(AuthenticatedController[PydanticSerializer]):
         user = _get_user_or_404(parsed_path.user_id)
         if user.pk != self.request.user.pk:
             require_superuser(self.request.user)
+        orphaned = companies_left_without_role_manager(user)
+        if orphaned:
+            names = ", ".join(company.name for company in orphaned)
+            raise APIError(
+                {
+                    "detail": (
+                        f"The user is the last person who can edit roles in: {names}."
+                    )
+                },
+                status_code=HTTPStatus.CONFLICT,
+            )
         user.delete()
         return None

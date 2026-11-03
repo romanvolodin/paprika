@@ -24,6 +24,7 @@ from apps.access.checks import (
     projects_q,
     require_can_grant_project_role,
     require_company_perm,
+    require_not_self,
     require_project_perm,
     visible_project_member_ids,
 )
@@ -517,7 +518,8 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
         summary="Update a project member's role",
         description=(
             "Change the role of an existing project member. Needs the "
-            "`project.members` permission."
+            "`project.members` permission. You cannot change your own role "
+            "(403)."
         ),
         response_description="The updated membership.",
         extra_responses=[
@@ -534,6 +536,7 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
     ) -> ProjectMemberOut:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
+        require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(project, parsed_path.user_id)
         role = _get_role_or_400(self, project.company, parsed_body.role_id)
         require_can_grant_project_role(self.request.user, project, membership.role)
@@ -549,7 +552,8 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
         status_code=HTTPStatus.NO_CONTENT,
         summary="Remove a project member",
         description=(
-            "Remove a member from the project. Needs the `project.members` permission."
+            "Remove a member from the project. Needs the `project.members` "
+            "permission. You cannot remove yourself (403)."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -560,6 +564,7 @@ class ProjectMemberDetailController(AuthenticatedController[PydanticSerializer])
     def delete(self, parsed_path: Path[ProjectMemberPath]) -> None:
         project = _get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.PROJECT_MEMBERS)
+        require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(project, parsed_path.user_id)
         require_can_grant_project_role(self.request.user, project, membership.role)
         membership.delete()

@@ -14,6 +14,7 @@ from apps.access.checks import (
     company_permissions_by_id,
     require_can_grant_company_role,
     require_company_perm,
+    require_not_self,
     role_manager_would_vanish,
 )
 from apps.access.defaults import get_default_role
@@ -387,7 +388,8 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         summary="Update a company member's role",
         description=(
             "Change the role of an existing company member. Needs the "
-            "`company.members` permission."
+            "`company.members` permission. You cannot change your own role "
+            "(403)."
         ),
         response_description="The updated membership.",
         extra_responses=[
@@ -405,6 +407,7 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
     ) -> CompanyMemberOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
+        require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(company, parsed_path.user_id)
         role = _get_role_or_400(self, company, parsed_body.role_id)
         require_can_grant_company_role(self.request.user, company, membership.role)
@@ -424,7 +427,8 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         summary="Remove a company member",
         description=(
             "Remove a member from the company, and from all of its projects. "
-            "Needs the `company.members` permission."
+            "Needs the `company.members` permission. You cannot remove "
+            "yourself (403)."
         ),
         extra_responses=[
             ResponseSpec(dict, status_code=HTTPStatus.NOT_FOUND),
@@ -436,6 +440,7 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
     def delete(self, parsed_path: Path[CompanyMemberPath]) -> None:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
+        require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(company, parsed_path.user_id)
         require_can_grant_company_role(self.request.user, company, membership.role)
         if role_manager_would_vanish(company, remove_user_id=membership.user_id):

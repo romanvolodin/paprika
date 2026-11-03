@@ -271,14 +271,14 @@ export interface paths {
         post?: never;
         /**
          * Remove a company member
-         * @description Remove a member from the company, and from all of its projects. Needs the `company.members` permission.
+         * @description Remove a member from the company, and from all of its projects. Needs the `company.members` permission. You cannot remove yourself (403).
          */
         delete: operations["deleteCompanyMemberDetailControllerApiV1CompaniesCompanyIdMembersUserId"];
         options?: never;
         head?: never;
         /**
          * Update a company member's role
-         * @description Change the role of an existing company member. Needs the `company.members` permission.
+         * @description Change the role of an existing company member. Needs the `company.members` permission. You cannot change your own role (403).
          */
         patch: operations["patchCompanyMemberDetailControllerApiV1CompaniesCompanyIdMembersUserId"];
         trace?: never;
@@ -627,14 +627,14 @@ export interface paths {
         post?: never;
         /**
          * Remove a project member
-         * @description Remove a member from the project. Needs the `project.members` permission.
+         * @description Remove a member from the project. Needs the `project.members` permission. You cannot remove yourself (403).
          */
         delete: operations["deleteProjectMemberDetailControllerApiV1ProjectsProjectIdMembersUserId"];
         options?: never;
         head?: never;
         /**
          * Update a project member's role
-         * @description Change the role of an existing project member. Needs the `project.members` permission.
+         * @description Change the role of an existing project member. Needs the `project.members` permission. You cannot change your own role (403).
          */
         patch: operations["patchProjectMemberDetailControllerApiV1ProjectsProjectIdMembersUserId"];
         trace?: never;
@@ -1147,7 +1147,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a user
-         * @description Permanently delete a user account: your own, or any one for the server superuser.
+         * @description Permanently delete a user account: your own, or any one for the server superuser. Rejected with a 409 while the user is the last person in a company who can edit roles.
          */
         delete: operations["deleteUserDetailControllerApiV1UsersUserId"];
         options?: never;
@@ -10759,6 +10759,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Raised when returned response does not match the response schema */

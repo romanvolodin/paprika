@@ -268,6 +268,12 @@ def require_project_perm(user: User, project: Project, code: str) -> None:
         raise _forbidden()
 
 
+def require_not_self(user: User, target_user_id: int) -> None:
+    """Reject with a 403 when the user acts on their own membership."""
+    if user.pk == target_user_id:
+        raise _forbidden()
+
+
 def require_superuser(user: User) -> None:
     if not user.is_superuser:
         raise _forbidden()
@@ -315,6 +321,16 @@ def role_manager_would_vanish(
     return not _has_role_manager(
         company, remove_user_id=remove_user_id, move=move, edit=edit
     )
+
+
+def companies_left_without_role_manager(user: User) -> list[Company]:
+    """Companies that would have nobody who can edit roles without the user."""
+    companies = Company.objects.filter(memberships__user=user)
+    return [
+        company
+        for company in companies
+        if role_manager_would_vanish(company, remove_user_id=user.pk)
+    ]
 
 
 def _company_role_sees_all_projects(user: User, company: Company) -> bool:

@@ -170,3 +170,28 @@ class TestDeleteUser:
 
         assert response.status_code == 401
         assert User.objects.filter(id=target.id).exists()
+
+
+class TestDeleteLastRoleManager:
+    def test_rejects_deleting_the_only_person_who_can_edit_roles(
+        self, auth_client, user_factory, company, company_membership_factory
+    ):
+        target = user_factory()
+        company_membership_factory(user=target, company=company, role="admin")
+
+        response = auth_client.delete(f"/api/v1/users/{target.id}/")
+
+        assert response.status_code == HTTPStatus.CONFLICT
+        assert company.name in response.json()["detail"]
+        assert User.objects.filter(id=target.id).exists()
+
+    def test_allows_it_when_someone_else_can_edit_roles(
+        self, auth_client, user_factory, company, company_membership_factory
+    ):
+        target = user_factory()
+        company_membership_factory(user=target, company=company, role="admin")
+        company_membership_factory(user=user_factory(), company=company, role="admin")
+
+        response = auth_client.delete(f"/api/v1/users/{target.id}/")
+
+        assert response.status_code == HTTPStatus.NO_CONTENT

@@ -487,16 +487,19 @@ class TestMemberPermissions:
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
     def test_the_last_person_who_can_edit_roles_cannot_be_removed_or_demoted(
-        self, auth_client, auth_user, company, company_membership_factory
+        self, auth_client, auth_user, company, company_membership_factory, user_factory
     ):
-        company_membership_factory(user=auth_user, company=company, role="admin")
+        auth_user.is_superuser = True
+        auth_user.save()
+        target = user_factory()
+        company_membership_factory(user=target, company=company, role="admin")
 
         removed = auth_client.delete(
-            f"/api/v1/companies/{company.id}/members/{auth_user.id}/"
+            f"/api/v1/companies/{company.id}/members/{target.id}/"
         )
         demoted = _patch_json(
             auth_client,
-            f"/api/v1/companies/{company.id}/members/{auth_user.id}/",
+            f"/api/v1/companies/{company.id}/members/{target.id}/",
             {"role_id": _role_id(company, "producer")},
         )
 
@@ -507,11 +510,12 @@ class TestMemberPermissions:
         self, auth_client, auth_user, company, company_membership_factory, user_factory
     ):
         company_membership_factory(user=auth_user, company=company, role="admin")
-        company_membership_factory(user=user_factory(), company=company, role="admin")
+        target = user_factory()
+        company_membership_factory(user=target, company=company, role="admin")
 
         response = _patch_json(
             auth_client,
-            f"/api/v1/companies/{company.id}/members/{auth_user.id}/",
+            f"/api/v1/companies/{company.id}/members/{target.id}/",
             {"role_id": _role_id(company, "producer")},
         )
 
@@ -539,3 +543,28 @@ class TestMemberPermissions:
 
         assert response.status_code == HTTPStatus.NO_CONTENT
         assert not project.memberships.filter(user=member).exists()
+
+
+class TestActingOnYourself:
+    @pytest.fixture
+    def two_admins(self, auth_user, user_factory, company, company_membership_factory):
+        company_membership_factory(user=auth_user, company=company, role="admin")
+        company_membership_factory(user=user_factory(), company=company, role="admin")
+        return company
+
+    def test_cannot_remove_yourself(self, auth_client, auth_user, two_admins):
+        response = auth_client.delete(
+            f"/api/v1/companies/{two_admins.id}/members/{auth_user.id}/"
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert CompanyMembership.objects.filter(user=auth_user).exists()
+
+    def test_cannot_change_your_own_role(self, auth_client, auth_user, two_admins):
+        response = auth_client.patch(
+            f"/api/v1/companies/{two_admins.id}/members/{auth_user.id}/",
+            data=json.dumps({"role_id": _role_id(two_admins, "producer")}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
