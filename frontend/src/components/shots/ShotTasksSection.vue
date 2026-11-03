@@ -95,10 +95,12 @@ async function saveHours() {
   if (!shotTask) return
   isSavingHours.value = true
   try {
-    await store.update(shotTask.id, {
-      estimated_hours: estimatedHours.value,
-      actual_hours: actualHours.value,
-    })
+    await store.update(
+      shotTask.id,
+      props.canEdit
+        ? { estimated_hours: estimatedHours.value, actual_hours: actualHours.value }
+        : { actual_hours: actualHours.value },
+    )
     hoursTask.value = null
   } catch (error) {
     message.error(describeShotTaskError(error, 'Не удалось сохранить часы.'))
@@ -269,7 +271,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
     width: 150,
     render: (shotTask) => formatHours(shotTask.estimated_hours, shotTask.actual_hours),
   },
-  ...(props.canEdit || props.canDelete
+  ...(props.canEdit || props.canUpdateOwn || props.canDelete
     ? [
         {
           title: '',
@@ -277,7 +279,7 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
           width: 190,
           render: (shotTask: ShotTaskOut) =>
             h('div', { class: 'shot-tasks__actions' }, [
-              props.canEdit
+              canChangeStatus(shotTask)
                 ? h(
                     NButton,
                     { size: 'small', quaternary: true, onClick: () => startEditHours(shotTask) },
@@ -376,7 +378,13 @@ const columns = computed<DataTableColumns<ShotTaskOut>>(() => [
     >
       <n-form label-placement="top">
         <n-form-item label="Плановые часы">
-          <n-input-number v-model:value="estimatedHours" :min="0" :precision="2" clearable />
+          <n-input-number
+            v-model:value="estimatedHours"
+            :min="0"
+            :precision="2"
+            :disabled="!canEdit"
+            clearable
+          />
         </n-form-item>
         <n-form-item label="Фактические часы">
           <n-input-number v-model:value="actualHours" :min="0" :precision="2" clearable />

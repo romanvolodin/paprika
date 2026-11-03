@@ -899,11 +899,15 @@ def _resolve_assignee(controller, project: Project, assignee_id: int) -> User:
     return User.objects.get(pk=assignee_id)
 
 
-def _is_own_status_change(user: User, project: Project, shot_task, body) -> bool:
-    """Whether this is the assignee changing only the status of their own task."""
+_OWN_TASK_FIELDS = {"status_id", "actual_hours"}
+
+
+def _is_own_tracking_change(user: User, project: Project, shot_task, body) -> bool:
+    """Whether the assignee changes only the status or actual hours of their task."""
     return (
         shot_task.assignee_id == user.id
-        and body.model_fields_set == {"status_id"}
+        and bool(body.model_fields_set)
+        and body.model_fields_set <= _OWN_TASK_FIELDS
         and can_in_project(user, project, P.TASK_UPDATE_OWN)
     )
 
@@ -1036,8 +1040,8 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
             "Partially update the tracking of a task on a shot: status, "
             "assignee (null to unassign) and estimated/actual hours (null "
             "to clear). The task and the shot can't be changed. Needs "
-            "`task.edit`; the assignee can change just the status of "
-            "their own task with `task.update_own`."
+            "`task.edit`; the assignee can change just the status and the "
+            "actual hours of their own task with `task.update_own`."
         ),
         response_description="The updated shot task.",
         extra_responses=[
@@ -1054,7 +1058,7 @@ class ShotTaskDetailController(AuthenticatedController[PydanticSerializer]):
     ) -> ShotTaskOut:
         shot_task = _get_shot_task_or_404(self.request.user, parsed_path.shot_task_id)
         project = shot_task.shot.project
-        if not _is_own_status_change(
+        if not _is_own_tracking_change(
             self.request.user, project, shot_task, parsed_body
         ):
             require_project_perm(self.request.user, project, P.TASK_EDIT)

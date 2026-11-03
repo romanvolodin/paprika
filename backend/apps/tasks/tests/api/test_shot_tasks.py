@@ -510,6 +510,69 @@ class TestUpdateShotTask:
         assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+class TestUpdateOwnShotTask:
+    @pytest.fixture
+    def own_task(self, auth_user, shot_task, project_membership_factory):
+        project_membership_factory(
+            user=auth_user, project=shot_task.shot.project, role="executor"
+        )
+        shot_task.assignee = auth_user
+        shot_task.save()
+        return shot_task
+
+    def _patch(self, client, shot_task, payload):
+        return _patch_json(client, f"/api/v1/shot-tasks/{shot_task.id}/", payload)
+
+    def test_the_assignee_can_enter_actual_hours(self, auth_client, own_task):
+        response = self._patch(auth_client, own_task, {"actual_hours": "3.5"})
+
+        assert response.status_code == HTTPStatus.OK
+        own_task.refresh_from_db()
+        assert own_task.actual_hours == Decimal("3.5")
+
+    def test_the_assignee_can_change_the_status_and_hours_together(
+        self, auth_client, own_task
+    ):
+        done = _status(own_task.shot.project, "Готова")
+
+        response = self._patch(
+            auth_client, own_task, {"status_id": done.id, "actual_hours": "2"}
+        )
+
+        assert response.status_code == HTTPStatus.OK
+        own_task.refresh_from_db()
+        assert own_task.status == done
+        assert own_task.actual_hours == Decimal("2")
+
+    def test_the_assignee_cannot_change_the_planned_hours_or_the_assignee(
+        self, auth_client, own_task
+    ):
+        planned = self._patch(auth_client, own_task, {"estimated_hours": "1"})
+        reassigned = self._patch(auth_client, own_task, {"assignee_id": None})
+
+        assert planned.status_code == HTTPStatus.FORBIDDEN
+        assert reassigned.status_code == HTTPStatus.FORBIDDEN
+
+    def test_an_empty_update_is_not_an_own_change(self, auth_client, own_task):
+        response = self._patch(auth_client, own_task, {})
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_hours_of_someone_elses_task_need_task_edit(
+        self, auth_client, own_task, user_factory, project_membership_factory
+    ):
+        other = user_factory()
+        project_membership_factory(
+            user=other, project=own_task.shot.project, role="executor"
+        )
+        own_task.assignee = other
+        own_task.save()
+
+        response = self._patch(auth_client, own_task, {"actual_hours": "1"})
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+
 class TestRemoveTaskFromShot:
     def test_removes_the_placement_but_keeps_the_task(
         self, auth_client, auth_user, shot_task, project_membership_factory

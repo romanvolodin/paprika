@@ -124,7 +124,7 @@ describe('ShotTasksSection', () => {
     expect(wrapper.text()).toContain('PRJ10')
   })
 
-  describe('when the user may only change the status of their own tasks', () => {
+  describe('when the user may only change the status and hours of their own tasks', () => {
     beforeEach(() => {
       useAuthStore().currentUser = {
         id: 5,
@@ -139,7 +139,7 @@ describe('ShotTasksSection', () => {
       }
     })
 
-    it('offers the status of a task assigned to them, but nothing else', async () => {
+    it('offers the status and hours of a task assigned to them, but nothing else', async () => {
       vi.mocked(tasksApi.listShotTasks).mockResolvedValue({ items: [buildShotTask(10, 5)] })
       const wrapper = mount(Host, { props: { shotId: 10, onlyOwnStatus: true } })
       await flushPromises()
@@ -147,7 +147,7 @@ describe('ShotTasksSection', () => {
       expect(wrapper.findAll('.n-select')).toHaveLength(1)
       const buttons = wrapper.findAll('button').map((button) => button.text())
       expect(buttons).not.toContain('Добавить задачу')
-      expect(buttons).not.toContain('Часы')
+      expect(buttons).toContain('Часы')
       expect(buttons).not.toContain('Снять')
     })
 
@@ -157,6 +157,30 @@ describe('ShotTasksSection', () => {
       await flushPromises()
 
       expect(wrapper.findAll('.n-select')).toHaveLength(0)
+      expect(wrapper.findAll('button').map((button) => button.text())).not.toContain('Часы')
+    })
+
+    it('saves only the actual hours and keeps the planned ones locked', async () => {
+      vi.mocked(tasksApi.listShotTasks).mockResolvedValue({ items: [buildShotTask(10, 5)] })
+      vi.mocked(tasksApi.updateShotTask).mockResolvedValue(buildShotTask(10, 5))
+      const wrapper = mount(Host, { props: { shotId: 10, onlyOwnStatus: true } })
+      await flushPromises()
+
+      await wrapper
+        .findAll('button')
+        .find((button) => button.text() === 'Часы')!
+        .trigger('click')
+      await flushPromises()
+      const inputs = document.body.querySelectorAll('.n-input-number .n-input')
+      expect(inputs[0].classList.contains('n-input--disabled')).toBe(true)
+      expect(inputs[1].classList.contains('n-input--disabled')).toBe(false)
+      const save = [...document.body.querySelectorAll('button')].find(
+        (button) => button.textContent?.trim() === 'Сохранить',
+      )!
+      save.click()
+      await flushPromises()
+
+      expect(tasksApi.updateShotTask).toHaveBeenCalledWith(100, { actual_hours: null })
     })
   })
 })
