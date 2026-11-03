@@ -99,6 +99,19 @@ describe('RoleEditor', () => {
     expect(wrapper.emitted('save')?.[0]?.[0]).toMatchObject({ sees_all_shots: true })
   })
 
+  it('warns when a role that cannot see every shot may create shots', () => {
+    const wrapper = mountEditor({ role: { ...role, sees_all_shots: false } })
+
+    expect(wrapper.text()).toContain('Созданные кадры она не увидит')
+  })
+
+  it('does not warn when the role sees every shot or cannot create them', () => {
+    expect(mountEditor().text()).not.toContain('Созданные кадры она не увидит')
+    expect(
+      mountEditor({ role: { ...role, sees_all_shots: false, permissions: [] } }).text(),
+    ).not.toContain('Созданные кадры она не увидит')
+  })
+
   it('does not send a role without a name', async () => {
     const wrapper = mountEditor()
 

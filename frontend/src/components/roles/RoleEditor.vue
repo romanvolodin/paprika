@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  NAlert,
   NButton,
   NCheckbox,
   NColorPicker,
@@ -55,6 +56,12 @@ watch(
     permissions.value = role ? [...role.permissions] : []
   },
   { immediate: true },
+)
+
+const createsInvisibleShots = computed(
+  () =>
+    !seesAllShots.value &&
+    (permissions.value.includes('shot.create') || permissions.value.includes('shot.import')),
 )
 
 // The catalog arrives in display order; keep the sections in that order.
@@ -149,6 +156,11 @@ async function handleSave() {
         </div>
       </div>
     </div>
+
+    <n-alert v-if="createsInvisibleShots" type="warning" :show-icon="false">
+      Эта роль может создавать кадры и загружать их из таблицы, но не видит все кадры проекта.
+      Созданные кадры она не увидит, пока ей не назначат на них задачу.
+    </n-alert>
 
     <section v-for="group in groups" :key="group.title" class="role-editor__group">
       <h3 class="role-editor__group-title">{{ group.title }}</h3>
