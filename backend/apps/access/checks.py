@@ -330,13 +330,61 @@ def _company_role_sees_all_projects_and_shots(user: User, company: Company) -> b
     ).exists()
 
 
+def _own_company_role(user: User, company: Company) -> Role | None:
+    membership = (
+        CompanyMembership.objects.filter(user=user, company=company)
+        .select_related("role")
+        .first()
+    )
+    return membership.role if membership else None
+
+
+def _own_role_codes(user: User, company: Company) -> frozenset[str]:
+    role = _own_company_role(user, company)
+    return frozenset(role.permissions) if role else frozenset()
+
+
+def can_edit_role(
+    user: User,
+    company: Company,
+    *,
+    old: Role | None,
+    permissions: list[str],
+    sees_all_projects: bool,
+    sees_all_shots: bool,
+) -> bool:
+    """Whether the user may turn `old` (None for a new role) into the given shape.
+
+    A role can only be changed in what the user's own company role has: every
+    permission added or removed, and every `sees_all_*` flag switched, must be
+    among the user's own.
+    """
+    if user.is_superuser:
+        return True
+    own = _own_company_role(user, company)
+    if own is None:
+        return False
+    before = frozenset(old.permissions) if old else frozenset()
+    changed = before ^ frozenset(permissions)
+    if not changed <= frozenset(own.permissions):
+        return False
+    if sees_all_projects != (old.sees_all_projects if old else False):
+        if not own.sees_all_projects:
+            return False
+    if sees_all_shots != (old.sees_all_shots if old else False):
+        if not own.sees_all_shots:
+            return False
+    return True
+
+
 def can_grant_company_role(user: User, company: Company, role: Role) -> bool:
     """Whether the user may give `role` to someone in the company.
 
     Nobody can hand out more than they have: the role's company permissions
     must all be among the user's own, and a role that sees every project
-    only goes to someone who sees every project themselves, and every
-    shot of them if the role does.
+    only goes to someone who sees every project themselves, with all its
+    project permissions among theirs, and every shot of them if the role
+    does.
     """
     if user.is_superuser:
         return True
@@ -346,6 +394,10 @@ def can_grant_company_role(user: User, company: Company, role: Role) -> bool:
         return False
     if not role.sees_all_projects:
         return True
+    if not (PROJECT_CODES & frozenset(role.permissions)) <= _own_role_codes(
+        user, company
+    ):
+        return False
     if role.sees_all_shots:
         return _company_role_sees_all_projects_and_shots(user, company)
     return _company_role_sees_all_projects(user, company)
@@ -360,6 +412,26 @@ def can_grant_project_role(user: User, project: Project, role: Role) -> bool:
     ):
         return False
     return not role.sees_all_shots or project_sees_all_shots(user, project)
+
+
+def require_can_edit_role(
+    user: User,
+    company: Company,
+    *,
+    old: Role | None,
+    permissions: list[str],
+    sees_all_projects: bool,
+    sees_all_shots: bool,
+) -> None:
+    if not can_edit_role(
+        user,
+        company,
+        old=old,
+        permissions=permissions,
+        sees_all_projects=sees_all_projects,
+        sees_all_shots=sees_all_shots,
+    ):
+        raise _forbidden()
 
 
 def require_can_grant_company_role(user: User, company: Company, role: Role) -> None:

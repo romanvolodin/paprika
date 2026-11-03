@@ -322,7 +322,7 @@ export interface paths {
         put?: never;
         /**
          * Create a role
-         * @description Create a role in the company. The name must be unique within the company (409 otherwise). Needs the `company.roles` permission.
+         * @description Create a role in the company. The name must be unique within the company (409 otherwise). Needs the `company.roles` permission, and the role can only hold permissions and `sees_all_*` flags the user has in their own company role (403 otherwise).
          */
         post: operations["postRoleListControllerApiV1CompaniesCompanyIdRoles"];
         delete?: never;
@@ -774,7 +774,7 @@ export interface paths {
         head?: never;
         /**
          * Update a role
-         * @description Partially update a role. A change that would leave the company with nobody who can edit roles is rejected with a 409. Needs the `company.roles` permission.
+         * @description Partially update a role. A change that would leave the company with nobody who can edit roles is rejected with a 409. Needs the `company.roles` permission, and only permissions and `sees_all_*` flags the user has in their own company role can be added, removed or switched (403 otherwise).
          */
         patch: operations["patchRoleDetailControllerApiV1RolesRoleId"];
         trace?: never;

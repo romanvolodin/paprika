@@ -191,3 +191,38 @@ class TestProjectRoles:
         )
 
         assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+class TestRoleWithProjectPermissions:
+    def test_a_role_that_sees_all_projects_needs_its_project_permissions_to_be_yours(
+        self, auth_client, auth_user, company, company_membership_factory, role_factory
+    ):
+        own = role_factory(
+            company=company,
+            permissions=["company.members", "company.edit", "company.pipeline"],
+            sees_all_projects=True,
+        )
+        company_membership_factory(user=auth_user, company=company, role=own)
+        producer_id = get_default_role(company, "producer").id
+
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{company.id}/invitations/",
+            {"email": "x@example.com", "role_id": producer_id},
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_the_same_role_is_fine_when_the_project_permissions_are_yours(
+        self, auth_client, auth_user, company, company_membership_factory
+    ):
+        company_membership_factory(user=auth_user, company=company, role="producer")
+        producer_id = get_default_role(company, "producer").id
+
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{company.id}/invitations/",
+            {"email": "x@example.com", "role_id": producer_id},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED

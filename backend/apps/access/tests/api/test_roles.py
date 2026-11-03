@@ -300,3 +300,81 @@ class TestDeleteRole:
         response = auth_client.delete(f"/api/v1/roles/{role.id}/")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+class TestEditRoleWithinOwnRights:
+    @pytest.fixture
+    def manager(self, auth_user, company, company_membership_factory, role_factory):
+        role = role_factory(
+            company=company,
+            permissions=["company.roles", "company.members", "shot.create"],
+        )
+        company_membership_factory(user=auth_user, company=company, role=role)
+        return role
+
+    def test_cannot_add_a_permission_you_do_not_have_to_your_own_role(
+        self, auth_client, manager
+    ):
+        response = _patch(
+            auth_client,
+            f"/api/v1/roles/{manager.id}/",
+            {"permissions": [*manager.permissions, "company.delete"]},
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_cannot_turn_on_a_scope_you_do_not_have(self, auth_client, manager):
+        manager.sees_all_projects = False
+        manager.save()
+
+        response = _patch(
+            auth_client, f"/api/v1/roles/{manager.id}/", {"sees_all_projects": True}
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_can_change_a_permission_you_have(self, auth_client, manager):
+        response = _patch(
+            auth_client,
+            f"/api/v1/roles/{manager.id}/",
+            {"permissions": ["company.roles", "company.members"]},
+        )
+
+        assert response.status_code == HTTPStatus.OK
+
+    def test_can_edit_another_role_but_only_in_what_you_have(
+        self, auth_client, company, manager, role_factory
+    ):
+        other = role_factory(company=company, permissions=["company.delete"])
+
+        kept = _patch(
+            auth_client,
+            f"/api/v1/roles/{other.id}/",
+            {"name": "Renamed", "permissions": ["company.delete", "shot.create"]},
+        )
+        stripped = _patch(
+            auth_client, f"/api/v1/roles/{other.id}/", {"permissions": []}
+        )
+
+        assert kept.status_code == HTTPStatus.OK
+        assert stripped.status_code == HTTPStatus.FORBIDDEN
+
+    def test_cannot_create_a_role_with_more_than_you_have(
+        self, auth_client, company, manager
+    ):
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{company.id}/roles/",
+            {"name": "Big", "color": "#112233", "permissions": ["company.delete"]},
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_can_create_a_role_within_your_rights(self, auth_client, company, manager):
+        response = _post(
+            auth_client,
+            f"/api/v1/companies/{company.id}/roles/",
+            {"name": "Small", "color": "#112233", "permissions": ["shot.create"]},
+        )
+
+        assert response.status_code == HTTPStatus.CREATED

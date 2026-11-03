@@ -7,6 +7,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 
 from apps.access.checks import (
     companies_q,
+    require_can_edit_role,
     require_company_perm,
     role_manager_would_vanish,
 )
@@ -136,7 +137,9 @@ class RoleListController(AuthenticatedController[PydanticSerializer]):
         summary="Create a role",
         description=(
             "Create a role in the company. The name must be unique within "
-            "the company (409 otherwise). Needs the `company.roles` permission."
+            "the company (409 otherwise). Needs the `company.roles` permission, and "
+            "the role can only hold permissions and `sees_all_*` flags the user "
+            "has in their own company role (403 otherwise)."
         ),
         response_description="The created role.",
         extra_responses=[
@@ -153,6 +156,14 @@ class RoleListController(AuthenticatedController[PydanticSerializer]):
     ) -> RoleOut:
         company = _get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_ROLES)
+        require_can_edit_role(
+            self.request.user,
+            company,
+            old=None,
+            permissions=parsed_body.permissions,
+            sees_all_projects=parsed_body.sees_all_projects,
+            sees_all_shots=parsed_body.sees_all_shots,
+        )
 
         if _name_taken(company, parsed_body.name):
             raise _conflict(
@@ -190,7 +201,9 @@ class RoleDetailController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Partially update a role. A change that would leave the company "
             "with nobody who can edit roles is rejected with a 409. Needs "
-            "the `company.roles` permission."
+            "the `company.roles` permission, and only permissions and "
+            "`sees_all_*` flags the user has in their own company role can be "
+            "added, removed or switched (403 otherwise)."
         ),
         response_description="The updated role.",
         extra_responses=[
@@ -223,6 +236,17 @@ class RoleDetailController(AuthenticatedController[PydanticSerializer]):
                 raise _bad_request(self, f"{field} cannot be null.", [field])
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
+
+        require_can_edit_role(
+            self.request.user,
+            role.company,
+            old=role,
+            permissions=update_fields.get("permissions", role.permissions),
+            sees_all_projects=update_fields.get(
+                "sees_all_projects", role.sees_all_projects
+            ),
+            sees_all_shots=update_fields.get("sees_all_shots", role.sees_all_shots),
+        )
 
         if "name" in update_fields and _name_taken(
             role.company, update_fields["name"], exclude_pk=role.pk
