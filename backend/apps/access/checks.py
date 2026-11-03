@@ -48,10 +48,10 @@ def visible_projects(user: User) -> QuerySet[Project]:
 
 
 def projects_with_all_shots(user: User) -> QuerySet[Project]:
-    """Projects where the user's role shows every shot, not just assigned ones.
+    """Projects where the user's roles show every shot, not just assigned ones.
 
-    The role in the project decides; a company role that sees every
-    project only speaks for projects the user is not a member of.
+    Either the role in the project or a company role that sees every
+    project (and every shot) is enough.
     """
     if user.is_superuser:
         return Project.objects.all()
@@ -62,7 +62,7 @@ def projects_with_all_shots(user: User) -> QuerySet[Project]:
         company__memberships__user=user,
         company__memberships__role__sees_all_projects=True,
         company__memberships__role__sees_all_shots=True,
-    ).exclude(memberships__user=user)
+    )
     return Project.objects.filter(
         Q(pk__in=as_member.values("pk")) | Q(pk__in=as_company_role.values("pk"))
     )
@@ -155,24 +155,26 @@ def company_permissions_by_id(
 
 
 def project_permissions(user: User, project: Project) -> frozenset[str]:
-    """What the user may do inside the project."""
+    """What the user may do inside the project.
+
+    The role in the project and a company role that sees every project
+    add up.
+    """
     if user.is_superuser:
         return PROJECT_CODES
-    codes = (
+    own = (
         ProjectMembership.objects.filter(user=user, project=project)
         .values_list("role__permissions", flat=True)
         .first()
     )
-    if codes is None:
-        # Not a member: only a company role that sees every project reaches in.
-        codes = (
-            CompanyMembership.objects.filter(
-                user=user, company_id=project.company_id, role__sees_all_projects=True
-            )
-            .values_list("role__permissions", flat=True)
-            .first()
+    wide = (
+        CompanyMembership.objects.filter(
+            user=user, company_id=project.company_id, role__sees_all_projects=True
         )
-    return PROJECT_CODES & frozenset(codes or ())
+        .values_list("role__permissions", flat=True)
+        .first()
+    )
+    return PROJECT_CODES & (frozenset(own or ()) | frozenset(wide or ()))
 
 
 def project_permissions_by_id(
@@ -195,10 +197,10 @@ def project_permissions_by_id(
     )
     result = {}
     for project in projects:
-        codes = own.get(project.pk)
-        if codes is None:
-            codes = wide.get(project.company_id)
-        result[project.pk] = PROJECT_CODES & frozenset(codes or ())
+        codes = frozenset(own.get(project.pk) or ()) | frozenset(
+            wide.get(project.company_id) or ()
+        )
+        result[project.pk] = PROJECT_CODES & codes
     return result
 
 

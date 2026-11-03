@@ -205,7 +205,7 @@ class TestCompanyRoleAndProjectRole:
             == HTTPStatus.NOT_FOUND
         )
 
-    def test_the_role_in_the_project_wins_over_the_company_role(
+    def test_a_company_role_that_sees_everything_still_counts_in_a_project(
         self,
         auth_client,
         auth_user,
@@ -221,7 +221,7 @@ class TestCompanyRoleAndProjectRole:
 
         response = auth_client.get(f"/api/v1/shots/{other.id}/")
 
-        assert response.status_code == HTTPStatus.NOT_FOUND
+        assert response.status_code == HTTPStatus.OK
 
     def test_an_assignment_without_membership_shows_nothing(
         self, auth_client, auth_user, mine, shot_task_factory

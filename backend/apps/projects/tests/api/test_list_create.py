@@ -172,7 +172,7 @@ class TestCreateProject:
         assert body["created_by"]["email"] == auth_user.email
         assert body["updated_by"]["id"] == auth_user.id
 
-    def test_creator_becomes_a_member_with_their_company_role(
+    def test_creator_who_sees_every_project_is_not_added_as_a_member(
         self, auth_client, auth_user, company, company_membership_factory
     ):
         company_membership_factory(user=auth_user, company=company, role="producer")
@@ -183,10 +183,32 @@ class TestCreateProject:
             {"name": "Acme Feature", "code": "PRJ"},
         )
 
+        assert response.status_code == 201
+        assert not ProjectMembership.objects.filter(
+            project_id=response.json()["id"], user=auth_user
+        ).exists()
+        assert (
+            auth_client.get(f"/api/v1/projects/{response.json()['id']}/").status_code
+            == 200
+        )
+
+    def test_creator_who_sees_only_their_projects_becomes_a_member_with_their_role(
+        self, auth_client, auth_user, company, company_membership_factory, role_factory
+    ):
+        role = role_factory(
+            company=company, permissions=["project.create"], sees_all_projects=False
+        )
+        company_membership_factory(user=auth_user, company=company, role=role)
+
+        response = _post_multipart(
+            auth_client,
+            f"/api/v1/companies/{company.id}/projects/",
+            {"name": "Acme Feature", "code": "PRJ"},
+        )
+
         project = Project.objects.get(id=response.json()["id"])
         membership = ProjectMembership.objects.get(project=project, user=auth_user)
-        assert membership.role.name == "Продюсер"
-        assert membership.role.company_id == company.id
+        assert membership.role_id == role.id
 
     def test_creator_can_immediately_see_their_new_project(
         self, auth_client, auth_user, company, company_membership_factory

@@ -3,6 +3,7 @@ import json
 
 import pytest
 
+from apps.access.defaults import get_default_role
 from apps.access.permissions import COMPANY_CODES, PROJECT_CODES
 
 
@@ -109,7 +110,7 @@ class TestProjectsOfTheWholeCompany:
 
         assert response.status_code == HTTPStatus.OK
 
-    def test_membership_in_the_project_wins_over_the_company_role(
+    def test_the_company_role_and_the_project_role_add_up(
         self,
         auth_client,
         auth_user,
@@ -124,7 +125,27 @@ class TestProjectsOfTheWholeCompany:
 
         response = auth_client.get(f"/api/v1/projects/{project.id}/")
 
-        assert response.json()["my_permissions"] == ["chat.write"]
+        assert set(response.json()["my_permissions"]) == PROJECT_CODES
+
+
+class TestDemotion:
+    def test_a_demoted_creator_loses_their_rights_in_the_project_they_created(
+        self, auth_client, auth_user, company, company_membership_factory
+    ):
+        membership = company_membership_factory(
+            user=auth_user, company=company, role="admin"
+        )
+        created = auth_client.post(
+            f"/api/v1/companies/{company.id}/projects/",
+            data={"name": "Acme Feature", "code": "PRJ"},
+        )
+        project_id = created.json()["id"]
+        membership.role = get_default_role(company, "client")
+        membership.save()
+
+        response = auth_client.get(f"/api/v1/projects/{project_id}/")
+
+        assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 class TestMyPermissions:

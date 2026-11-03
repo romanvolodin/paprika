@@ -331,10 +331,14 @@ class ProjectListController(AuthenticatedController[PydanticSerializer]):
             created_by=self.request.user,
             updated_by=self.request.user,
         )
-        company_membership = CompanyMembership.objects.filter(
-            user=self.request.user, company=company
-        ).first()
-        if company_membership is not None:
+        company_membership = (
+            CompanyMembership.objects.filter(user=self.request.user, company=company)
+            .select_related("role")
+            .first()
+        )
+        if company_membership is not None and not (
+            company_membership.role.sees_all_projects
+        ):
             ProjectMembership.objects.create(
                 user=self.request.user,
                 project=project,
