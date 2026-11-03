@@ -24,7 +24,7 @@ from apps.projects.models import Project
 from apps.users.models import User
 
 from ..models import Invitation, InvitationProject
-from ..services import accept_invitation
+from ..services import accept_invitation, inviter_can_still_give_access
 from .schemas import (
     CompanyInvitationsPath,
     InvitationCreateIn,
@@ -386,6 +386,16 @@ def _require_open(invitation: Invitation) -> None:
             {"detail": "This invitation has been used or has expired."},
             status_code=HTTPStatus.GONE,
         )
+    if not inviter_can_still_give_access(invitation):
+        raise APIError(
+            {
+                "detail": (
+                    "The person who sent this invitation can no longer give "
+                    "this access. Ask them to invite you again."
+                )
+            },
+            status_code=HTTPStatus.GONE,
+        )
 
 
 class InviteInfoController(Controller[PydanticSerializer]):
@@ -438,7 +448,9 @@ class InviteRegisterController(Controller[PydanticSerializer]):
             "Public. Create the account of the invited email with the name "
             "and password given and accept the invitation. Sign in "
             "afterwards. If the email already has an account, accept the "
-            "invitation while signed in to it instead (409)."
+            "invitation while signed in to it instead (409). Gone (410) when "
+            "the invitation was used or expired, or when the person who "
+            "sent it can no longer give this access."
         ),
         extra_responses=[_NOT_FOUND, _BAD_REQUEST, _CONFLICT, _GONE],
         tags=["Invitations"],
@@ -477,7 +489,9 @@ class InviteAcceptController(AuthenticatedController[PydanticSerializer]):
         summary="Accept an invitation",
         description=(
             "Accept the invitation as the signed-in user, whose email has to "
-            "be the invited one (403 otherwise)."
+            "be the invited one (403 otherwise). Gone (410) when the "
+            "invitation was used or expired, or when the person who sent it "
+            "can no longer give this access."
         ),
         extra_responses=[_NOT_FOUND, _FORBIDDEN, _GONE],
         tags=["Invitations"],

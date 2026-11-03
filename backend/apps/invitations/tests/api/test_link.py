@@ -35,9 +35,19 @@ def _register(client, token, **overrides):
 
 
 @pytest.fixture
-def invitation(invitation_factory, company, project_factory):
+def inviter(user_factory, company, company_membership_factory):
+    user = user_factory()
+    company_membership_factory(user=user, company=company, role="admin")
+    return user
+
+
+@pytest.fixture
+def invitation(invitation_factory, company, project_factory, inviter):
     invitation = invitation_factory(
-        company=company, email="invitee@example.com", role="freelancer"
+        company=company,
+        email="invitee@example.com",
+        role="freelancer",
+        created_by=inviter,
     )
     InvitationProject.objects.create(
         invitation=invitation,
@@ -227,3 +237,90 @@ class TestAccept:
     @pytest.fixture
     def anonymous(self):
         return Client()
+
+
+class TestInviterNoLongerAllowed:
+    @pytest.fixture
+    def invitee(self, user_factory):
+        return user_factory(email="Invitee@example.com", password=DEFAULT_PASSWORD)
+
+    def _accept(self, invitation, invitee):
+        client = Client()
+        client.post(
+            "/api/v1/auth/login/",
+            data=json.dumps({"email": invitee.email, "password": DEFAULT_PASSWORD}),
+            content_type="application/json",
+        )
+        return client.post(f"/api/v1/invite/{invitation.token}/accept/")
+
+    def _gone(self, invitation, invitee):
+        response = self._accept(invitation, invitee)
+
+        assert response.status_code == HTTPStatus.GONE
+        assert not CompanyMembership.objects.filter(user=invitee).exists()
+        assert Invitation.objects.filter(
+            pk=invitation.pk, accepted_at__isnull=True
+        ).exists()
+
+    def test_the_inviter_was_demoted(self, invitation, invitee, inviter, company):
+        CompanyMembership.objects.filter(user=inviter, company=company).update(
+            role=get_default_role(company, "executor")
+        )
+
+        self._gone(invitation, invitee)
+
+    def test_the_inviter_left_the_company(self, invitation, invitee, inviter):
+        CompanyMembership.objects.filter(user=inviter).delete()
+
+        self._gone(invitation, invitee)
+
+    def test_the_inviter_no_longer_exists(self, invitation, invitee, inviter):
+        inviter.delete()
+
+        self._gone(invitation, invitee)
+
+    def test_the_role_grew_after_the_invitation_was_sent(
+        self, invitation, invitee, inviter, company
+    ):
+        CompanyMembership.objects.filter(user=inviter, company=company).update(
+            role=get_default_role(company, "producer")
+        )
+        role = invitation.role
+        role.permissions = [*role.permissions, "company.delete"]
+        role.save()
+
+        self._gone(invitation, invitee)
+
+    def test_register_is_refused_too(self, anonymous, invitation, inviter):
+        CompanyMembership.objects.filter(user=inviter).delete()
+
+        response = _register(anonymous, invitation.token)
+
+        assert response.status_code == HTTPStatus.GONE
+        assert not User.objects.filter(email__iexact=invitation.email).exists()
+
+    def test_the_invitation_stays_in_the_company_list(
+        self,
+        invitation,
+        invitee,
+        inviter,
+        company,
+        user_factory,
+        company_membership_factory,
+    ):
+        CompanyMembership.objects.filter(user=inviter).delete()
+        manager = user_factory(password=DEFAULT_PASSWORD)
+        company_membership_factory(user=manager, company=company, role="admin")
+        self._accept(invitation, invitee)
+        client = Client()
+        client.post(
+            "/api/v1/auth/login/",
+            data=json.dumps({"email": manager.email, "password": DEFAULT_PASSWORD}),
+            content_type="application/json",
+        )
+
+        response = client.get(f"/api/v1/companies/{company.id}/invitations/")
+
+        assert [item["email"] for item in response.json()["items"]] == [
+            invitation.email
+        ]

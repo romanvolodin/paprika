@@ -474,7 +474,7 @@ export interface paths {
         put?: never;
         /**
          * Accept an invitation
-         * @description Accept the invitation as the signed-in user, whose email has to be the invited one (403 otherwise).
+         * @description Accept the invitation as the signed-in user, whose email has to be the invited one (403 otherwise). Gone (410) when the invitation was used or expired, or when the person who sent it can no longer give this access.
          */
         post: operations["postInviteAcceptControllerApiV1InviteTokenAccept"];
         delete?: never;
@@ -494,7 +494,7 @@ export interface paths {
         put?: never;
         /**
          * Make an account from an invitation
-         * @description Public. Create the account of the invited email with the name and password given and accept the invitation. Sign in afterwards. If the email already has an account, accept the invitation while signed in to it instead (409).
+         * @description Public. Create the account of the invited email with the name and password given and accept the invitation. Sign in afterwards. If the email already has an account, accept the invitation while signed in to it instead (409). Gone (410) when the invitation was used or expired, or when the person who sent it can no longer give this access.
          */
         post: operations["postInviteRegisterControllerApiV1InviteTokenRegister"];
         delete?: never;
