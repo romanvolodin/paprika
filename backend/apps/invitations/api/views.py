@@ -10,7 +10,9 @@ from dmr.plugins.pydantic import PydanticSerializer
 from apps.access.api.schemas import RoleRefOut
 from apps.access.checks import (
     companies_q,
-    projects_q,
+    get_company_or_404,
+    get_project_or_404,
+    get_role_or_400,
     require_can_grant_company_role,
     require_can_grant_project_role,
     require_company_perm,
@@ -82,30 +84,6 @@ def _serialize(invitation: Invitation) -> InvitationOut:
     )
 
 
-def _get_company_or_404(user: User, company_id: int) -> Company:
-    try:
-        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
-    except Company.DoesNotExist as exc:
-        raise APIError(
-            {"detail": f"Company with id={company_id} was not found."},
-            status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
-
-
-def _get_project_or_404(user: User, project_id: int) -> Project:
-    try:
-        return (
-            Project.objects.filter(projects_q(user, "pk"))
-            .select_related("company")
-            .get(pk=project_id)
-        )
-    except Project.DoesNotExist as exc:
-        raise APIError(
-            {"detail": f"Project with id={project_id} was not found."},
-            status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
-
-
 def _get_invitation_or_404(user: User, invitation_id: int) -> Invitation:
     try:
         return (
@@ -125,20 +103,6 @@ def _require_can_manage(user: User, invitation: Invitation) -> None:
     if invitation.created_by_id == user.id:
         return
     require_company_perm(user, invitation.company, P.COMPANY_MEMBERS)
-
-
-def _get_role_or_400(
-    controller, company: Company, role_id: int, loc: list[str]
-) -> Role:
-    try:
-        return Role.objects.get(pk=role_id, company=company)
-    except Role.DoesNotExist as exc:
-        raise _error(
-            controller,
-            "This role does not belong to the company.",
-            loc,
-            HTTPStatus.BAD_REQUEST,
-        ) from exc
 
 
 def _clear_expired_for(company: Company, email: str) -> None:
@@ -211,7 +175,7 @@ class CompanyInvitationListController(AuthenticatedController[PydanticSerializer
         tags=["Invitations"],
     )
     def get(self, parsed_path: Path[CompanyInvitationsPath]) -> InvitationListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         invitations = (
             Invitation.objects.filter(company=company, accepted_at__isnull=True)
@@ -239,9 +203,9 @@ class CompanyInvitationListController(AuthenticatedController[PydanticSerializer
         parsed_body: Body[InvitationCreateIn],
     ) -> InvitationOut:
         user = self.request.user
-        company = _get_company_or_404(user, parsed_path.company_id)
+        company = get_company_or_404(user, parsed_path.company_id)
         require_company_perm(user, company, P.COMPANY_MEMBERS)
-        role = _get_role_or_400(self, company, parsed_body.role_id, ["role_id"])
+        role = get_role_or_400(self, company, parsed_body.role_id, ["role_id"])
         require_can_grant_company_role(user, company, role)
 
         projects: list[tuple[Project, Role]] = []
@@ -251,7 +215,7 @@ class CompanyInvitationListController(AuthenticatedController[PydanticSerializer
             if item.project_id in seen:
                 raise _error(self, "Duplicate project.", loc, HTTPStatus.BAD_REQUEST)
             seen.add(item.project_id)
-            project = _get_project_or_404(user, item.project_id)
+            project = get_project_or_404(user, item.project_id)
             if project.company_id != company.id:
                 raise _error(
                     self,
@@ -259,7 +223,7 @@ class CompanyInvitationListController(AuthenticatedController[PydanticSerializer
                     loc,
                     HTTPStatus.BAD_REQUEST,
                 )
-            project_role = _get_role_or_400(self, company, item.role_id, loc)
+            project_role = get_role_or_400(self, company, item.role_id, loc)
             require_can_grant_project_role(user, project, project_role)
             projects.append((project, project_role))
 
@@ -292,10 +256,10 @@ class ProjectInvitationController(AuthenticatedController[PydanticSerializer]):
         parsed_body: Body[ProjectInvitationCreateIn],
     ) -> InvitationOut:
         user = self.request.user
-        project = _get_project_or_404(user, parsed_path.project_id)
+        project = get_project_or_404(user, parsed_path.project_id)
         require_project_perm(user, project, P.PROJECT_MEMBERS)
         company = project.company
-        role = _get_role_or_400(self, company, parsed_body.role_id, ["role_id"])
+        role = get_role_or_400(self, company, parsed_body.role_id, ["role_id"])
         if (COMPANY_CODES & set(role.permissions)) or role.sees_all_projects:
             raise _error(
                 self,

@@ -13,6 +13,7 @@ from http import HTTPStatus
 
 from django.db.models import Q, QuerySet
 from dmr import APIError
+from dmr.errors import ErrorType
 
 from apps.companies.models import Company, CompanyMembership
 from apps.projects.models import Project, ProjectMembership
@@ -247,6 +248,58 @@ def can_in_company(user: User, company: Company, code: str) -> bool:
 
 def can_in_project(user: User, project: Project, code: str) -> bool:
     return code in project_permissions(user, project)
+
+
+def get_company_or_404(user: User, company_id: int) -> Company:
+    """Look up a company, scoped to companies the user is a member of.
+
+    A company the user doesn't belong to 404s exactly like one that
+    doesn't exist at all - membership isn't leaked to non-members.
+    """
+    try:
+        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
+    except Company.DoesNotExist as exc:
+        raise APIError(
+            {"detail": f"Company with id={company_id} was not found."},
+            status_code=HTTPStatus.NOT_FOUND,
+        ) from exc
+
+
+def get_project_or_404(user: User, project_id: int) -> Project:
+    """Look up a project, scoped to projects the user can see.
+
+    That is the projects they are a member of, plus all of the company's
+    projects for a company role that sees them all. Any other project 404s
+    exactly like one that doesn't exist at all.
+    """
+    try:
+        return (
+            Project.objects.filter(projects_q(user, "pk"))
+            .select_related("company")
+            .get(pk=project_id)
+        )
+    except Project.DoesNotExist as exc:
+        raise APIError(
+            {"detail": f"Project with id={project_id} was not found."},
+            status_code=HTTPStatus.NOT_FOUND,
+        ) from exc
+
+
+def get_role_or_400(
+    controller, company: Company, role_id: int, loc: list[str] | None = None
+) -> Role:
+    """Look up a role of the company, or answer 400 for the field `loc`."""
+    try:
+        return Role.objects.get(pk=role_id, company=company)
+    except Role.DoesNotExist as exc:
+        raise APIError(
+            controller.format_error(
+                "This role does not belong to the company.",
+                loc=loc or ["role_id"],
+                error_type=ErrorType.value_error,
+            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+        ) from exc
 
 
 def _forbidden() -> APIError:

@@ -10,17 +10,17 @@ from apps.access.checks import (
     companies_q,
     company_permissions,
     company_permissions_by_id,
+    get_company_or_404,
+    get_role_or_400,
     require_can_grant_company_role,
     require_company_perm,
     require_not_self,
     role_manager_would_vanish,
 )
 from apps.access.defaults import get_default_role
-from apps.access.models import Role
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company, CompanyMembership
-from apps.users.models import User
 
 from .schemas import (
     CompanyCreateIn,
@@ -69,21 +69,6 @@ def _serialize_member(request, membership: CompanyMembership) -> CompanyMemberOu
     )
 
 
-def _get_company_or_404(user: User, company_id: int) -> Company:
-    """Look up a company, scoped to companies the user is a member of.
-
-    A company the user doesn't belong to 404s exactly like one that
-    doesn't exist at all - membership isn't leaked to non-members.
-    """
-    try:
-        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
-    except Company.DoesNotExist as exc:
-        raise APIError(
-            {"detail": f"Company with id={company_id} was not found."},
-            status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
-
-
 def _get_membership_or_404(company: Company, user_id: int) -> CompanyMembership:
     try:
         return CompanyMembership.objects.select_related("user", "role").get(
@@ -93,20 +78,6 @@ def _get_membership_or_404(company: Company, user_id: int) -> CompanyMembership:
         raise APIError(
             {"detail": (f"User with id={user_id} is not a member of this company.")},
             status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
-
-
-def _get_role_or_400(controller, company: Company, role_id: int) -> Role:
-    try:
-        return Role.objects.get(pk=role_id, company=company)
-    except Role.DoesNotExist as exc:
-        raise APIError(
-            controller.format_error(
-                "This role does not belong to the company.",
-                loc=["role_id"],
-                error_type=ErrorType.value_error,
-            ),
-            status_code=HTTPStatus.BAD_REQUEST,
         ) from exc
 
 
@@ -213,7 +184,7 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
         tags=["Companies"],
     )
     def get(self, parsed_path: Path[CompanyPath]) -> CompanyOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         return _serialize_company(
             company, company_permissions(self.request.user, company)
         )
@@ -237,7 +208,7 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyPath],
         parsed_body: Body[CompanyUpdateIn],
     ) -> CompanyOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_EDIT)
 
         update_fields = parsed_body.model_dump(exclude_unset=True)
@@ -276,7 +247,7 @@ class CompanyDetailController(AuthenticatedController[PydanticSerializer]):
         tags=["Companies"],
     )
     def delete(self, parsed_path: Path[CompanyPath]) -> None:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_DELETE)
         company.delete()
         return None
@@ -295,7 +266,7 @@ class CompanyMemberListController(AuthenticatedController[PydanticSerializer]):
         tags=["Companies"],
     )
     def get(self, parsed_path: Path[CompanyPath]) -> CompanyMemberListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         memberships = company.memberships.select_related("user", "role").order_by(
             "user__email"
         )
@@ -331,11 +302,11 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         parsed_path: Path[CompanyMemberPath],
         parsed_body: Body[CompanyMemberUpdateIn],
     ) -> CompanyMemberOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(company, parsed_path.user_id)
-        role = _get_role_or_400(self, company, parsed_body.role_id)
+        role = get_role_or_400(self, company, parsed_body.role_id)
         require_can_grant_company_role(self.request.user, company, membership.role)
         require_can_grant_company_role(self.request.user, company, role)
 
@@ -364,7 +335,7 @@ class CompanyMemberDetailController(AuthenticatedController[PydanticSerializer])
         tags=["Companies"],
     )
     def delete(self, parsed_path: Path[CompanyMemberPath]) -> None:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_MEMBERS)
         require_not_self(self.request.user, parsed_path.user_id)
         membership = _get_membership_or_404(company, parsed_path.user_id)

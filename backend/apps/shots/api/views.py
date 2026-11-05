@@ -8,6 +8,8 @@ from dmr.plugins.pydantic import PydanticSerializer
 
 from apps.access.checks import (
     companies_q,
+    get_company_or_404,
+    get_project_or_404,
     require_company_perm,
     require_project_perm,
     visible_shot_groups,
@@ -16,7 +18,6 @@ from apps.access.checks import (
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.companies.models import Company
-from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project
 from apps.shots.models import Shot, ShotGroup, ShotStatus
 from apps.users.api.views import _serialize_user
@@ -100,7 +101,7 @@ class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectShotGroupsPath],
         parsed_query: Query[ShotGroupListQuery],
     ) -> ShotGroupListOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
 
         queryset = visible_shot_groups(self.request.user).filter(project=project)
 
@@ -137,7 +138,7 @@ class ShotGroupListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectShotGroupsPath],
         parsed_body: Body[ShotGroupCreateIn],
     ) -> ShotGroupOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.GROUP_MANAGE)
 
         if ShotGroup.objects.filter(project=project, name=parsed_body.name).exists():
@@ -262,7 +263,7 @@ def _serialize_shot_status(request, shot_status: ShotStatus) -> ShotStatusOut:
 def _get_shot_status_or_404(user: User, shot_status_id: int) -> ShotStatus:
     """Look up a shot status, scoped to companies the user is a member of.
 
-    Mirrors `apps.projects.api.views._get_company_or_404`.
+    Mirrors `apps.access.checks.get_company_or_404`.
     """
     try:
         return ShotStatus.objects.filter(companies_q(user, "company")).get(
@@ -312,7 +313,7 @@ class ShotStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyShotStatusesPath],
         parsed_query: Query[ShotStatusListQuery],
     ) -> ShotStatusListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
 
         queryset = ShotStatus.objects.filter(company=company)
         if parsed_query.search:
@@ -343,7 +344,7 @@ class ShotStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyShotStatusesPath],
         parsed_body: Body[ShotStatusCreateIn],
     ) -> ShotStatusOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         if ShotStatus.objects.filter(company=company, name=parsed_body.name).exists():
@@ -696,7 +697,7 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectShotsPath],
         parsed_query: Query[ShotListQuery],
     ) -> ShotListOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
 
         queryset = _with_latest_thumb(
             visible_shots(self.request.user).filter(project=project)
@@ -737,7 +738,7 @@ class ShotListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectShotsPath],
         parsed_body: Body[ShotCreateIn],
     ) -> ShotOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.SHOT_CREATE)
 
         if Shot.objects.filter(project=project, name=parsed_body.name).exists():
@@ -787,7 +788,7 @@ class ShotFiltersController(AuthenticatedController[PydanticSerializer]):
         tags=["Shots"],
     )
     def get(self, parsed_path: Path[ProjectShotsPath]) -> ShotFiltersOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
         shots = visible_shots(self.request.user).filter(project=project)
         assignee_ids = set(
             shots.filter(shot_tasks__assignee__isnull=False).values_list(

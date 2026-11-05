@@ -10,6 +10,8 @@ from dmr.plugins.pydantic import PydanticSerializer
 from apps.access.checks import (
     can_in_project,
     companies_q,
+    get_company_or_404,
+    get_project_or_404,
     projects_q,
     projects_with_all_shots,
     require_company_perm,
@@ -25,7 +27,6 @@ from apps.chat.events import (
     record_task_added,
 )
 from apps.companies.models import Company
-from apps.projects.api.views import _get_company_or_404, _get_project_or_404
 from apps.projects.models import Project, ProjectMembership
 from apps.shots.api.views import _get_shot_or_404
 from apps.tasks.models import ShotTask, Task, TaskStatus, TaskType
@@ -183,7 +184,7 @@ class TaskTypeListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyTaskTypesPath],
         parsed_query: Query[TaskTypeListQuery],
     ) -> TaskTypeListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
 
         queryset = TaskType.objects.filter(company=company).select_related(
             "created_by", "updated_by"
@@ -219,7 +220,7 @@ class TaskTypeListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyTaskTypesPath],
         parsed_body: Body[TaskTypeCreateIn],
     ) -> TaskTypeOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         clash = _task_type_clash(
@@ -394,7 +395,7 @@ class TaskStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyTaskStatusesPath],
         parsed_query: Query[TaskStatusListQuery],
     ) -> TaskStatusListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
 
         queryset = TaskStatus.objects.filter(company=company).select_related(
             "created_by", "updated_by"
@@ -428,7 +429,7 @@ class TaskStatusListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyTaskStatusesPath],
         parsed_body: Body[TaskStatusCreateIn],
     ) -> TaskStatusOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_PIPELINE)
 
         if TaskStatus.objects.filter(company=company, name=parsed_body.name).exists():
@@ -674,7 +675,7 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectTasksPath],
         parsed_query: Query[TaskListQuery],
     ) -> TaskListOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
 
         queryset = _task_queryset().filter(
             pk__in=_visible_tasks(self.request.user).values("pk"), project=project
@@ -720,7 +721,7 @@ class TaskListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[ProjectTasksPath],
         parsed_body: Body[TaskCreateIn],
     ) -> TaskOut:
-        project = _get_project_or_404(self.request.user, parsed_path.project_id)
+        project = get_project_or_404(self.request.user, parsed_path.project_id)
         require_project_perm(self.request.user, project, P.TASK_CREATE)
 
         task_type = _resolve_task_type(self, project, parsed_body.type_id)

@@ -7,6 +7,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 
 from apps.access.checks import (
     companies_q,
+    get_company_or_404,
     require_can_edit_role,
     require_company_perm,
     role_manager_would_vanish,
@@ -66,16 +67,6 @@ def _serialize_role(role: Role) -> RoleOut:
     )
 
 
-def _get_company_or_404(user: User, company_id: int) -> Company:
-    try:
-        return Company.objects.filter(companies_q(user, "pk")).get(pk=company_id)
-    except Company.DoesNotExist as exc:
-        raise APIError(
-            {"detail": f"Company with id={company_id} was not found."},
-            status_code=HTTPStatus.NOT_FOUND,
-        ) from exc
-
-
 def _get_role_or_404(user: User, role_id: int) -> Role:
     try:
         role = (
@@ -129,7 +120,7 @@ class RoleListController(AuthenticatedController[PydanticSerializer]):
         tags=["Roles"],
     )
     def get(self, parsed_path: Path[CompanyRolesPath]) -> RoleListOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         return RoleListOut(items=[_serialize_role(r) for r in _roles(company)])
 
     @modify(
@@ -154,7 +145,7 @@ class RoleListController(AuthenticatedController[PydanticSerializer]):
         parsed_path: Path[CompanyRolesPath],
         parsed_body: Body[RoleCreateIn],
     ) -> RoleOut:
-        company = _get_company_or_404(self.request.user, parsed_path.company_id)
+        company = get_company_or_404(self.request.user, parsed_path.company_id)
         require_company_perm(self.request.user, company, P.COMPANY_ROLES)
         require_can_edit_role(
             self.request.user,

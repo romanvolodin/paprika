@@ -6,12 +6,15 @@ from dmr import APIError, Path, Query, ResponseSpec, modify
 from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticSerializer
 
-from apps.access.checks import require_project_perm, shots_q
+from apps.access.checks import (
+    get_project_or_404,
+    require_project_perm,
+    shots_q,
+)
 from apps.access.permissions import P
 from apps.auth.api.controllers import AuthenticatedController
 from apps.chat.api.views import _serialize_attachment
 from apps.chat.models import Message
-from apps.projects.api.views import _get_project_or_404
 from apps.tasks.models import ShotTask
 from apps.users.api.views import _serialize_user
 from apps.versions.api.views import _file_url
@@ -158,7 +161,7 @@ class ProjectFeedController(AuthenticatedController[PydanticSerializer]):
         parsed_query: Query[FeedQuery],
     ) -> FeedOut:
         user = self.request.user
-        project = _get_project_or_404(user, parsed_path.project_id)
+        project = get_project_or_404(user, parsed_path.project_id)
         require_project_perm(user, project, P.FEED_VIEW)
         types = _parse_types(self, parsed_query.type)
         sources = _sources(project, user, types, parsed_query.mine)
