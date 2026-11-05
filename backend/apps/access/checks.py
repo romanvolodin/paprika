@@ -39,12 +39,13 @@ def visible_projects(user: User) -> QuerySet[Project]:
     """
     if user.is_superuser:
         return Project.objects.all()
+    as_member = Project.objects.filter(memberships__user=user)
+    as_company_role = Project.objects.filter(
+        company__memberships__user=user,
+        company__memberships__role__sees_all_projects=True,
+    )
     return Project.objects.filter(
-        Q(memberships__user=user)
-        | Q(
-            company__memberships__user=user,
-            company__memberships__role__sees_all_projects=True,
-        )
+        Q(pk__in=as_member.values("pk")) | Q(pk__in=as_company_role.values("pk"))
     )
 
 
