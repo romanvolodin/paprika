@@ -462,6 +462,41 @@ class TestMemberPermissions:
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
+class TestAddingSomeoneOutsideTheCompany:
+    def test_a_user_of_another_company_looks_like_one_that_does_not_exist(
+        self,
+        auth_client,
+        auth_user,
+        company,
+        company_membership_factory,
+        project_factory,
+        project_membership_factory,
+        user_factory,
+    ):
+        company_membership_factory(user=auth_user, company=company)
+        project = project_factory(company=company)
+        project_membership_factory(user=auth_user, project=project, role="admin")
+        stranger = user_factory()
+        missing_id = stranger.id + 1000
+        payload = {"role_id": _role_id(project, "executor")}
+
+        outsider = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/members/",
+            {**payload, "user_id": stranger.id},
+        )
+        missing = _post_json(
+            auth_client,
+            f"/api/v1/projects/{project.id}/members/",
+            {**payload, "user_id": missing_id},
+        )
+
+        assert outsider.status_code == missing.status_code == HTTPStatus.NOT_FOUND
+        assert outsider.json()["detail"].replace(str(stranger.id), "N") == (
+            missing.json()["detail"].replace(str(missing_id), "N")
+        )
+
+
 class TestActingOnYourself:
     @pytest.fixture
     def project(self, auth_user, project_factory, project_membership_factory):
