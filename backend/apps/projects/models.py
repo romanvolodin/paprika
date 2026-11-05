@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -115,6 +116,20 @@ class ProjectMembership(BaseModel):
             )
         ]
         ordering = ["project", "user"]
+
+    def clean(self):
+        if (
+            self.role_id is not None
+            and self.project_id is not None
+            and self.role.company_id != self.project.company_id
+        ):
+            raise ValidationError(
+                {"role": _("The role belongs to another company than the project.")}
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} — {self.project} ({self.role})"

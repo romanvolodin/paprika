@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -82,6 +83,18 @@ class CompanyMembership(BaseModel):
             )
         ]
         ordering = ["company", "user"]
+
+    def clean(self):
+        if (
+            self.role_id is not None
+            and self.company_id is not None
+            and self.role.company_id != self.company_id
+        ):
+            raise ValidationError({"role": _("The role belongs to another company.")})
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} — {self.company} ({self.role})"
