@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Literal
 
 import pydantic
 
@@ -6,6 +7,9 @@ from apps.access.permissions import ALL_CODES, PERMISSIONS
 
 
 _COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+
+PermissionCode = Literal[tuple(p.code for p in PERMISSIONS)]
+PermissionLevel = Literal["company", "project"]
 
 
 def _known_codes(codes: list[str]) -> list[str]:
@@ -18,11 +22,13 @@ def _known_codes(codes: list[str]) -> list[str]:
 class PermissionOut(pydantic.BaseModel):
     """One of the permissions a role can be made of."""
 
-    code: str = pydantic.Field(description="Stable code, e.g. `shot.create`.")
+    code: PermissionCode = pydantic.Field(
+        description="Stable code, e.g. `shot.create`."
+    )
     label: str
     description: str
     group: str = pydantic.Field(description="Section the permission is shown in.")
-    level: str = pydantic.Field(
+    level: PermissionLevel = pydantic.Field(
         description=(
             "`company` permissions act through the role in the company, "
             "`project` ones through the role in the project."

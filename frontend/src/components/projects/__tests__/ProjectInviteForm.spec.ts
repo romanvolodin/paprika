@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { NSelect } from 'naive-ui'
 import ProjectInviteForm from '@/components/projects/ProjectInviteForm.vue'
-import type { RoleOut } from '@/types/api'
+import type { PermissionOut, RoleOut } from '@/types/api'
 
 function role(id: number, name: string, permissions: string[], sees = false): RoleOut {
   return {
@@ -28,8 +28,19 @@ const roles = [
   role(5, 'Свой широкий', [], true),
 ]
 
+function permission(code: PermissionOut['code'], level: PermissionOut['level']): PermissionOut {
+  return { code, label: code, description: '', group: 'Группа', level }
+}
+
+const catalog = [
+  permission('company.delete', 'company'),
+  permission('company.members', 'company'),
+  permission('shot.create', 'project'),
+  permission('chat.write', 'project'),
+]
+
 function mountForm() {
-  return mount(ProjectInviteForm, { props: { roles, isSubmitting: false } })
+  return mount(ProjectInviteForm, { props: { roles, catalog, isSubmitting: false } })
 }
 
 describe('ProjectInviteForm', () => {

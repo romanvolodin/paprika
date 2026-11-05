@@ -114,6 +114,7 @@ describe('useProjectPageStore', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
+    vi.mocked(rolesApi.listPermissions).mockResolvedValue({ items: [] })
   })
 
   describe('open', () => {
@@ -211,6 +212,7 @@ describe('useProjectPageStore', () => {
       expect(rolesApi.listCompanyRoles).toHaveBeenCalledWith(7)
       expect(store.companyMembers).toHaveLength(2)
       expect(store.roles.map((role) => role.name)).toEqual(['Админ', 'Исполнитель'])
+      expect(rolesApi.listPermissions).toHaveBeenCalled()
       expect(store.isLoading).toBe(false)
     })
   })

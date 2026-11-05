@@ -14,6 +14,7 @@ import type {
   ProjectInvitationCreateIn,
   ProjectMemberOut,
   ProjectOut,
+  PermissionOut,
   RoleOut,
 } from '@/types/api'
 
@@ -30,6 +31,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
   const companyMembers = ref<CompanyMemberOut[]>([])
   // The company's roles, for the role pickers of the members list.
   const roles = ref<RoleOut[]>([])
+  const permissionCatalog = ref<PermissionOut[]>([])
   const isLoading = ref(false)
 
   // `open` can be called again (another project, another company) while
@@ -87,12 +89,14 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     if (!project.value) return
     isLoading.value = true
     try {
-      const [membersResult, rolesResult] = await Promise.all([
+      const [membersResult, rolesResult, catalogResult] = await Promise.all([
         companiesApi.listCompanyMembers(project.value.company_id),
         rolesApi.listCompanyRoles(project.value.company_id),
+        rolesApi.listPermissions(),
       ])
       companyMembers.value = membersResult.items
       roles.value = rolesResult.items
+      permissionCatalog.value = catalogResult.items
     } finally {
       isLoading.value = false
     }
@@ -143,6 +147,7 @@ export const useProjectPageStore = defineStore('projectPage', () => {
     members,
     companyMembers,
     roles,
+    permissionCatalog,
     inviteToProject,
     isLoading,
     open,

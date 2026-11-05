@@ -460,6 +460,7 @@ function confirmDeleteProject() {
         <project-invite-form
           ref="inviteForm"
           :roles="store.roles"
+          :catalog="store.permissionCatalog"
           :is-submitting="isInviting"
           @submit="handleInvite"
         />

@@ -1,6 +1,9 @@
+import type { PermissionCode } from '@/types/api'
+
 // Codes of the permissions a role is made of. The list lives on the backend
 // (`apps/access/permissions.py`, also served by `GET /permissions/`); these
-// are only the codes the interface itself checks.
+// are only the codes the interface itself checks. The type check fails when
+// one of them is no longer a code the backend knows.
 export const PERMISSION = {
   companyEdit: 'company.edit',
   companyMembers: 'company.members',
@@ -30,16 +33,6 @@ export const PERMISSION = {
 
   chatWrite: 'chat.write',
   chatEditAny: 'chat.edit_any',
-} as const
+} as const satisfies Record<string, PermissionCode>
 
-// The permissions that act through the role in the company, not in a project.
-export const COMPANY_LEVEL_CODES = [
-  PERMISSION.companyEdit,
-  PERMISSION.companyMembers,
-  PERMISSION.companyRoles,
-  PERMISSION.companyPipeline,
-  PERMISSION.projectCreate,
-  'company.delete',
-] as const
-
-export type PermissionCode = (typeof PERMISSION)[keyof typeof PERMISSION]
+export type { PermissionCode }

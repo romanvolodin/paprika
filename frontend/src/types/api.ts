@@ -49,6 +49,7 @@ export type RegisterIn = components['schemas']['RegisterIn']
 export type RoleCreateIn = components['schemas']['RoleCreateIn']
 export type RoleUpdateIn = components['schemas']['RoleUpdateIn']
 export type PermissionOut = components['schemas']['PermissionOut']
+export type PermissionCode = PermissionOut['code']
 export type PermissionListOut = components['schemas']['PermissionListOut']
 
 export type ProjectOut = components['schemas']['ProjectOut']

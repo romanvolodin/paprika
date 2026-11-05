@@ -1803,8 +1803,9 @@ export interface components {
             /**
              * Code
              * @description Stable code, e.g. `shot.create`.
+             * @enum {string}
              */
-            code: string;
+            code: "company.edit" | "company.delete" | "company.members" | "company.roles" | "company.pipeline" | "project.create" | "project.edit" | "project.delete" | "project.members" | "feed.view" | "shot.create" | "shot.edit" | "shot.delete" | "shot.import" | "group.manage" | "task.create" | "task.edit" | "task.delete" | "task.update_own" | "version.upload" | "version.delete" | "version.delete_own" | "chat.write" | "chat.edit_any";
             /** Label */
             label: string;
             /** Description */
@@ -1817,8 +1818,9 @@ export interface components {
             /**
              * Level
              * @description `company` permissions act through the role in the company, `project` ones through the role in the project.
+             * @enum {string}
              */
-            level: string;
+            level: "company" | "project";
         };
         /**
          * ProjectCreateIn

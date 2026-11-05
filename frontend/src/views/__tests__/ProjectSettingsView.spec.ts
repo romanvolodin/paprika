@@ -71,6 +71,7 @@ describe('ProjectSettingsView', () => {
     vi.clearAllMocks()
     vi.mocked(companiesApi.listCompanyMembers).mockResolvedValue({ items: [] })
     vi.mocked(rolesApi.listCompanyRoles).mockResolvedValue({ items: [] })
+    vi.mocked(rolesApi.listPermissions).mockResolvedValue({ items: [] })
   })
 
   it.each(['admin', 'producer'] as const)('shows the delete button to a %s', async (role) => {

@@ -2,10 +2,13 @@
 import { computed, ref } from 'vue'
 import { NButton, NIcon, NInput, NSelect } from 'naive-ui'
 import { SendOutline } from '@vicons/ionicons5'
-import { COMPANY_LEVEL_CODES } from '@/constants/permissions'
-import type { RoleOut } from '@/types/api'
+import type { PermissionCode, PermissionOut, RoleOut } from '@/types/api'
 
-const props = defineProps<{ roles: RoleOut[]; isSubmitting: boolean }>()
+const props = defineProps<{
+  roles: RoleOut[]
+  catalog: PermissionOut[]
+  isSubmitting: boolean
+}>()
 
 const emit = defineEmits<{ submit: [value: { email: string; role_id: number }] }>()
 
@@ -14,12 +17,19 @@ const roleId = ref<number | null>(null)
 
 // A person invited to a project gets the same role in the company, so a
 // role with company rights can only be given by inviting to the company.
+const companyLevelCodes = computed(
+  () =>
+    new Set(
+      props.catalog.filter((permission) => permission.level === 'company').map((p) => p.code),
+    ),
+)
+
 const options = computed(() =>
   props.roles
     .filter(
       (role) =>
         !role.sees_all_projects &&
-        !role.permissions.some((code) => (COMPANY_LEVEL_CODES as readonly string[]).includes(code)),
+        !role.permissions.some((code) => companyLevelCodes.value.has(code as PermissionCode)),
     )
     .map((role) => ({ label: role.name, value: role.id })),
 )
