@@ -874,7 +874,7 @@ export interface paths {
         head?: never;
         /**
          * Update a shot task
-         * @description Partially update the tracking of a task on a shot: status, assignee (null to unassign) and estimated/actual hours (null to clear). The task and the shot can't be changed. Needs `task.edit`; the assignee can change just the status of their own task with `task.update_own`.
+         * @description Partially update the tracking of a task on a shot: status, assignee (null to unassign) and estimated/actual hours (null to clear). The task and the shot can't be changed. Needs `task.edit`; the assignee can change just the status and the actual hours of their own task with `task.update_own`.
          */
         patch: operations["patchShotTaskDetailControllerApiV1ShotTasksShotTaskId"];
         trace?: never;
@@ -966,7 +966,7 @@ export interface paths {
         put?: never;
         /**
          * Place a task on a shot
-         * @description Place an existing task (`task_id`) of the shot's project on the shot. `status_id` defaults to the company's default task status; `assignee_id` must be a member of the project. A task can be placed on a given shot only once (409 otherwise). Needs the `task.create` permission.
+         * @description Place an existing task (`task_id`) of the shot's project on the shot. `status_id` defaults to the company's default task status; `assignee_id` must be a member of the project whose role allows working on tasks (`task.update_own`). A task can be placed on a given shot only once (409 otherwise). Needs the `task.create` permission.
          */
         post: operations["postShotTaskListControllerApiV1ShotsShotIdTasks"];
         delete?: never;

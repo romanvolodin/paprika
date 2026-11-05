@@ -278,6 +278,29 @@ class TestPlaceTaskOnShot:
         assert response.status_code == HTTPStatus.CREATED
         assert response.json()["assignee"]["id"] == colleague.id
 
+    def test_an_assignee_whose_role_cannot_work_on_tasks_is_rejected(
+        self,
+        auth_client,
+        member_shot,
+        task_factory,
+        user_factory,
+        project_membership_factory,
+    ):
+        viewer = user_factory()
+        project_membership_factory(
+            user=viewer, project=member_shot.project, role="client"
+        )
+        task = task_factory(project=member_shot.project)
+
+        response = _post_json(
+            auth_client,
+            _url(member_shot),
+            {"task_id": task.id, "assignee_id": viewer.id},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+        assert not ShotTask.objects.exists()
+
     @pytest.mark.parametrize("field", ["estimated_hours", "actual_hours"])
     @pytest.mark.parametrize("value", [-1, 1.234, 10_000_000])
     def test_rejects_invalid_hours(
@@ -508,6 +531,26 @@ class TestUpdateShotTask:
         )
 
         assert response.status_code == HTTPStatus.NOT_FOUND
+
+    def test_reassigning_to_such_a_member_is_rejected_too(
+        self,
+        auth_client,
+        member_shot_task,
+        user_factory,
+        project_membership_factory,
+    ):
+        viewer = user_factory()
+        project_membership_factory(
+            user=viewer, project=member_shot_task.shot.project, role="client"
+        )
+
+        response = _patch_json(
+            auth_client,
+            f"/api/v1/shot-tasks/{member_shot_task.id}/",
+            {"assignee_id": viewer.id},
+        )
+
+        assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 class TestUpdateOwnShotTask:

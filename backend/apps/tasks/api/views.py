@@ -886,7 +886,7 @@ def _resolve_status_for_create(
 
 
 def _resolve_assignee(controller, project: Project, assignee_id: int) -> User:
-    """Resolve `assignee_id` to a member of `project` (else 400)."""
+    """Resolve `assignee_id` to a project member who can work on tasks (else 400)."""
     is_member = ProjectMembership.objects.filter(
         project=project, user_id=assignee_id
     ).exists()
@@ -896,7 +896,14 @@ def _resolve_assignee(controller, project: Project, assignee_id: int) -> User:
             f"User with id={assignee_id} is not a member of this project.",
             ["assignee_id"],
         )
-    return User.objects.get(pk=assignee_id)
+    assignee = User.objects.get(pk=assignee_id)
+    if not can_in_project(assignee, project, P.TASK_UPDATE_OWN):
+        raise _bad_request(
+            controller,
+            f"User with id={assignee_id} cannot work on tasks in this project.",
+            ["assignee_id"],
+        )
+    return assignee
 
 
 _OWN_TASK_FIELDS = {"status_id", "actual_hours"}
@@ -945,7 +952,8 @@ class ShotTaskListController(AuthenticatedController[PydanticSerializer]):
         description=(
             "Place an existing task (`task_id`) of the shot's project on "
             "the shot. `status_id` defaults to the company's default task "
-            "status; `assignee_id` must be a member of the project. A "
+            "status; `assignee_id` must be a member of the project whose "
+            "role allows working on tasks (`task.update_own`). A "
             "task can be placed on a given shot only once (409 "
             "otherwise). Needs the `task.create` permission."
         ),
