@@ -12,6 +12,8 @@ defineProps<{
 
 <template>
   <RouterLink class="shot-card" :to="to">
+    <shot-status-tag class="status" v-if="status" :status="status" />
+
     <div class="shot-card__preview">
       <img v-if="shot.thumb" :src="shot.thumb" :alt="shot.name" loading="lazy" />
       <span v-else class="shot-card__no-preview">Нет превью</span>
@@ -20,7 +22,6 @@ defineProps<{
     <div class="shot-card__info">
       <div class="shot-card__heading">
         <span class="shot-card__name mono">{{ shot.name }}</span>
-        <shot-status-tag v-if="status" :status="status" />
       </div>
     </div>
   </RouterLink>
@@ -28,6 +29,7 @@ defineProps<{
 
 <style scoped>
 .shot-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -43,6 +45,14 @@ defineProps<{
 .shot-card:hover {
   border-color: var(--color-border-strong);
   background: var(--color-bg-hover);
+}
+
+.status {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #00000055;
+  backdrop-filter: blur(100px);
 }
 
 .shot-card__preview {
