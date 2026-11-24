@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { h, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, h, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import {
-  NButton,
-  NDataTable,
-  NIcon,
-  NInput,
-  NPagination,
-  NTag,
-  type DataTableColumns,
-} from 'naive-ui'
+import { NButton, NIcon, NInput, NPagination, NTag, type DataTableColumns } from 'naive-ui'
 import { AddOutline, SearchOutline } from '@vicons/ionicons5'
+import ItemList from '@/components/common/ItemList.vue'
+import ViewModeSwitch from '@/components/common/ViewModeSwitch.vue'
+import ProjectCard from '@/components/projects/ProjectCard.vue'
+import { useViewMode } from '@/composables/useViewMode'
 import { useProjectsStore } from '@/stores/projects'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
 import type { ProjectOut } from '@/types/api'
@@ -19,6 +15,8 @@ import type { ProjectOut } from '@/types/api'
 const router = useRouter()
 const projects = useProjectsStore()
 const currentCompany = useCurrentCompanyStore()
+
+const viewMode = useViewMode('projects')
 
 const searchInput = ref('')
 
@@ -35,20 +33,24 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('ru-RU')
 }
 
+const companySlugById = computed(
+  () => new Map(currentCompany.companies.map((company) => [company.id, company.slug])),
+)
+
+function projectRoute(project: ProjectOut): RouteLocationRaw | null {
+  const companySlug = companySlugById.value.get(project.company_id)
+  if (!companySlug) return null
+  return { name: 'project-home', params: { companySlug, projectCode: project.code } }
+}
+
 const columns: DataTableColumns<ProjectOut> = [
   {
     title: 'Название',
     key: 'name',
     render: (project) => {
-      const companySlug = currentCompany.companies.find(
-        (company) => company.id === project.company_id,
-      )?.slug
-      if (!companySlug) return project.name
-      return h(
-        RouterLink,
-        { to: { name: 'project-home', params: { companySlug, projectCode: project.code } } },
-        { default: () => project.name },
-      )
+      const to = projectRoute(project)
+      if (!to) return project.name
+      return h(RouterLink, { to }, { default: () => project.name })
     },
   },
   {
@@ -114,20 +116,27 @@ watch(() => currentCompany.currentCompanyId, fetchForCurrentCompany)
           <template #prefix><n-icon :component="SearchOutline" /></template>
         </n-input>
 
-        <n-button type="primary" @click="router.push({ name: 'project-create' })">
-          <template #icon><n-icon :component="AddOutline" /></template>
-          Новый проект
-        </n-button>
+        <div class="projects-page__toolbar-actions">
+          <view-mode-switch v-model="viewMode" />
+          <n-button type="primary" @click="router.push({ name: 'project-create' })">
+            <template #icon><n-icon :component="AddOutline" /></template>
+            Новый проект
+          </n-button>
+        </div>
       </div>
 
-      <n-data-table
+      <item-list
+        :items="projects.items"
         :columns="columns"
-        :data="projects.items"
+        :mode="viewMode"
         :loading="projects.isLoading"
-        :bordered="false"
-        :row-key="(row: ProjectOut) => row.id"
-        class="projects-page__table"
-      />
+        :row-key="(project: ProjectOut) => project.id"
+        class="projects-page__list"
+      >
+        <template #card="{ item }">
+          <project-card :project="item" :to="projectRoute(item) ?? undefined" />
+        </template>
+      </item-list>
 
       <div class="projects-page__pagination">
         <n-pagination
@@ -155,9 +164,16 @@ watch(() => currentCompany.currentCompanyId, fetchForCurrentCompany)
 
 .projects-page__toolbar {
   display: flex;
+  align-items: center;
   gap: var(--space-3);
   justify-content: space-between;
   flex-wrap: wrap;
+}
+
+.projects-page__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .projects-page__pagination {
@@ -166,7 +182,7 @@ watch(() => currentCompany.currentCompanyId, fetchForCurrentCompany)
 }
 
 @media (max-width: 640px) {
-  .projects-page__table {
+  .projects-page__list {
     font-size: var(--text-sm, 13px);
   }
 }
