@@ -102,12 +102,9 @@ migrate: _require-mode
 superuser: _require-mode
   docker compose -f {{COMPOSE-FILE}} exec backend {{MANAGE}} createsuperuser
 
-backup: _require-mode
-  @if [ "{{MODE}}" = "dev" ]; then \
-    docker compose -f compose.dev.yaml exec -T pg sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl' > "paprika-dev-backup-$(date +%Y%m%d-%H%M%S).sql"; \
-  elif [ "{{MODE}}" = "prod" ]; then \
-    docker compose -f compose.prod.yaml exec -T pg sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl' > paprika.sql; \
-  fi
+backup OUT_DIR=".": _require-mode
+  @mkdir -p "{{OUT_DIR}}"
+  docker compose -f {{COMPOSE-FILE}} exec -T pg sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl' > "{{OUT_DIR}}/paprika-{{MODE}}-backup-$(date +%Y%m%d-%H%M%S).sql"
 
 test *ARGS:
   docker compose -f compose.dev.yaml exec backend uv run pytest {{ARGS}}
