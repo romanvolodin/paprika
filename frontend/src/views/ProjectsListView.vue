@@ -2,11 +2,24 @@
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import { NButton, NIcon, NInput, NPagination, NTag, type DataTableColumns } from 'naive-ui'
+import {
+  NButton,
+  NIcon,
+  NInput,
+  NPagination,
+  NRadioButton,
+  NRadioGroup,
+  NTag,
+  type DataTableColumns,
+} from 'naive-ui'
 import { AddOutline, SearchOutline } from '@vicons/ionicons5'
 import ItemList from '@/components/common/ItemList.vue'
 import ViewModeSwitch from '@/components/common/ViewModeSwitch.vue'
 import ProjectCard from '@/components/projects/ProjectCard.vue'
+import {
+  useProjectStatusFilter,
+  type ProjectStatusFilter,
+} from '@/composables/useProjectStatusFilter'
 import { useViewMode } from '@/composables/useViewMode'
 import { useProjectsStore } from '@/stores/projects'
 import { useCurrentCompanyStore } from '@/stores/currentCompany'
@@ -17,6 +30,7 @@ const projects = useProjectsStore()
 const currentCompany = useCurrentCompanyStore()
 
 const viewMode = useViewMode('projects')
+const statusFilter = useProjectStatusFilter('projects')
 
 const searchInput = ref('')
 
@@ -27,6 +41,10 @@ const debouncedSearch = useDebounceFn((value: string) => {
 function handleSearchInput(value: string) {
   searchInput.value = value
   debouncedSearch(value)
+}
+
+function handleStatusFilterChange(value: string | number | boolean) {
+  statusFilter.value = value as ProjectStatusFilter
 }
 
 function formatDate(value: string): string {
@@ -78,6 +96,16 @@ const columns: DataTableColumns<ProjectOut> = [
   },
 ]
 
+const filteredItems = computed(() => {
+  if (statusFilter.value === 'active') {
+    return projects.items.filter((project) => project.is_active)
+  }
+  if (statusFilter.value === 'archived') {
+    return projects.items.filter((project) => !project.is_active)
+  }
+  return projects.items
+})
+
 function fetchForCurrentCompany() {
   if (currentCompany.currentCompanyId !== null) {
     projects.fetchProjects(currentCompany.currentCompanyId)
@@ -116,6 +144,17 @@ watch(() => currentCompany.currentCompanyId, fetchForCurrentCompany)
           <template #prefix><n-icon :component="SearchOutline" /></template>
         </n-input>
 
+        <n-radio-group
+          :value="statusFilter"
+          name="project-status-filter"
+          size="small"
+          @update:value="handleStatusFilterChange"
+        >
+          <n-radio-button value="all">Все</n-radio-button>
+          <n-radio-button value="active">Активные</n-radio-button>
+          <n-radio-button value="archived">Архив</n-radio-button>
+        </n-radio-group>
+
         <div class="projects-page__toolbar-actions">
           <view-mode-switch v-model="viewMode" />
           <n-button type="primary" @click="router.push({ name: 'project-create' })">
@@ -126,7 +165,7 @@ watch(() => currentCompany.currentCompanyId, fetchForCurrentCompany)
       </div>
 
       <item-list
-        :items="projects.items"
+        :items="filteredItems"
         :columns="columns"
         :mode="viewMode"
         :loading="projects.isLoading"
